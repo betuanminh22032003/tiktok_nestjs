@@ -1,6 +1,7 @@
 import {
   Entity,
   PrimaryGeneratedColumn,
+  Column,
   CreateDateColumn,
   ManyToOne,
   JoinColumn,
@@ -17,9 +18,11 @@ export class Like {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Column()
   @Index()
   userId: string;
 
+  @Column()
   @Index()
   videoId: string;
 

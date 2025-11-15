@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import ReactPlayer from 'react-player';
+const Player: any = ReactPlayer;
 import { Heart, MessageCircle, Share2, Play, Pause } from 'lucide-react';
 import { interactionAPI } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
@@ -33,7 +34,7 @@ export default function VideoCard({ video, isActive = false }: VideoCardProps) {
   const [likesCount, setLikesCount] = useState(video.likesCount);
   const [commentsCount, setCommentsCount] = useState(video.commentsCount);
   const { isAuthenticated } = useAuthStore();
-  const playerRef = useRef<ReactPlayer>(null);
+  const playerRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -110,7 +111,7 @@ export default function VideoCard({ video, isActive = false }: VideoCardProps) {
     >
       {/* Video Player */}
       <div className="relative w-full max-w-[500px] h-full">
-        <ReactPlayer
+        <Player
           ref={playerRef}
           url={video.videoUrl}
           playing={isPlaying}

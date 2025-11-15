@@ -8,13 +8,15 @@ const logFormat = format.combine(
   format.json(),
 );
 
-export const logger = createLogger({
-  level: process.env.LOG_LEVEL || 'info',
-  format: logFormat,
-  transports: [
-    new transports.Console({
-      format: format.combine(format.colorize(), format.simple()),
-    }),
+const logTransports: any[] = [
+  new transports.Console({
+    format: format.combine(format.colorize(), format.simple()),
+  }),
+];
+
+// Only add file transports when explicitly enabled (disabled in production containers by default)
+if (process.env.ENABLE_FILE_LOGGING === 'true') {
+  logTransports.push(
     new DailyRotateFile({
       filename: 'logs/application-%DATE%.log',
       datePattern: 'YYYY-MM-DD',
@@ -28,5 +30,11 @@ export const logger = createLogger({
       maxSize: '20m',
       maxFiles: '30d',
     }),
-  ],
+  );
+}
+
+export const logger = createLogger({
+  level: process.env.LOG_LEVEL || 'info',
+  format: logFormat,
+  transports: logTransports,
 });

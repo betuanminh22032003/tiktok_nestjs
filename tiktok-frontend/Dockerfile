@@ -5,6 +5,8 @@ FROM node:20-bullseye-slim AS deps
 
 WORKDIR /monorepo
 
+# No build dependencies needed in deps stage; only in builder
+
 # Copy root workspace package files
 COPY package*.json ./
 
@@ -17,22 +19,26 @@ RUN npm ci && npm cache clean --force
 # =============================================================================
 # Build stage
 # =============================================================================
-FROM node:20-bullseye-slim AS builder
+FROM node:20-bullseye AS builder
 
 WORKDIR /monorepo
 
-# Copy node_modules from deps stage
-COPY --from=deps /monorepo/node_modules ./node_modules
-COPY --from=deps /monorepo/tiktok-frontend/node_modules ./tiktok-frontend/node_modules
+# Install build dependencies for native modules
+RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
 
-# Copy frontend source
+# Copy frontend source and package files
 COPY tiktok-frontend ./tiktok-frontend
+COPY tiktok-frontend/package*.json ./tiktok-frontend/
 COPY package*.json ./
 
 # Set working directory to frontend
 WORKDIR /monorepo/tiktok-frontend
 
-# Build the Next.js application
+# Install frontend dependencies inside the builder so native modules
+# are built for the container's environment (ensures lightningcss binary exists)
+RUN npm ci --ignore-scripts=false --no-audit --no-fund
+# Rebuild lightningcss native bindings for correct architecture
+RUN npm rebuild lightningcss
 ENV NEXT_TELEMETRY_DISABLED 1
 ENV NODE_ENV production
 
