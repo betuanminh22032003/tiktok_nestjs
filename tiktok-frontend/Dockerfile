@@ -1,7 +1,7 @@
 # =============================================================================
 # Build stage - Shared dependencies from monorepo
 # =============================================================================
-FROM node:20-alpine AS deps
+FROM node:20-bullseye-slim AS deps
 
 WORKDIR /monorepo
 
@@ -17,7 +17,7 @@ RUN npm ci && npm cache clean --force
 # =============================================================================
 # Build stage
 # =============================================================================
-FROM node:20-alpine AS builder
+FROM node:20-bullseye-slim AS builder
 
 WORKDIR /monorepo
 
@@ -41,7 +41,7 @@ RUN npm run build
 # =============================================================================
 # Production stage
 # =============================================================================
-FROM node:20-alpine AS runner
+FROM node:20-bullseye-slim AS runner
 
 WORKDIR /app
 

@@ -1,7 +1,7 @@
 # =============================================================================
 # Build stage - Shared dependencies
 # =============================================================================
-FROM node:20-alpine AS builder
+FROM node:20-bullseye-slim AS builder
 
 WORKDIR /app
 
@@ -26,7 +26,7 @@ RUN npm run build -- api-gateway
 # =============================================================================
 # Production stage
 # =============================================================================
-FROM node:20-alpine
+FROM node:20-bullseye-slim
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && \

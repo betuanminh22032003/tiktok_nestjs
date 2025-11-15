@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { RpcException } from '@nestjs/microservices';
 import { User } from '@app/database/entities/user.entity';
-import { logger } from '@app/common/utils/logger';
+import { logger } from '@app/common/utils';
 
 interface Notification {
   id: string;

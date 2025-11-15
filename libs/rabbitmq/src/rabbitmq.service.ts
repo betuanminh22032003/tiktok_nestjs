@@ -5,17 +5,17 @@ import * as amqp from 'amqplib';
 @Injectable()
 export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(RabbitMQService.name);
-  private connection: amqp.Connection;
-  private channel: amqp.Channel;
+  private connection: any;
+  private channel: any;
 
-  constructor(private configService: ConfigService) {}
+  constructor(private configService: ConfigService) { }
 
   async onModuleInit() {
     try {
       const url = this.configService.get<string>('RABBITMQ_URL', 'amqp://localhost:5672');
       this.connection = await amqp.connect(url);
       this.channel = await this.connection.createChannel();
-      
+
       this.logger.log('RabbitMQ connected successfully');
 
       this.connection.on('error', (err) => {
