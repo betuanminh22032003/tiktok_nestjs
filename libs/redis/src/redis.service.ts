@@ -96,13 +96,13 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   }
 
   // Feed Cache
-  async cacheFeed(userId: string, page: number, data: any, ttl = 300): Promise<void> {
-    const key = `feed:${userId}:${page}`;
+  async cacheFeed(userId: string, page: number, limit: number, data: any, ttl = 300): Promise<void> {
+    const key = `feed:${userId}:${page}:${limit}`;
     await this.client.setex(key, ttl, JSON.stringify(data));
   }
 
-  async getCachedFeed(userId: string, page: number): Promise<any> {
-    const key = `feed:${userId}:${page}`;
+  async getCachedFeed(userId: string, page: number, limit: number): Promise<any> {
+    const key = `feed:${userId}:${page}:${limit}`;
     const data = await this.client.get(key);
     return data ? JSON.parse(data) : null;
   }

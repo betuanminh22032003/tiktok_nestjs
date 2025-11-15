@@ -28,9 +28,9 @@ RUN npm run build -- notification-service
 # =============================================================================
 FROM node:20-bullseye-slim
 
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nestjs -u 1001
+# Create non-root user (Debian)
+RUN groupadd -g 1001 nodejs && \
+  useradd -m -u 1001 -g nodejs -s /bin/sh nestjs
 
 WORKDIR /app
 

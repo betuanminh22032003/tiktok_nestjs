@@ -45,9 +45,9 @@ FROM node:20-bullseye-slim AS runner
 
 WORKDIR /app
 
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nextjs -u 1001
+# Create non-root user (Debian)
+RUN groupadd -g 1001 nodejs && \
+  useradd -m -u 1001 -g nodejs -s /bin/sh nextjs
 
 # Set production environment
 ENV NODE_ENV production

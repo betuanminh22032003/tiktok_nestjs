@@ -26,6 +26,23 @@ import {
 import { lastValueFrom } from 'rxjs';
 import { WebsocketGateway } from '../websocket/websocket.gateway';
 
+interface LikeResponse {
+  likesCount: number;
+  isLiked: boolean;
+}
+
+interface CommentResponse {
+  comment: {
+    id: string;
+    user: any;
+  };
+  commentsCount: number;
+}
+
+interface ViewResponse {
+  views: number;
+}
+
 interface InteractionServiceClient {
   likeVideo(data: any): any;
   unlikeVideo(data: any): any;
@@ -62,7 +79,7 @@ export class InteractionController {
         userId: user.sub,
         videoId: dto.videoId,
       }),
-    );
+    ) as LikeResponse;
 
     // Broadcast via WebSocket
     this.websocketGateway.broadcastLike(dto.videoId, {
@@ -84,7 +101,7 @@ export class InteractionController {
         userId: user.sub,
         videoId: dto.videoId,
       }),
-    );
+    ) as LikeResponse;
 
     // Broadcast via WebSocket
     this.websocketGateway.broadcastUnlike(dto.videoId, {
@@ -122,7 +139,7 @@ export class InteractionController {
         videoId: dto.videoId,
         content: dto.content,
       }),
-    );
+    ) as CommentResponse;
 
     // Broadcast via WebSocket
     this.websocketGateway.broadcastComment(dto.videoId, {
@@ -183,7 +200,7 @@ export class InteractionController {
         videoId: dto.videoId,
         userId: user?.sub,
       }),
-    );
+    ) as ViewResponse;
 
     // Optionally broadcast view count update
     this.websocketGateway.broadcastViewUpdate(dto.videoId, result.views);

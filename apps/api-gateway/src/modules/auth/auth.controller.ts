@@ -18,6 +18,16 @@ import { JwtAuthGuard } from '@app/common/guards';
 import { CurrentUser, generateCookieOptions, ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from '@app/common';
 import { lastValueFrom } from 'rxjs';
 
+interface AuthResponse {
+  accessToken: string;
+  refreshToken: string;
+  user: {
+    id: string;
+    email: string;
+    username: string;
+  };
+}
+
 interface AuthServiceGrpc {
   register(data: any): any;
   login(data: any): any;
@@ -41,7 +51,7 @@ export class AuthController implements OnModuleInit {
   @ApiOperation({ summary: 'Register a new user' })
   @ApiResponse({ status: 201, description: 'User registered successfully' })
   async register(@Body() registerDto: RegisterDto, @Res() res: Response) {
-    const result = await lastValueFrom(this.authService.register(registerDto));
+    const result = await lastValueFrom(this.authService.register(registerDto)) as AuthResponse;
 
     const cookieOptions = generateCookieOptions(
       process.env.NODE_ENV === 'production',
@@ -69,7 +79,7 @@ export class AuthController implements OnModuleInit {
   @ApiOperation({ summary: 'Login user' })
   @ApiResponse({ status: 200, description: 'User logged in successfully' })
   async login(@Body() loginDto: LoginDto, @Res() res: Response) {
-    const result = await lastValueFrom(this.authService.login(loginDto));
+    const result = await lastValueFrom(this.authService.login(loginDto)) as AuthResponse;
 
     const cookieOptions = generateCookieOptions(
       process.env.NODE_ENV === 'production',
@@ -132,7 +142,7 @@ export class AuthController implements OnModuleInit {
 
     const result = await lastValueFrom(
       this.authService.refreshToken({ refreshToken }),
-    );
+    ) as { accessToken: string };
 
     const cookieOptions = generateCookieOptions(
       process.env.NODE_ENV === 'production',

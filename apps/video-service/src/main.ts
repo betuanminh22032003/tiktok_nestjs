@@ -3,9 +3,9 @@ import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { ValidationPipe } from '@nestjs/common';
 import { join } from 'path';
 import { VideoModule } from './video.module';
-import { AllExceptionsFilter } from '@app/common/filters/all-exceptions.filter';
-import { LoggingInterceptor } from '@app/common/interceptors/logging.interceptor';
-import { logger } from '@app/common/utils/logger';
+import { AllExceptionsFilter } from '@app/common/filters';
+import { LoggingInterceptor } from '@app/common/interceptors';
+import { logger } from '@app/common/utils';
 
 async function bootstrap() {
   // Create hybrid application (gRPC + HTTP)

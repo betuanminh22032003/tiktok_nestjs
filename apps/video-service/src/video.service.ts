@@ -15,7 +15,7 @@ import {
   CreateVideoDto,
   UpdateVideoStatsDto,
 } from '@app/common/dto/video.dto';
-import { logger } from '@app/common/utils/logger';
+import { logger } from '@app/common/utils';
 
 @Injectable()
 export class VideoService {

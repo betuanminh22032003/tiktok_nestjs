@@ -8,7 +8,7 @@ import { Like } from '@app/database/entities/like.entity';
 import { Comment } from '@app/database/entities/comment.entity';
 import { RedisService } from '@app/redis';
 import { RabbitMQService } from '@app/rabbitmq';
-import { logger } from '@app/common/utils/logger';
+import { logger } from '@app/common/utils';
 
 @Injectable()
 export class InteractionService {
