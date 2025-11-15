@@ -173,13 +173,45 @@ services:
       GRPC_INTERACTION_URL: interaction-service:50053
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
-      CORS_ORIGIN: http://localhost:3000,http://localhost:3001
+      CORS_ORIGIN: http://localhost:4000,http://localhost:3000,http://localhost:3001
     ports:
-      - "3000:3000"
+      - "4000:3000"
     depends_on:
       - auth-service
       - video-service
       - interaction-service
+    networks:
+      - tiktok_network
+    restart: unless-stopped
+
+  # Notification Service
+  notification-service:
+    build:
+      context: .
+      dockerfile: apps/notification-service/Dockerfile
+    container_name: tiktok_notification_service
+    environment:
+      NODE_ENV: production
+      PORT: 3004
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: tiktok_clone
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      GRPC_NOTIFICATION_URL: 0.0.0.0:50054
+    ports:
+      - "3004:3004"
+      - "50054:50054"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     networks:
       - tiktok_network
     restart: unless-stopped
@@ -203,7 +235,7 @@ services:
     image: grafana/grafana:latest
     container_name: tiktok_grafana
     ports:
-      - "3001:3000"
+      - "3005:3000"   # changed from 3001:3000 to avoid host port conflict
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
     volumes:

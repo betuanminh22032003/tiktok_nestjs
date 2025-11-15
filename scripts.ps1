@@ -36,6 +36,133 @@ function Clean-Project {
     Write-Host "✅ Clean completed!" -ForegroundColor Green
 }
 
+# Generate a cryptographically secure secret
+function New-Secret {
+    $bytes = New-Object 'System.Byte[]' 32
+    (New-Object System.Security.Cryptography.RNGCryptoServiceProvider).GetBytes($bytes)
+    # base64 and remove problematic chars for env files
+    # Use URL-safe Base64 encoding: replace '+' with '-', '/' with '_', and trim '=' padding
+    ([Convert]::ToBase64String($bytes) -replace '\+', '-' -replace '/', '_' -replace '=+$', '')
+}
+
+# Ensure .env exists with sensible defaults (development)
+function Ensure-EnvFile {
+    param([switch]$Force)
+    $root = $PSScriptRoot
+    $envPath = Join-Path $root ".env"
+    if ((-not (Test-Path $envPath)) -or $Force) {
+        Write-Host "Creating .env file at $envPath" -ForegroundColor Cyan
+        $access = New-Secret
+        $refresh = New-Secret
+        $content = @"
+# Auto-generated .env (development)
+NODE_ENV=development
+PORT=3000
+# Database
+DB_HOST=postgres
+DB_PORT=5432
+DB_USERNAME=postgres
+DB_PASSWORD=postgres
+DB_NAME=tiktok_clone
+# Redis
+REDIS_HOST=redis
+REDIS_PORT=6379
+# RabbitMQ
+RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+# JWT
+JWT_ACCESS_SECRET=$access
+JWT_REFRESH_SECRET=$refresh
+# gRPC (local compose)
+GRPC_AUTH_URL=auth-service:50051
+GRPC_VIDEO_URL=video-service:50052
+GRPC_INTERACTION_URL=interaction-service:50053
+GRPC_NOTIFICATION_URL=notification-service:50054
+# CORS
+CORS_ORIGIN=http://localhost:3000,http://localhost:3001
+"@
+        $content | Out-File -Encoding UTF8 -FilePath $envPath -Force
+        Write-Host "✅ .env created" -ForegroundColor Green
+    } else {
+        Write-Host ".env already exists at $envPath" -ForegroundColor Yellow
+    }
+}
+
+# Determine docker-compose command available on the machine
+function Get-ComposeCmd {
+    if (Get-Command docker-compose -ErrorAction SilentlyContinue) { return 'docker-compose' }
+    return 'docker compose'
+}
+
+# Start entire project: infra via docker-compose and optional frontend
+function Start-All {
+    param(
+        [switch]$StartFrontend,
+        [switch]$SkipPull,
+        [switch]$ForceEnv
+    )
+
+    Ensure-EnvFile -Force:$ForceEnv
+
+    # Check Docker
+        docker info
+    } catch {
+        Write-Error "Docker does not appear to be available. Start Docker Desktop and retry.`nError details: $($_.Exception.Message)"
+        Write-Error "Docker does not appear to be available. Start Docker Desktop and retry."
+        return
+    }
+
+    $compose = Get-ComposeCmd
+    Write-Host "Using compose command: $compose" -ForegroundColor Cyan
+
+    if (-not $SkipPull) {
+        Write-Host "Attempting to pull images (this may fail if network/registry blocked)" -ForegroundColor Cyan
+        try {
+            & $compose pull
+        } catch {
+            Write-Warning "Pull failed: $_. Continuing to attempt build/up. If you have network issues, see Docker settings or try pulling images manually."
+        }
+    }
+
+    Write-Host "Bringing up services (build if necessary)..." -ForegroundColor Cyan
+    try {
+        & $compose up --build -d
+    } catch {
+        Write-Error "Compose up failed: $_"
+        return
+    }
+
+    Write-Host "✅ Services started (or are starting). Showing status:" -ForegroundColor Green
+    & $compose ps
+
+    if ($StartFrontend) {
+        # try to find frontend
+        $root = $PSScriptRoot
+        $candidates = @('tiktok-frontend','frontend','apps/frontend','apps/web','web')
+        $found = $null
+        foreach ($d in $candidates) {
+            $p = Join-Path $root $d
+            if (Test-Path (Join-Path $p 'package.json')) { $found = $p; break }
+        }
+        if ($null -eq $found) {
+            Write-Warning "No frontend folder found in common locations. Start frontend manually."
+        } else {
+            Write-Host "Starting frontend at: $found" -ForegroundColor Cyan
+            $pkg = Get-Content (Join-Path $found 'package.json') -Raw | ConvertFrom-Json
+            if ($pkg.scripts.'dev') { $script = 'dev' }
+            elseif ($pkg.scripts.'start:dev') { $script = 'start:dev' }
+            elseif ($pkg.scripts.'start') { $script = 'start' }
+            else { $script = $null }
+            $runCmd = if ($script) { "npm run $script" } else { "npm start" }
+            $cmd = "cd `"$found`"; npm install; $runCmd"
+            $cmd = "cd `"$found`"; npm install; " + (if ($script) { "npm run $script" } else { "npm start" })
+            Start-Process -FilePath 'powershell' -ArgumentList ('-NoExit','-Command',$cmd)
+            Write-Host "Frontend started in new PowerShell window." -ForegroundColor Green
+        }
+    }
+
+    Write-Host "To tail logs: $compose logs -f" -ForegroundColor Yellow
+}
+
 function Reset-Database {
     Write-Host "⚠️  WARNING: This will delete all data!" -ForegroundColor Red
     $confirm = Read-Host "Are you sure? (yes/no)"
@@ -162,12 +289,16 @@ function Show-Help {
     Write-Host "  logs [service] Show logs (all or specific service)" -ForegroundColor White
     Write-Host "  health         Check service health" -ForegroundColor White
     Write-Host "  test-api       Test API endpoints" -ForegroundColor White
+    Write-Host "  run-all [flags] Start backend (docker-compose) and optional frontend" -ForegroundColor White
+    Write-Host "                 Flags: frontend,skip-pull,force-env  (comma separated)" -ForegroundColor White
     Write-Host "  help           Show this help message" -ForegroundColor White
     Write-Host ""
     Write-Host "Examples:" -ForegroundColor Yellow
     Write-Host "  .\scripts.ps1 start-infra" -ForegroundColor Gray
     Write-Host "  .\scripts.ps1 logs api-gateway" -ForegroundColor Gray
     Write-Host "  .\scripts.ps1 health" -ForegroundColor Gray
+    Write-Host "  .\scripts.ps1 run-all frontend" -ForegroundColor Gray
+    Write-Host "  .\scripts.ps1 run-all skip-pull" -ForegroundColor Gray
 }
 
 # Main switch
@@ -179,5 +310,21 @@ switch ($Command.ToLower()) {
     "logs" { Show-Logs -ServiceName $Service }
     "health" { Test-Health }
     "test-api" { Test-API }
+    "run-all" {
+        # Service parameter can be comma-separated flags: frontend,skip-pull,force-env
+        $startFrontend = $false
+        $skipPull = $false
+        $forceEnv = $false
+        if ($Service) {
+            foreach ($f in $Service.Split(',')) {
+                switch ($f.Trim().ToLower()) {
+                    'frontend' { $startFrontend = $true }
+                    'skip-pull' { $skipPull = $true }
+                    'force-env' { $forceEnv = $true }
+                }
+            }
+        }
+        Start-All -StartFrontend:$startFrontend -SkipPull:$skipPull -ForceEnv:$forceEnv
+    }
     default { Show-Help }
 }
