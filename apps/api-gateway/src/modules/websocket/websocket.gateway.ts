@@ -18,9 +18,7 @@ import { JwtService } from '@nestjs/jwt';
   },
   namespace: '/ws',
 })
-export class WebsocketGateway
-  implements OnGatewayConnection, OnGatewayDisconnect
-{
+export class WebsocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
@@ -33,8 +31,7 @@ export class WebsocketGateway
     try {
       // Extract token from handshake
       const token =
-        client.handshake.auth.token ||
-        client.handshake.headers.authorization?.split(' ')[1];
+        client.handshake.auth.token || client.handshake.headers.authorization?.split(' ')[1];
 
       if (!token) {
         this.logger.warn(`Client ${client.id} connection rejected: No token`);
@@ -69,10 +66,7 @@ export class WebsocketGateway
 
   // Subscribe to video room
   @SubscribeMessage('join_video')
-  handleJoinVideo(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() data: { videoId: string },
-  ) {
+  handleJoinVideo(@ConnectedSocket() client: Socket, @MessageBody() data: { videoId: string }) {
     const room = `video:${data.videoId}`;
     client.join(room);
     this.logger.log(`Client ${client.id} joined room ${room}`);
@@ -81,10 +75,7 @@ export class WebsocketGateway
 
   // Leave video room
   @SubscribeMessage('leave_video')
-  handleLeaveVideo(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() data: { videoId: string },
-  ) {
+  handleLeaveVideo(@ConnectedSocket() client: Socket, @MessageBody() data: { videoId: string }) {
     const room = `video:${data.videoId}`;
     client.leave(room);
     this.logger.log(`Client ${client.id} left room ${room}`);
@@ -110,10 +101,7 @@ export class WebsocketGateway
   /**
    * Broadcast when a video receives an unlike
    */
-  broadcastUnlike(
-    videoId: string,
-    data: { userId: string; totalLikes: number },
-  ) {
+  broadcastUnlike(videoId: string, data: { userId: string; totalLikes: number }) {
     const room = `video:${videoId}`;
     this.server.to(room).emit('video:unliked', {
       videoId,

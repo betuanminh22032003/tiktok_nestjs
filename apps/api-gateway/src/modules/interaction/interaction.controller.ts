@@ -10,19 +10,10 @@ import {
   Inject,
 } from '@nestjs/common';
 import { ClientGrpc } from '@nestjs/microservices';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@app/common/guards/jwt-auth.guard';
 import { CurrentUser } from '@app/common/decorators/current-user.decorator';
-import {
-  CreateCommentDto,
-  LikeVideoDto,
-  ViewVideoDto,
-} from '@app/common/dto/interaction.dto';
+import { CreateCommentDto, LikeVideoDto, ViewVideoDto } from '@app/common/dto/interaction.dto';
 import { lastValueFrom } from 'rxjs';
 import { WebsocketGateway } from '../websocket/websocket.gateway';
 
@@ -74,12 +65,12 @@ export class InteractionController {
   @ApiOperation({ summary: 'Like a video' })
   @ApiResponse({ status: 201, description: 'Video liked successfully' })
   async likeVideo(@Body() dto: LikeVideoDto, @CurrentUser() user: any) {
-    const result = await lastValueFrom(
+    const result = (await lastValueFrom(
       this.interactionService.likeVideo({
         userId: user.sub,
         videoId: dto.videoId,
       }),
-    ) as LikeResponse;
+    )) as LikeResponse;
 
     // Broadcast via WebSocket
     this.websocketGateway.broadcastLike(dto.videoId, {
@@ -96,12 +87,12 @@ export class InteractionController {
   @ApiOperation({ summary: 'Unlike a video' })
   @ApiResponse({ status: 200, description: 'Video unliked successfully' })
   async unlikeVideo(@Body() dto: LikeVideoDto, @CurrentUser() user: any) {
-    const result = await lastValueFrom(
+    const result = (await lastValueFrom(
       this.interactionService.unlikeVideo({
         userId: user.sub,
         videoId: dto.videoId,
       }),
-    ) as LikeResponse;
+    )) as LikeResponse;
 
     // Broadcast via WebSocket
     this.websocketGateway.broadcastUnlike(dto.videoId, {
@@ -133,13 +124,13 @@ export class InteractionController {
   @ApiOperation({ summary: 'Add a comment to a video' })
   @ApiResponse({ status: 201, description: 'Comment added successfully' })
   async addComment(@Body() dto: CreateCommentDto, @CurrentUser() user: any) {
-    const result = await lastValueFrom(
+    const result = (await lastValueFrom(
       this.interactionService.addComment({
         userId: user.sub,
         videoId: dto.videoId,
         content: dto.content,
       }),
-    ) as CommentResponse;
+    )) as CommentResponse;
 
     // Broadcast via WebSocket
     this.websocketGateway.broadcastComment(dto.videoId, {
@@ -195,12 +186,12 @@ export class InteractionController {
   @ApiOperation({ summary: 'Record a video view' })
   @ApiResponse({ status: 201, description: 'View recorded successfully' })
   async recordView(@Body() dto: ViewVideoDto, @CurrentUser() user?: any) {
-    const result = await lastValueFrom(
+    const result = (await lastValueFrom(
       this.interactionService.recordView({
         videoId: dto.videoId,
         userId: user?.sub,
       }),
-    ) as ViewResponse;
+    )) as ViewResponse;
 
     // Optionally broadcast view count update
     this.websocketGateway.broadcastViewUpdate(dto.videoId, result.views);

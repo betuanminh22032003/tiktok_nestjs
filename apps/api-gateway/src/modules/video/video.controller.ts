@@ -45,8 +45,7 @@ export class VideoController {
   constructor(@Inject('VIDEO_SERVICE') private readonly client: ClientGrpc) {}
 
   onModuleInit() {
-    this.videoService =
-      this.client.getService<VideoServiceClient>('VideoService');
+    this.videoService = this.client.getService<VideoServiceClient>('VideoService');
   }
 
   @Post()
@@ -148,9 +147,7 @@ export class VideoController {
   @ApiResponse({ status: 200, description: 'Video retrieved successfully' })
   @ApiResponse({ status: 404, description: 'Video not found' })
   async getVideo(@Param('id') id: string) {
-    const result = await lastValueFrom(
-      this.videoService.getVideo({ videoId: id }),
-    );
+    const result = await lastValueFrom(this.videoService.getVideo({ videoId: id }));
     return result;
   }
 

@@ -15,7 +15,12 @@ import { Response, Request } from 'express';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { RegisterDto, LoginDto } from '@app/common/dto';
 import { JwtAuthGuard } from '@app/common/guards';
-import { CurrentUser, generateCookieOptions, ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from '@app/common';
+import {
+  CurrentUser,
+  generateCookieOptions,
+  ACCESS_TOKEN_COOKIE,
+  REFRESH_TOKEN_COOKIE,
+} from '@app/common';
 import { lastValueFrom } from 'rxjs';
 
 interface AuthResponse {
@@ -51,11 +56,9 @@ export class AuthController implements OnModuleInit {
   @ApiOperation({ summary: 'Register a new user' })
   @ApiResponse({ status: 201, description: 'User registered successfully' })
   async register(@Body() registerDto: RegisterDto, @Res() res: Response) {
-    const result = await lastValueFrom(this.authService.register(registerDto)) as AuthResponse;
+    const result = (await lastValueFrom(this.authService.register(registerDto))) as AuthResponse;
 
-    const cookieOptions = generateCookieOptions(
-      process.env.NODE_ENV === 'production',
-    );
+    const cookieOptions = generateCookieOptions(process.env.NODE_ENV === 'production');
 
     res.cookie(ACCESS_TOKEN_COOKIE, result.accessToken, {
       ...cookieOptions,
@@ -79,11 +82,9 @@ export class AuthController implements OnModuleInit {
   @ApiOperation({ summary: 'Login user' })
   @ApiResponse({ status: 200, description: 'User logged in successfully' })
   async login(@Body() loginDto: LoginDto, @Res() res: Response) {
-    const result = await lastValueFrom(this.authService.login(loginDto)) as AuthResponse;
+    const result = (await lastValueFrom(this.authService.login(loginDto))) as AuthResponse;
 
-    const cookieOptions = generateCookieOptions(
-      process.env.NODE_ENV === 'production',
-    );
+    const cookieOptions = generateCookieOptions(process.env.NODE_ENV === 'production');
 
     res.cookie(ACCESS_TOKEN_COOKIE, result.accessToken, {
       ...cookieOptions,
@@ -132,7 +133,7 @@ export class AuthController implements OnModuleInit {
   @ApiOperation({ summary: 'Refresh access token' })
   async refresh(@Req() req: Request, @Res() res: Response) {
     const refreshToken = req.cookies[REFRESH_TOKEN_COOKIE];
-    
+
     if (!refreshToken) {
       return res.status(HttpStatus.UNAUTHORIZED).json({
         success: false,
@@ -140,13 +141,11 @@ export class AuthController implements OnModuleInit {
       });
     }
 
-    const result = await lastValueFrom(
-      this.authService.refreshToken({ refreshToken }),
-    ) as { accessToken: string };
+    const result = (await lastValueFrom(this.authService.refreshToken({ refreshToken }))) as {
+      accessToken: string;
+    };
 
-    const cookieOptions = generateCookieOptions(
-      process.env.NODE_ENV === 'production',
-    );
+    const cookieOptions = generateCookieOptions(process.env.NODE_ENV === 'production');
 
     res.cookie(ACCESS_TOKEN_COOKIE, result.accessToken, {
       ...cookieOptions,

@@ -25,12 +25,7 @@ export class AuthService {
     private redisService: RedisService,
   ) {}
 
-  async register(data: {
-    email: string;
-    username: string;
-    password: string;
-    fullName?: string;
-  }) {
+  async register(data: { email: string; username: string; password: string; fullName?: string }) {
     const { email, username, password, fullName } = data;
 
     // Check if user exists

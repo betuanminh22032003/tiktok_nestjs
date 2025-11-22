@@ -26,12 +26,7 @@ export class NotificationService {
     private readonly userRepository: Repository<User>,
   ) {}
 
-  async sendNotification(
-    userId: string,
-    type: string,
-    message: string,
-    metadata?: any,
-  ) {
+  async sendNotification(userId: string, type: string, message: string, metadata?: any) {
     try {
       const notification: Notification = {
         id: this.generateId(),
@@ -115,18 +110,12 @@ export class NotificationService {
       return { success: true };
     } catch (error) {
       logger.error('Error marking notifications as read:', error);
-      throw new RpcException(
-        error.message || 'Failed to mark notifications as read',
-      );
+      throw new RpcException(error.message || 'Failed to mark notifications as read');
     }
   }
 
   // Event handlers for RabbitMQ events
-  async handleVideoLiked(data: {
-    userId: string;
-    videoId: string;
-    totalLikes: number;
-  }) {
+  async handleVideoLiked(data: { userId: string; videoId: string; totalLikes: number }) {
     logger.info(`Handling video.liked event for video ${data.videoId}`);
     // Get video owner and send notification
     // await this.sendNotification(videoOwnerId, 'like', `Someone liked your video`);
@@ -143,11 +132,7 @@ export class NotificationService {
     // await this.sendNotification(videoOwnerId, 'comment', `Someone commented on your video`);
   }
 
-  async handleVideoCreated(data: {
-    videoId: string;
-    userId: string;
-    title: string;
-  }) {
+  async handleVideoCreated(data: { videoId: string; userId: string; title: string }) {
     logger.info(`Handling video.created event for video ${data.videoId}`);
     // Send notification to followers
     // const followers = await this.getFollowers(data.userId);

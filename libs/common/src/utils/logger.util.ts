@@ -28,7 +28,10 @@ try {
 } catch (err: any) {
   fileLoggingEnabled = false;
   // eslint-disable-next-line no-console
-  console.warn(`File logging disabled - cannot create log directory "${logDir}":`, err && err.message ? err.message : err);
+  console.warn(
+    `File logging disabled - cannot create log directory "${logDir}":`,
+    err && err.message ? err.message : err,
+  );
 }
 
 if (fileLoggingEnabled) {

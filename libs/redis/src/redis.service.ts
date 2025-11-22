@@ -96,7 +96,13 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   }
 
   // Feed Cache
-  async cacheFeed(userId: string, page: number, limit: number, data: any, ttl = 300): Promise<void> {
+  async cacheFeed(
+    userId: string,
+    page: number,
+    limit: number,
+    data: any,
+    ttl = 300,
+  ): Promise<void> {
     const key = `feed:${userId}:${page}:${limit}`;
     await this.client.setex(key, ttl, JSON.stringify(data));
   }

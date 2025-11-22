@@ -40,7 +40,7 @@ describe('Auth API (e2e)', () => {
           expect(res.body.data.user).toHaveProperty('email', registerDto.email);
           expect(res.body.data.user).toHaveProperty('username', registerDto.username);
           expect(res.body.data.user).not.toHaveProperty('password');
-          
+
           // Check cookies
           cookies = res.headers['set-cookie'];
           expect(cookies).toBeDefined();
@@ -94,7 +94,7 @@ describe('Auth API (e2e)', () => {
         .expect((res) => {
           expect(res.body).toHaveProperty('success', true);
           expect(res.body.data).toHaveProperty('user');
-          
+
           cookies = res.headers['set-cookie'];
           expect(cookies).toBeDefined();
         });
@@ -134,13 +134,11 @@ describe('Auth API (e2e)', () => {
   describe('/api/auth/me (GET)', () => {
     beforeAll(async () => {
       // Login first to get cookies
-      const response = await request(app.getHttpServer())
-        .post('/api/auth/login')
-        .send({
-          emailOrUsername: 'test@example.com',
-          password: 'Password123!',
-        });
-      
+      const response = await request(app.getHttpServer()).post('/api/auth/login').send({
+        emailOrUsername: 'test@example.com',
+        password: 'Password123!',
+      });
+
       cookies = response.headers['set-cookie'];
     });
 
@@ -156,9 +154,7 @@ describe('Auth API (e2e)', () => {
     });
 
     it('should fail without authentication', () => {
-      return request(app.getHttpServer())
-        .get('/api/auth/me')
-        .expect(401);
+      return request(app.getHttpServer()).get('/api/auth/me').expect(401);
     });
   });
 
@@ -170,7 +166,7 @@ describe('Auth API (e2e)', () => {
         .expect(200)
         .expect((res) => {
           expect(res.body).toHaveProperty('success', true);
-          
+
           // Check if cookies are cleared
           const setCookies = res.headers['set-cookie'];
           if (setCookies) {
@@ -186,15 +182,13 @@ describe('Auth API (e2e)', () => {
     let refreshCookie: string;
 
     beforeAll(async () => {
-      const response = await request(app.getHttpServer())
-        .post('/api/auth/login')
-        .send({
-          emailOrUsername: 'test@example.com',
-          password: 'Password123!',
-        });
-      
-      refreshCookie = response.headers['set-cookie'].find((c: string) => 
-        c.startsWith('refresh_token')
+      const response = await request(app.getHttpServer()).post('/api/auth/login').send({
+        emailOrUsername: 'test@example.com',
+        password: 'Password123!',
+      });
+
+      refreshCookie = response.headers['set-cookie'].find((c: string) =>
+        c.startsWith('refresh_token'),
       );
     });
 
@@ -210,9 +204,7 @@ describe('Auth API (e2e)', () => {
     });
 
     it('should fail without refresh token', () => {
-      return request(app.getHttpServer())
-        .post('/api/auth/refresh')
-        .expect(401);
+      return request(app.getHttpServer()).post('/api/auth/refresh').expect(401);
     });
   });
 });

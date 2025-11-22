@@ -275,22 +275,15 @@ export class InteractionService {
       }
 
       if (comment.userId !== userId) {
-        throw new RpcException(
-          'Forbidden: You can only delete your own comments',
-        );
+        throw new RpcException('Forbidden: You can only delete your own comments');
       }
 
       await this.commentRepository.remove(comment);
 
       // Update Redis counter
-      const currentCount = await this.redisService.getCommentsCount(
-        comment.videoId,
-      );
+      const currentCount = await this.redisService.getCommentsCount(comment.videoId);
       if (currentCount > 0) {
-        await this.redisService.set(
-          `video:${comment.videoId}:comments`,
-          String(currentCount - 1),
-        );
+        await this.redisService.set(`video:${comment.videoId}:comments`, String(currentCount - 1));
       }
 
       logger.info(`Comment ${commentId} deleted`);

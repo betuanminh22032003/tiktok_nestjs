@@ -116,9 +116,7 @@ describe('AuthService', () => {
     });
 
     it('should throw error if username already exists', async () => {
-      mockUserRepository.findOne
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce(mockUser);
+      mockUserRepository.findOne.mockResolvedValueOnce(null).mockResolvedValueOnce(mockUser);
 
       await expect(service.register(registerDto)).rejects.toThrow(RpcException);
     });
@@ -133,7 +131,7 @@ describe('AuthService', () => {
     it('should successfully login with valid credentials', async () => {
       const hashedPassword = await bcrypt.hash('password123', 10);
       const userWithHashedPassword = { ...mockUser, password: hashedPassword };
-      
+
       mockUserRepository.findOne.mockResolvedValue(userWithHashedPassword);
       mockJwtService.signAsync.mockResolvedValue('mock-token');
       mockRedisService.setSession.mockResolvedValue(true);
@@ -207,9 +205,9 @@ describe('AuthService', () => {
     it('should throw error with invalid refresh token', async () => {
       mockJwtService.verifyAsync.mockRejectedValue(new Error('Invalid token'));
 
-      await expect(
-        service.refreshToken({ refreshToken: 'invalid-token' }),
-      ).rejects.toThrow(RpcException);
+      await expect(service.refreshToken({ refreshToken: 'invalid-token' })).rejects.toThrow(
+        RpcException,
+      );
     });
   });
 
@@ -240,9 +238,9 @@ describe('AuthService', () => {
     it('should throw error if user not found', async () => {
       mockUserRepository.findOne.mockResolvedValue(null);
 
-      await expect(
-        service.getUserById({ userId: 'non-existent-id' }),
-      ).rejects.toThrow(RpcException);
+      await expect(service.getUserById({ userId: 'non-existent-id' })).rejects.toThrow(
+        RpcException,
+      );
     });
   });
 });

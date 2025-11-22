@@ -8,7 +8,7 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
   private connection: any;
   private channel: any;
 
-  constructor(private configService: ConfigService) { }
+  constructor(private configService: ConfigService) {}
 
   async onModuleInit() {
     try {
@@ -52,10 +52,7 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async consumeMessages(
-    queue: string,
-    callback: (message: any) => Promise<void>,
-  ): Promise<void> {
+  async consumeMessages(queue: string, callback: (message: any) => Promise<void>): Promise<void> {
     try {
       await this.channel.assertQueue(queue, { durable: true });
       await this.channel.prefetch(1);
@@ -87,12 +84,9 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
   async publish(exchange: string, message: any): Promise<void> {
     try {
       await this.channel.assertExchange(exchange, 'fanout', { durable: true });
-      this.channel.publish(
-        exchange,
-        '',
-        Buffer.from(JSON.stringify(message)),
-        { persistent: true },
-      );
+      this.channel.publish(exchange, '', Buffer.from(JSON.stringify(message)), {
+        persistent: true,
+      });
       this.logger.log(`Published message to exchange ${exchange}`);
     } catch (error) {
       this.logger.error(`Failed to publish to exchange ${exchange}`, error);
@@ -100,10 +94,7 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async subscribe(
-    exchange: string,
-    callback: (message: any) => Promise<void>,
-  ): Promise<void> {
+  async subscribe(exchange: string, callback: (message: any) => Promise<void>): Promise<void> {
     try {
       await this.channel.assertExchange(exchange, 'fanout', { durable: true });
       const { queue } = await this.channel.assertQueue('', { exclusive: true });

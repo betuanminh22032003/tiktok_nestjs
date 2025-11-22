@@ -9,12 +9,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @GrpcMethod('AuthService', 'Register')
-  async register(data: {
-    email: string;
-    username: string;
-    password: string;
-    fullName?: string;
-  }) {
+  async register(data: { email: string; username: string; password: string; fullName?: string }) {
     this.logger.log(`Register request for email: ${data.email}`);
     return await this.authService.register(data);
   }

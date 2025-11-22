@@ -7,12 +7,7 @@ export class NotificationController {
   constructor(private readonly notificationService: NotificationService) {}
 
   @GrpcMethod('NotificationService', 'SendNotification')
-  async sendNotification(data: {
-    userId: string;
-    type: string;
-    message: string;
-    metadata?: any;
-  }) {
+  async sendNotification(data: { userId: string; type: string; message: string; metadata?: any }) {
     return this.notificationService.sendNotification(
       data.userId,
       data.type,
@@ -23,11 +18,7 @@ export class NotificationController {
 
   @GrpcMethod('NotificationService', 'GetNotifications')
   async getNotifications(data: { userId: string; page?: number; limit?: number }) {
-    return this.notificationService.getNotifications(
-      data.userId,
-      data.page,
-      data.limit,
-    );
+    return this.notificationService.getNotifications(data.userId, data.page, data.limit);
   }
 
   @GrpcMethod('NotificationService', 'MarkAsRead')

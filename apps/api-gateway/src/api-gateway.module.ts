@@ -16,7 +16,7 @@ import { HealthController } from './health.controller';
       envFilePath: '.env',
     }),
     RedisModule,
-    
+
     // gRPC Clients
     ClientsModule.register([
       {
@@ -47,7 +47,7 @@ import { HealthController } from './health.controller';
         },
       },
     ]),
-    
+
     AuthModule,
     VideoModule,
     InteractionModule,

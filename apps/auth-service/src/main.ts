@@ -7,7 +7,7 @@ import { join } from 'path';
 
 async function bootstrap() {
   const logger = new Logger('AuthService');
-  
+
   const app = await NestFactory.create(AuthModule);
   const configService = app.get(ConfigService);
 
@@ -31,7 +31,7 @@ async function bootstrap() {
 
   await app.startAllMicroservices();
   logger.log('🚀 Auth Service is running on gRPC port 50051');
-  
+
   // Also start HTTP for health checks
   const port = configService.get('PORT', 3001);
   await app.listen(port);

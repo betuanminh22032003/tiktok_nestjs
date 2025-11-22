@@ -129,18 +129,13 @@ describe('VideoService', () => {
       });
       expect(mockVideoRepository.create).toHaveBeenCalled();
       expect(mockVideoRepository.save).toHaveBeenCalled();
-      expect(mockRabbitMQService.publish).toHaveBeenCalledWith(
-        'video.created',
-        expect.any(Object),
-      );
+      expect(mockRabbitMQService.publish).toHaveBeenCalledWith('video.created', expect.any(Object));
     });
 
     it('should throw error if user not found', async () => {
       mockUserRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.createVideo(createVideoDto)).rejects.toThrow(
-        RpcException,
-      );
+      await expect(service.createVideo(createVideoDto)).rejects.toThrow(RpcException);
     });
   });
 
@@ -178,9 +173,7 @@ describe('VideoService', () => {
       mockRedisService.get.mockResolvedValue(null);
       mockVideoRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.getVideo('non-existent-id')).rejects.toThrow(
-        RpcException,
-      );
+      await expect(service.getVideo('non-existent-id')).rejects.toThrow(RpcException);
     });
   });
 
@@ -225,26 +218,21 @@ describe('VideoService', () => {
 
       expect(result).toEqual({ success: true });
       expect(mockVideoRepository.remove).toHaveBeenCalled();
-      expect(mockRabbitMQService.publish).toHaveBeenCalledWith(
-        'video.deleted',
-        expect.any(Object),
-      );
+      expect(mockRabbitMQService.publish).toHaveBeenCalledWith('video.deleted', expect.any(Object));
     });
 
     it('should throw error if user is not the owner', async () => {
       mockVideoRepository.findOne.mockResolvedValue(mockVideo);
 
-      await expect(
-        service.deleteVideo('video-id', 'different-user-id'),
-      ).rejects.toThrow(RpcException);
+      await expect(service.deleteVideo('video-id', 'different-user-id')).rejects.toThrow(
+        RpcException,
+      );
     });
 
     it('should throw error if video not found', async () => {
       mockVideoRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.deleteVideo('non-existent-id', 'user-id')).rejects.toThrow(
-        RpcException,
-      );
+      await expect(service.deleteVideo('non-existent-id', 'user-id')).rejects.toThrow(RpcException);
     });
   });
 

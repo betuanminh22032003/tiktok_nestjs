@@ -25,20 +25,12 @@ export class InteractionController {
 
   @GrpcMethod('InteractionService', 'AddComment')
   async addComment(data: AddCommentDto) {
-    return this.interactionService.addComment(
-      data.userId,
-      data.videoId,
-      data.content,
-    );
+    return this.interactionService.addComment(data.userId, data.videoId, data.content);
   }
 
   @GrpcMethod('InteractionService', 'GetComments')
   async getComments(data: GetCommentsDto) {
-    return this.interactionService.getComments(
-      data.videoId,
-      data.page,
-      data.limit,
-    );
+    return this.interactionService.getComments(data.videoId, data.page, data.limit);
   }
 
   @GrpcMethod('InteractionService', 'RecordView')

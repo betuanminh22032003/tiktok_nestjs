@@ -11,10 +11,7 @@ import { Video } from '@app/database/entities/video.entity';
 import { User } from '@app/database/entities/user.entity';
 import { RedisService } from '@app/redis';
 import { RabbitMQService } from '@app/rabbitmq';
-import {
-  CreateVideoDto,
-  UpdateVideoStatsDto,
-} from '@app/common/dto/video.dto';
+import { CreateVideoDto, UpdateVideoStatsDto } from '@app/common/dto/video.dto';
 import { logger } from '@app/common/utils';
 
 @Injectable()
@@ -137,11 +134,7 @@ export class VideoService {
       };
 
       // Cache for 5 minutes
-      await this.redisService.set(
-        `video:${videoId}`,
-        JSON.stringify(videoData),
-        300,
-      );
+      await this.redisService.set(`video:${videoId}`, JSON.stringify(videoData), 300);
 
       return { video: videoData };
     } catch (error) {
@@ -156,11 +149,7 @@ export class VideoService {
       const cachePageKey = `${cacheKey}:${page}:${limit}`;
 
       // Try cache first
-      const cachedFeed = await this.redisService.getCachedFeed(
-        userId || 'global',
-        page,
-        limit,
-      );
+      const cachedFeed = await this.redisService.getCachedFeed(userId || 'global', page, limit);
       if (cachedFeed) {
         return { videos: cachedFeed, page, limit, hasMore: cachedFeed.length === limit };
       }
@@ -206,13 +195,7 @@ export class VideoService {
       );
 
       // Cache for 2 minutes
-      await this.redisService.cacheFeed(
-        userId || 'global',
-        page,
-        limit,
-        enrichedVideos,
-        120,
-      );
+      await this.redisService.cacheFeed(userId || 'global', page, limit, enrichedVideos, 120);
 
       return {
         videos: enrichedVideos,
@@ -357,10 +340,7 @@ export class VideoService {
     try {
       const skip = (page - 1) * limit;
       const [videos, total] = await this.videoRepository.findAndCount({
-        where: [
-          { title: ILike(`%${query}%`) },
-          { description: ILike(`%${query}%`) },
-        ],
+        where: [{ title: ILike(`%${query}%`) }, { description: ILike(`%${query}%`) }],
         relations: ['user'],
         order: { createdAt: 'DESC' },
         skip,

@@ -12,7 +12,7 @@ import { LoggingInterceptor, TransformInterceptor } from '@app/common/intercepto
 async function bootstrap() {
   const logger = new Logger('APIGateway');
   const app = await NestFactory.create(ApiGatewayModule);
-  
+
   const configService = app.get(ConfigService);
 
   // Security
@@ -49,13 +49,13 @@ async function bootstrap() {
     .addBearerAuth()
     .addCookieAuth('access_token')
     .build();
-  
+
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 
   const port = configService.get('PORT', 3000);
   await app.listen(port);
-  
+
   logger.log(`🚀 API Gateway is running on http://localhost:${port}`);
   logger.log(`📚 Swagger docs available at http://localhost:${port}/api/docs`);
 }

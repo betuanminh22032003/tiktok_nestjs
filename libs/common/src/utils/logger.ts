@@ -25,7 +25,10 @@ if (process.env.ENABLE_FILE_LOGGING === 'true') {
   } catch (err: any) {
     dirOk = false;
     // eslint-disable-next-line no-console
-    console.warn(`File logging disabled - cannot create log directory "${logDir}":`, err && err.message ? err.message : err);
+    console.warn(
+      `File logging disabled - cannot create log directory "${logDir}":`,
+      err && err.message ? err.message : err,
+    );
   }
   if (dirOk) {
     logTransports.push(
