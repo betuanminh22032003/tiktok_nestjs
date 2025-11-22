@@ -8,7 +8,7 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
   private kafka: Kafka;
   private producer: Producer;
   private consumer: Consumer;
-  private readonly consumerCallbacks = new Map<string, (message: any) => Promise<void>>();
+  private readonly consumerCallbacks = new Map<string, (message: unknown) => Promise<void>>();
 
   constructor(private configService: ConfigService) {}
 
@@ -59,7 +59,7 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
    * @param topic - Kafka topic name
    * @param message - Message payload
    */
-  async publish(topic: string, message: any): Promise<void> {
+  async publish(topic: string, message: unknown): Promise<void> {
     try {
       await this.producer.send({
         topic,
@@ -83,7 +83,7 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
    * @param key - Message key (determines partition)
    * @param message - Message payload
    */
-  async publishWithKey(topic: string, key: string, message: any): Promise<void> {
+  async publishWithKey(topic: string, key: string, message: unknown): Promise<void> {
     try {
       await this.producer.send({
         topic,
@@ -107,7 +107,7 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
    * @param topic - Kafka topic name
    * @param callback - Function to handle received messages
    */
-  async subscribe(topic: string, callback: (message: any) => Promise<void>): Promise<void> {
+  async subscribe(topic: string, callback: (message: unknown) => Promise<void>): Promise<void> {
     try {
       // Store the callback
       this.consumerCallbacks.set(topic, callback);
@@ -157,7 +157,7 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
    */
   async subscribeToTopics(
     topics: string[],
-    callback: (topic: string, message: any) => Promise<void>,
+    callback: (topic: string, message: unknown) => Promise<void>,
   ): Promise<void> {
     try {
       for (const topic of topics) {
@@ -184,7 +184,7 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
    * @param partition - Partition number
    * @param message - Message payload
    */
-  async publishToPartition(topic: string, partition: number, message: any): Promise<void> {
+  async publishToPartition(topic: string, partition: number, message: unknown): Promise<void> {
     try {
       await this.producer.send({
         topic,

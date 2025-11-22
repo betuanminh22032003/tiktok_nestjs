@@ -21,7 +21,7 @@ import {
   ACCESS_TOKEN_COOKIE,
   REFRESH_TOKEN_COOKIE,
 } from '@app/common';
-import { lastValueFrom } from 'rxjs';
+import { lastValueFrom, Observable } from 'rxjs';
 
 interface AuthResponse {
   accessToken: string;
@@ -33,12 +33,28 @@ interface AuthResponse {
   };
 }
 
+interface LogoutRequest {
+  userId: string;
+}
+
+interface GetUserByIdRequest {
+  userId: string;
+}
+
+interface RefreshTokenRequest {
+  refreshToken: string;
+}
+
+interface RefreshTokenResponse {
+  accessToken: string;
+}
+
 interface AuthServiceGrpc {
-  register(data: any): any;
-  login(data: any): any;
-  logout(data: any): any;
-  getUserById(data: any): any;
-  refreshToken(data: any): any;
+  register(data: RegisterDto): Observable<AuthResponse>;
+  login(data: LoginDto): Observable<AuthResponse>;
+  logout(data: LogoutRequest): Observable<unknown>;
+  getUserById(data: GetUserByIdRequest): Observable<unknown>;
+  refreshToken(data: RefreshTokenRequest): Observable<RefreshTokenResponse>;
 }
 
 @ApiTags('Authentication')

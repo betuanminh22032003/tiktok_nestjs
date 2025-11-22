@@ -25,12 +25,12 @@ const logDir = process.env.LOG_DIR || 'logs';
 let fileLoggingEnabled = true;
 try {
   fs.mkdirSync(path.resolve(logDir), { recursive: true });
-} catch (err: any) {
+} catch (err: unknown) {n) {
   fileLoggingEnabled = false;
   // eslint-disable-next-line no-console
   console.warn(
     `File logging disabled - cannot create log directory "${logDir}":`,
-    err && err.message ? err.message : err,
+    err instanceof Error ? err.message : String(err),
   );
 }
 

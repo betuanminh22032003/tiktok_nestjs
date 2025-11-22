@@ -11,6 +11,17 @@ import { Server, Socket } from 'socket.io';
 import { Logger, UseGuards } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
+interface UserInfo {
+  id: string;
+  username: string;
+  fullName: string;
+  avatar?: string;
+}
+
+interface NotificationMetadata {
+  [key: string]: string | number | boolean | undefined;
+}
+
 @WebSocketGateway({
   cors: {
     origin: process.env.FRONTEND_URL || 'http://localhost:3001',
@@ -121,7 +132,7 @@ export class WebsocketGateway implements OnGatewayConnection, OnGatewayDisconnec
       commentId: string;
       userId: string;
       content: string;
-      user: any;
+      user: UserInfo;
       totalComments: number;
     },
   ) {
@@ -171,7 +182,7 @@ export class WebsocketGateway implements OnGatewayConnection, OnGatewayDisconnec
     notification: {
       type: string;
       message: string;
-      metadata?: any;
+      metadata?: NotificationMetadata;
     },
   ) {
     const socketId = this.userSockets.get(userId);

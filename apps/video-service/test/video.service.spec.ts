@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { VideoService } from '../src/video.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { Video } from '@app/database/entities/video.entity';
 import { User } from '@app/database/entities/user.entity';
 import { RedisService } from '@app/redis';
@@ -9,8 +10,8 @@ import { RpcException } from '@nestjs/microservices';
 
 describe('VideoService', () => {
   let service: VideoService;
-  let videoRepository: any;
-  let userRepository: any;
+  let videoRepository: Repository<Video>;
+  let userRepository: Repository<User>;
   let redisService: RedisService;
   let rabbitMQService: RabbitMQService;
 

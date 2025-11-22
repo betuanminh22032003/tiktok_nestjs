@@ -1,8 +1,59 @@
+import type { Socket } from 'socket.io-client';
+
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:3000';
 
-let socket: any = null;
+interface VideoLikedData {
+  videoId: string;
+  userId: string;
+  totalLikes: number;
+  timestamp: string;
+}
 
-export const getSocket = (token?: string): any => {
+interface VideoCommentData {
+  videoId: string;
+  commentId: string;
+  userId: string;
+  content: string;
+  user: {
+    id: string;
+    username: string;
+    fullName: string;
+    avatar?: string;
+  };
+  totalComments: number;
+  timestamp: string;
+}
+
+interface VideoCommentDeletedData {
+  videoId: string;
+  commentId: string;
+  timestamp: string;
+}
+
+interface ViewsUpdatedData {
+  videoId: string;
+  totalViews: number;
+  timestamp: string;
+}
+
+interface NewVideoData {
+  videoId: string;
+  userId: string;
+  title: string;
+  thumbnailUrl: string;
+  timestamp: string;
+}
+
+interface NotificationData {
+  type: string;
+  message: string;
+  metadata?: Record<string, unknown>;
+  timestamp: string;
+}
+
+let socket: Socket | null = null;
+
+export const getSocket = (token?: string): Socket | null => {
   if (!socket) {
     // Only create socket on the client. Use a dynamic import so the
     // bundler doesn't include `socket.io-client` in the server build.
@@ -23,7 +74,7 @@ export const getSocket = (token?: string): any => {
         console.log('WebSocket disconnected');
       });
 
-      socket.on('connect_error', (error: any) => {
+      socket.on('connect_error', (error: Error) => {
         console.error('WebSocket connection error:', error);
       });
     }).catch((err) => {
@@ -51,31 +102,31 @@ export const leaveVideoRoom = (videoId: string) => {
 };
 
 // Event listeners
-export const onVideoLiked = (callback: (data: any) => void) => {
+export const onVideoLiked = (callback: (data: VideoLikedData) => void) => {
   socket?.on('video:liked', callback);
 };
 
-export const onVideoUnliked = (callback: (data: any) => void) => {
+export const onVideoUnliked = (callback: (data: VideoLikedData) => void) => {
   socket?.on('video:unliked', callback);
 };
 
-export const onVideoComment = (callback: (data: any) => void) => {
+export const onVideoComment = (callback: (data: VideoCommentData) => void) => {
   socket?.on('video:comment', callback);
 };
 
-export const onVideoCommentDeleted = (callback: (data: any) => void) => {
+export const onVideoCommentDeleted = (callback: (data: VideoCommentDeletedData) => void) => {
   socket?.on('video:comment_deleted', callback);
 };
 
-export const onViewsUpdated = (callback: (data: any) => void) => {
+export const onViewsUpdated = (callback: (data: ViewsUpdatedData) => void) => {
   socket?.on('video:views_updated', callback);
 };
 
-export const onNewVideo = (callback: (data: any) => void) => {
+export const onNewVideo = (callback: (data: NewVideoData) => void) => {
   socket?.on('video:new', callback);
 };
 
-export const onNotification = (callback: (data: any) => void) => {
+export const onNotification = (callback: (data: NotificationData) => void) => {
   socket?.on('notification', callback);
 };
 

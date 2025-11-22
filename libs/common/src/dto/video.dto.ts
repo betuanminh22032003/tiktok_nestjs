@@ -34,7 +34,7 @@ export class CreateVideoDto {
   duration?: number;
 
   @ApiProperty({ type: 'string', format: 'binary' })
-  video?: any;
+  video?: Express.Multer.File;
 }
 
 export class GetVideoDto {

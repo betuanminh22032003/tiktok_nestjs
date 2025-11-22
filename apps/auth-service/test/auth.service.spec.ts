@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from '../src/auth.service';
 import { JwtService } from '@nestjs/jwt';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { User } from '@app/database/entities/user.entity';
 import { RedisService } from '@app/redis';
 import { RabbitMQService } from '@app/rabbitmq';
@@ -12,7 +13,7 @@ describe('AuthService', () => {
   let service: AuthService;
   let jwtService: JwtService;
   let redisService: RedisService;
-  let userRepository: any;
+  let userRepository: Repository<User>;
 
   const mockUser = {
     id: 'test-user-id',

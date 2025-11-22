@@ -5,8 +5,8 @@ import * as amqp from 'amqplib';
 @Injectable()
 export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(RabbitMQService.name);
-  private connection: any;
-  private channel: any;
+  private connection: amqp.Connection | null = null;
+  private channel: amqp.Channel | null = null;
 
   constructor(private configService: ConfigService) {}
 
@@ -40,7 +40,7 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async publishMessage(queue: string, message: any): Promise<boolean> {
+  async publishMessage(queue: string, message: unknown): Promise<boolean> {
     try {
       await this.channel.assertQueue(queue, { durable: true });
       return this.channel.sendToQueue(queue, Buffer.from(JSON.stringify(message)), {
@@ -52,7 +52,7 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async consumeMessages(queue: string, callback: (message: any) => Promise<void>): Promise<void> {
+  async consumeMessages(queue: string, callback: (message: unknown) => Promise<void>): Promise<void> {
     try {
       await this.channel.assertQueue(queue, { durable: true });
       await this.channel.prefetch(1);
@@ -81,7 +81,7 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async publish(exchange: string, message: any): Promise<void> {
+  async publish(exchange: string, message: unknown): Promise<void> {
     try {
       await this.channel.assertExchange(exchange, 'fanout', { durable: true });
       this.channel.publish(exchange, '', Buffer.from(JSON.stringify(message)), {
@@ -94,7 +94,7 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async subscribe(exchange: string, callback: (message: any) => Promise<void>): Promise<void> {
+  async subscribe(exchange: string, callback: (message: unknown) => Promise<void>): Promise<void> {
     try {
       await this.channel.assertExchange(exchange, 'fanout', { durable: true });
       const { queue } = await this.channel.assertQueue('', { exclusive: true });

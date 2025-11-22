@@ -100,14 +100,14 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     userId: string,
     page: number,
     limit: number,
-    data: any,
+    data: unknown,
     ttl = 300,
   ): Promise<void> {
     const key = `feed:${userId}:${page}:${limit}`;
     await this.client.setex(key, ttl, JSON.stringify(data));
   }
 
-  async getCachedFeed(userId: string, page: number, limit: number): Promise<any> {
+  async getCachedFeed(userId: string, page: number, limit: number): Promise<unknown> {
     const key = `feed:${userId}:${page}:${limit}`;
     const data = await this.client.get(key);
     return data ? JSON.parse(data) : null;
@@ -122,12 +122,12 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   }
 
   // Session Management
-  async setSession(userId: string, sessionData: any, ttl = 86400): Promise<void> {
+  async setSession(userId: string, sessionData: unknown, ttl = 86400): Promise<void> {
     const key = `session:${userId}`;
     await this.client.setex(key, ttl, JSON.stringify(sessionData));
   }
 
-  async getSession(userId: string): Promise<any> {
+  async getSession(userId: string): Promise<unknown> {
     const key = `session:${userId}`;
     const data = await this.client.get(key);
     return data ? JSON.parse(data) : null;

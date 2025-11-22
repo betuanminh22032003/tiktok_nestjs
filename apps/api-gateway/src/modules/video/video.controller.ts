@@ -25,16 +25,58 @@ import {
 import { JwtAuthGuard } from '@app/common/guards/jwt-auth.guard';
 import { CurrentUser } from '@app/common/decorators/current-user.decorator';
 import { CreateVideoDto, GetVideoFeedDto } from '@app/common/dto/video.dto';
-import { lastValueFrom } from 'rxjs';
+import { lastValueFrom, Observable } from 'rxjs';
+
+interface JwtPayload {
+  sub: string;
+  email: string;
+  username: string;
+}
+
+interface CreateVideoRequest {
+  userId: string;
+  title: string;
+  description?: string;
+  videoUrl: string;
+  thumbnailUrl?: string;
+  duration?: number;
+}
+
+interface GetVideoRequest {
+  videoId: string;
+}
+
+interface GetFeedRequest {
+  userId?: string;
+  page: number;
+  limit: number;
+}
+
+interface DeleteVideoRequest {
+  videoId: string;
+  userId: string;
+}
+
+interface GetUserVideosRequest {
+  userId: string;
+  page: number;
+  limit: number;
+}
+
+interface SearchVideosRequest {
+  query: string;
+  page: number;
+  limit: number;
+}
 
 interface VideoServiceClient {
-  createVideo(data: any): any;
-  getVideo(data: any): any;
-  getFeed(data: any): any;
-  updateVideoStats(data: any): any;
-  deleteVideo(data: any): any;
-  getUserVideos(data: any): any;
-  searchVideos(data: any): any;
+  createVideo(data: CreateVideoRequest): Observable<unknown>;
+  getVideo(data: GetVideoRequest): Observable<unknown>;
+  getFeed(data: GetFeedRequest): Observable<unknown>;
+  updateVideoStats(data: unknown): Observable<unknown>;
+  deleteVideo(data: DeleteVideoRequest): Observable<unknown>;
+  getUserVideos(data: GetUserVideosRequest): Observable<unknown>;
+  searchVideos(data: SearchVideosRequest): Observable<unknown>;
 }
 
 @ApiTags('Videos')
@@ -69,7 +111,7 @@ export class VideoController {
   })
   @UseInterceptors(FileInterceptor('video'))
   async createVideo(
-    @CurrentUser() user: any,
+    @CurrentUser() user: JwtPayload,
     @Body() createVideoDto: CreateVideoDto,
     @UploadedFile() file?: Express.Multer.File,
   ) {
@@ -91,7 +133,7 @@ export class VideoController {
   @Get('feed')
   @ApiOperation({ summary: 'Get video feed' })
   @ApiResponse({ status: 200, description: 'Video feed retrieved successfully' })
-  async getFeed(@Query() query: GetVideoFeedDto, @CurrentUser() user?: any) {
+  async getFeed(@Query() query: GetVideoFeedDto, @CurrentUser() user?: JwtPayload) {
     const feedData = {
       userId: user?.sub || query.userId,
       page: query.page || 1,
@@ -158,7 +200,7 @@ export class VideoController {
   @ApiResponse({ status: 200, description: 'Video deleted successfully' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Video not found' })
-  async deleteVideo(@Param('id') id: string, @CurrentUser() user: any) {
+  async deleteVideo(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     const result = await lastValueFrom(
       this.videoService.deleteVideo({
         videoId: id,

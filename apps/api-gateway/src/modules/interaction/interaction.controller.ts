@@ -14,8 +14,21 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 import { JwtAuthGuard } from '@app/common/guards/jwt-auth.guard';
 import { CurrentUser } from '@app/common/decorators/current-user.decorator';
 import { CreateCommentDto, LikeVideoDto, ViewVideoDto } from '@app/common/dto/interaction.dto';
-import { lastValueFrom } from 'rxjs';
+import { lastValueFrom, Observable } from 'rxjs';
 import { WebsocketGateway } from '../websocket/websocket.gateway';
+
+interface JwtPayload {
+  sub: string;
+  email: string;
+  username: string;
+}
+
+interface UserInfo {
+  id: string;
+  username: string;
+  fullName: string;
+  avatar?: string;
+}
 
 interface LikeResponse {
   likesCount: number;
@@ -25,7 +38,7 @@ interface LikeResponse {
 interface CommentResponse {
   comment: {
     id: string;
-    user: any;
+    user: UserInfo;
   };
   commentsCount: number;
 }
@@ -34,14 +47,41 @@ interface ViewResponse {
   views: number;
 }
 
+interface LikeVideoRequest {
+  userId: string;
+  videoId: string;
+}
+
+interface AddCommentRequest {
+  userId: string;
+  videoId: string;
+  content: string;
+}
+
+interface GetCommentsRequest {
+  videoId: string;
+  page: number;
+  limit: number;
+}
+
+interface DeleteCommentRequest {
+  commentId: string;
+  userId: string;
+}
+
+interface RecordViewRequest {
+  videoId: string;
+  userId?: string;
+}
+
 interface InteractionServiceClient {
-  likeVideo(data: any): any;
-  unlikeVideo(data: any): any;
-  addComment(data: any): any;
-  getComments(data: any): any;
-  recordView(data: any): any;
-  deleteComment(data: any): any;
-  getLikeStatus(data: any): any;
+  likeVideo(data: LikeVideoRequest): Observable<LikeResponse>;
+  unlikeVideo(data: LikeVideoRequest): Observable<LikeResponse>;
+  addComment(data: AddCommentRequest): Observable<CommentResponse>;
+  getComments(data: GetCommentsRequest): Observable<unknown>;
+  recordView(data: RecordViewRequest): Observable<ViewResponse>;
+  deleteComment(data: DeleteCommentRequest): Observable<unknown>;
+  getLikeStatus(data: LikeVideoRequest): Observable<unknown>;
 }
 
 @ApiTags('Interactions')
@@ -64,7 +104,7 @@ export class InteractionController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Like a video' })
   @ApiResponse({ status: 201, description: 'Video liked successfully' })
-  async likeVideo(@Body() dto: LikeVideoDto, @CurrentUser() user: any) {
+  async likeVideo(@Body() dto: LikeVideoDto, @CurrentUser() user: JwtPayload) {
     const result = (await lastValueFrom(
       this.interactionService.likeVideo({
         userId: user.sub,
@@ -86,7 +126,7 @@ export class InteractionController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Unlike a video' })
   @ApiResponse({ status: 200, description: 'Video unliked successfully' })
-  async unlikeVideo(@Body() dto: LikeVideoDto, @CurrentUser() user: any) {
+  async unlikeVideo(@Body() dto: LikeVideoDto, @CurrentUser() user: JwtPayload) {
     const result = (await lastValueFrom(
       this.interactionService.unlikeVideo({
         userId: user.sub,
@@ -108,7 +148,7 @@ export class InteractionController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Check if user liked a video' })
   @ApiResponse({ status: 200, description: 'Like status retrieved' })
-  async getLikeStatus(@Param('videoId') videoId: string, @CurrentUser() user: any) {
+  async getLikeStatus(@Param('videoId') videoId: string, @CurrentUser() user: JwtPayload) {
     const result = await lastValueFrom(
       this.interactionService.getLikeStatus({
         userId: user.sub,
@@ -123,7 +163,7 @@ export class InteractionController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Add a comment to a video' })
   @ApiResponse({ status: 201, description: 'Comment added successfully' })
-  async addComment(@Body() dto: CreateCommentDto, @CurrentUser() user: any) {
+  async addComment(@Body() dto: CreateCommentDto, @CurrentUser() user: JwtPayload) {
     const result = (await lastValueFrom(
       this.interactionService.addComment({
         userId: user.sub,
@@ -168,7 +208,7 @@ export class InteractionController {
   @ApiOperation({ summary: 'Delete a comment' })
   @ApiResponse({ status: 200, description: 'Comment deleted successfully' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
-  async deleteComment(@Param('commentId') commentId: string, @CurrentUser() user: any) {
+  async deleteComment(@Param('commentId') commentId: string, @CurrentUser() user: JwtPayload) {
     const result = await lastValueFrom(
       this.interactionService.deleteComment({
         commentId,
@@ -185,7 +225,7 @@ export class InteractionController {
   @Post('view')
   @ApiOperation({ summary: 'Record a video view' })
   @ApiResponse({ status: 201, description: 'View recorded successfully' })
-  async recordView(@Body() dto: ViewVideoDto, @CurrentUser() user?: any) {
+  async recordView(@Body() dto: ViewVideoDto, @CurrentUser() user?: JwtPayload) {
     const result = (await lastValueFrom(
       this.interactionService.recordView({
         videoId: dto.videoId,

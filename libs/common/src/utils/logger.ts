@@ -1,4 +1,4 @@
-import { createLogger, format, transports } from 'winston';
+import { createLogger, format, transports, transport } from 'winston';
 import * as DailyRotateFile from 'winston-daily-rotate-file';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -10,7 +10,7 @@ const logFormat = format.combine(
   format.json(),
 );
 
-const logTransports: any[] = [
+const logTransports: transport[] = [
   new transports.Console({
     format: format.combine(format.colorize(), format.simple()),
   }),
@@ -22,12 +22,12 @@ if (process.env.ENABLE_FILE_LOGGING === 'true') {
   let dirOk = true;
   try {
     fs.mkdirSync(path.resolve(logDir), { recursive: true });
-  } catch (err: any) {
+  } catch (err: unknown) {n) {
     dirOk = false;
     // eslint-disable-next-line no-console
     console.warn(
       `File logging disabled - cannot create log directory "${logDir}":`,
-      err && err.message ? err.message : err,
+      err instanceof Error ? err.message : String(err),
     );
   }
   if (dirOk) {

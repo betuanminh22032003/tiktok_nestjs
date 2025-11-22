@@ -5,12 +5,16 @@ import { RpcException } from '@nestjs/microservices';
 import { User } from '@app/database/entities/user.entity';
 import { logger } from '@app/common/utils';
 
+interface NotificationMetadata {
+  [key: string]: string | number | boolean | undefined;
+}
+
 interface Notification {
   id: string;
   userId: string;
   type: string;
   message: string;
-  metadata?: any;
+  metadata?: NotificationMetadata;
   read: boolean;
   createdAt: Date;
 }
@@ -26,7 +30,7 @@ export class NotificationService {
     private readonly userRepository: Repository<User>,
   ) {}
 
-  async sendNotification(userId: string, type: string, message: string, metadata?: any) {
+  async sendNotification(userId: string, type: string, message: string, metadata?: NotificationMetadata) {
     try {
       const notification: Notification = {
         id: this.generateId(),
