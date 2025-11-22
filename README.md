@@ -41,7 +41,7 @@ cd tiktok_nestjs
 - [CI/CD](#-cicd)
 - [Deployment](#-deployment)
 - [Monitoring](#-monitoring)
-- [AI Development Guide](#-ai-development-guide)
+- [Documentation](#-documentation)
 
 ## ✨ Tính năng
 
@@ -580,24 +580,29 @@ tiktok_nestjs/
 - ✅ Environment variables cho secrets
 - ✅ Regular security audits
 
-## 🤖 AI Development Guide
+## 📚 Documentation
 
-**Files:**
-- **[AI_PROMPT_GUIDE.md](AI_PROMPT_GUIDE.md)** - Patterns and conventions
-- **[.copilot-instructions.md](.copilot-instructions.md)** - Auto-loaded by Copilot
+All detailed documentation has been organized in the `/docs` folder:
 
-**Good Prompt**: `"Add POST /auth/verify to auth-service. Use VerifyEmailDto, store in Redis (@app/redis) 24h. Follow auth.service.ts pattern."`
-**Bad Prompt**: `"Add login"` (too vague)
+- 📘 **[QUICKSTART.md](docs/QUICKSTART.md)** - Quick setup guide
+- 📗 **[DEVELOPMENT.md](docs/DEVELOPMENT.md)** - Development workflow
+- 📕 **[MONOREPO_ARCHITECTURE.md](docs/MONOREPO_ARCHITECTURE.md)** - Architecture details
+- 📙 **[AI_PROMPT_GUIDE.md](docs/AI_PROMPT_GUIDE.md)** - AI coding patterns
+- 📓 **[CONTRIBUTING.md](docs/CONTRIBUTING.md)** - Contribution guidelines
+- 📔 **[COMMIT_CONVENTION.md](docs/COMMIT_CONVENTION.md)** - Commit standards
+- 📒 **[SECURITY.md](docs/SECURITY.md)** - Security best practices
+- 📖 **[CODE_OF_CONDUCT.md](docs/CODE_OF_CONDUCT.md)** - Community guidelines
+- 📄 **[KAFKA_MIGRATION.md](docs/KAFKA_MIGRATION.md)** - Kafka migration notes
 
 ## 🤝 Contributing
 
 1. Fork the project
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes following [COMMIT_CONVENTION.md](COMMIT_CONVENTION.md)
+3. Commit your changes following [docs/COMMIT_CONVENTION.md](docs/COMMIT_CONVENTION.md)
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+Read [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for detailed guidelines.
 
 ## 📝 License
 
