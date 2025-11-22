@@ -5,7 +5,7 @@ import { InteractionController } from './interaction.controller';
 import { InteractionService } from './interaction.service';
 import { DatabaseModule } from '@app/database';
 import { RedisModule } from '@app/redis';
-import { RabbitMQModule } from '@app/rabbitmq';
+import { KafkaModule } from '@app/kafka';
 import { Video } from '@app/database/entities/video.entity';
 import { User } from '@app/database/entities/user.entity';
 import { Like } from '@app/database/entities/like.entity';
@@ -20,7 +20,7 @@ import { HealthController } from './health.controller';
     }),
     DatabaseModule,
     RedisModule,
-    RabbitMQModule.register({ name: 'interaction-service' }),
+    KafkaModule.register({ name: 'interaction-service' }),
     TypeOrmModule.forFeature([Video, User, Like, Comment]),
   ],
   controllers: [InteractionController, HealthController],

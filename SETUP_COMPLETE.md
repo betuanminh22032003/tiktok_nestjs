@@ -17,14 +17,14 @@
 6. **Notification Service** (NestJS) - Port 3004 + gRPC 50054
 7. **PostgreSQL** - Port 5432
 8. **Redis** - Port 6379
-9. **RabbitMQ** - Port 5672 + Management 15672
+9. **Kafka** - Port 9092 (+ Zookeeper on 2181)
 10. **Prometheus** - Port 9090
 11. **Grafana** - Port 3005
 
 ### Features
 - ✅ Shared TypeScript types/interfaces giữa backend & frontend
 - ✅ gRPC communication giữa microservices
-- ✅ RabbitMQ message queue
+- ✅ Kafka message streaming
 - ✅ Redis caching
 - ✅ PostgreSQL database với TypeORM
 - ✅ JWT Authentication với secure secrets
@@ -79,7 +79,7 @@ tiktok_nestjs/
 │   ├── common/                - Common utilities
 │   ├── database/              - TypeORM entities
 │   ├── grpc/                  - gRPC clients
-│   ├── rabbitmq/              - Message queue
+│   ├── kafka/                 - Message streaming
 │   └── redis/                 - Cache client
 │
 ├── tiktok-frontend/           🎨 Next.js Frontend
@@ -171,7 +171,7 @@ docker system prune -af         # Clean Docker
 | **Frontend** | http://localhost:3000 | - |
 | **API Gateway** | http://localhost:4000 | - |
 | **Swagger Docs** | http://localhost:4000/api/docs | - |
-| **RabbitMQ** | http://localhost:15672 | guest/guest |
+| **Kafka** | localhost:9092 | (broker) |
 | **Prometheus** | http://localhost:9090 | - |
 | **Grafana** | http://localhost:3005 | admin/admin |
 

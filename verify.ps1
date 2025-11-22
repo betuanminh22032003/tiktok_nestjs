@@ -15,7 +15,7 @@ Write-Host ""
 
 $containers = docker compose ps --format json | ConvertFrom-Json
 $expectedServices = @(
-    "postgres", "redis", "rabbitmq",
+    "postgres", "redis", "zookeeper", "kafka",
     "auth-service", "video-service", "interaction-service", "notification-service",
     "api-gateway", "frontend",
     "prometheus", "grafana"
@@ -70,14 +70,14 @@ try {
     Write-Host "  ⚠️  Swagger Docs - Not available yet" -ForegroundColor Yellow
 }
 
-# RabbitMQ
+# Kafka
 try {
-    $response = Invoke-WebRequest -Uri "http://localhost:15672" -TimeoutSec 5 -UseBasicParsing
-    if ($response.StatusCode -eq 200) {
-        Write-Host "  ✅ RabbitMQ Management (http://localhost:15672) - OK" -ForegroundColor Green
+    $kafkaCheck = docker exec tiktok_kafka kafka-broker-api-versions --bootstrap-server localhost:9092 2>&1
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "  ✅ Kafka (localhost:9092) - OK" -ForegroundColor Green
     }
 } catch {
-    Write-Host "  ⚠️  RabbitMQ Management - Not available yet" -ForegroundColor Yellow
+    Write-Host "  ⚠️  Kafka - Not available yet" -ForegroundColor Yellow
 }
 
 # Prometheus

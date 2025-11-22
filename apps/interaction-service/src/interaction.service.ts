@@ -7,7 +7,7 @@ import { User } from '@app/database/entities/user.entity';
 import { Like } from '@app/database/entities/like.entity';
 import { Comment } from '@app/database/entities/comment.entity';
 import { RedisService } from '@app/redis';
-import { RabbitMQService } from '@app/rabbitmq';
+import { KafkaService } from '@app/kafka';
 import { logger } from '@app/common/utils';
 
 @Injectable()
@@ -22,7 +22,7 @@ export class InteractionService {
     @InjectRepository(Comment)
     private readonly commentRepository: Repository<Comment>,
     private readonly redisService: RedisService,
-    private readonly rabbitMQService: RabbitMQService,
+    private readonly kafkaService: KafkaService,
   ) {}
 
   async likeVideo(userId: string, videoId: string) {
@@ -69,7 +69,7 @@ export class InteractionService {
       const totalLikes = await this.redisService.getLikes(videoId);
 
       // Publish event
-      await this.rabbitMQService.publish('video.liked', {
+      await this.kafkaService.publish('video.liked', {
         userId,
         videoId,
         totalLikes,
@@ -111,7 +111,7 @@ export class InteractionService {
       const totalLikes = await this.redisService.getLikes(videoId);
 
       // Publish event
-      await this.rabbitMQService.publish('video.unliked', {
+      await this.kafkaService.publish('video.unliked', {
         userId,
         videoId,
         totalLikes,
@@ -159,7 +159,7 @@ export class InteractionService {
       const totalComments = await this.redisService.getCommentsCount(videoId);
 
       // Publish event
-      await this.rabbitMQService.publish('comment.created', {
+      await this.kafkaService.publish('comment.created', {
         commentId: savedComment.id,
         userId,
         videoId,
@@ -246,7 +246,7 @@ export class InteractionService {
       const totalViews = await this.redisService.getViews(videoId);
 
       // Publish event
-      await this.rabbitMQService.publish('video.viewed', {
+      await this.kafkaService.publish('video.viewed', {
         videoId,
         userId,
         totalViews,

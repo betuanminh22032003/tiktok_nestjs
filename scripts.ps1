@@ -11,20 +11,20 @@ param(
 )
 
 function Start-Infrastructure {
-    Write-Host "🚀 Starting infrastructure (PostgreSQL, Redis, RabbitMQ)..." -ForegroundColor Cyan
-    docker-compose up -d postgres redis rabbitmq
+    Write-Host "🚀 Starting infrastructure (PostgreSQL, Redis, Kafka, Zookeeper)..." -ForegroundColor Cyan
+    docker-compose up -d postgres redis zookeeper kafka
     Write-Host "✅ Infrastructure started!" -ForegroundColor Green
     Write-Host ""
     Write-Host "Services:" -ForegroundColor Yellow
     Write-Host "  - PostgreSQL: localhost:5432" -ForegroundColor Gray
     Write-Host "  - Redis: localhost:6379" -ForegroundColor Gray
-    Write-Host "  - RabbitMQ: localhost:5672" -ForegroundColor Gray
-    Write-Host "  - RabbitMQ Management: http://localhost:15672" -ForegroundColor Gray
+    Write-Host "  - Kafka: localhost:9092" -ForegroundColor Gray
+    Write-Host "  - Zookeeper: localhost:2181" -ForegroundColor Gray
 }
 
 function Stop-Infrastructure {
     Write-Host "🛑 Stopping infrastructure..." -ForegroundColor Yellow
-    docker-compose stop postgres redis rabbitmq
+    docker-compose stop postgres redis zookeeper kafka
     Write-Host "✅ Infrastructure stopped!" -ForegroundColor Green
 }
 
@@ -68,8 +68,10 @@ DB_NAME=tiktok_clone
 # Redis
 REDIS_HOST=redis
 REDIS_PORT=6379
-# RabbitMQ
-RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+# Kafka
+KAFKA_BROKERS=kafka:29092
+KAFKA_CLIENT_ID=tiktok-service
+KAFKA_GROUP_ID=tiktok-group
 # JWT
 JWT_ACCESS_SECRET=$access
 JWT_REFRESH_SECRET=$refresh
@@ -167,10 +169,10 @@ function Start-All {
 function Reset-Database {
     Write-Host "⚠️  WARNING: This will delete all data!" -ForegroundColor Red
     $confirm = Read-Host "Are you sure? (yes/no)"
-    if ($confirm -eq "yes") {
+    if ($confirm -eq \"yes\") {
         docker-compose down -v
-        docker-compose up -d postgres redis rabbitmq
-        Write-Host "✅ Database reset completed!" -ForegroundColor Green
+        docker-compose up -d postgres redis zookeeper kafka
+        Write-Host \"✅ Database reset completed!\" -ForegroundColor Green
     } else {
         Write-Host "❌ Cancelled" -ForegroundColor Red
     }
@@ -300,11 +302,11 @@ function Start-Docker {
     docker compose ps
     Write-Host ""
     Write-Host "Access:" -ForegroundColor Cyan
-    Write-Host "  Frontend:         http://localhost:3000" -ForegroundColor Green
-    Write-Host "  API Gateway:      http://localhost:4000" -ForegroundColor Green
-    Write-Host "  Swagger Docs:     http://localhost:4000/api/docs" -ForegroundColor Green
-    Write-Host "  RabbitMQ Manager: http://localhost:15672 (guest/guest)" -ForegroundColor Gray
-    Write-Host "  Prometheus:       http://localhost:9090" -ForegroundColor Gray
+    Write-Host \"  Frontend:         http://localhost:3000\" -ForegroundColor Green
+    Write-Host \"  API Gateway:      http://localhost:4000\" -ForegroundColor Green
+    Write-Host \"  Swagger Docs:     http://localhost:4000/api/docs\" -ForegroundColor Green
+    Write-Host \"  Kafka Broker:     localhost:9092\" -ForegroundColor Gray
+    Write-Host \"  Prometheus:       http://localhost:9090\" -ForegroundColor Gray
     Write-Host "  Grafana:          http://localhost:3005 (admin/admin)" -ForegroundColor Gray
 }
 
@@ -349,7 +351,7 @@ function Show-Help {
     Write-Host "  docker-clean    Clean Docker resources (volumes, images)" -ForegroundColor White
     Write-Host ""
     Write-Host "💻 Development Commands (Local):" -ForegroundColor Yellow
-    Write-Host "  start-infra    Start infrastructure only (DB, Redis, RabbitMQ)" -ForegroundColor White
+    Write-Host \"  start-infra    Start infrastructure only (DB, Redis, Kafka, Zookeeper)\" -ForegroundColor White
     Write-Host "  stop-infra     Stop infrastructure services" -ForegroundColor White
     Write-Host "  clean          Clean build artifacts (dist, node_modules)" -ForegroundColor White
     Write-Host "  reset-db       Reset database (WARNING: deletes all data)" -ForegroundColor White

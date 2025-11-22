@@ -4,10 +4,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { NotificationController } from './notification.controller';
 import { NotificationService } from './notification.service';
 import { DatabaseModule } from '@app/database';
-import { RabbitMQModule } from '@app/rabbitmq';
+import { KafkaModule } from '@app/kafka';
 import { User } from '@app/database/entities/user.entity';
 import { HealthController } from './health.controller';
-import { RabbitMQService } from '@app/rabbitmq';
+import { KafkaService } from '@app/kafka';
 
 @Module({
   imports: [
@@ -16,7 +16,7 @@ import { RabbitMQService } from '@app/rabbitmq';
       envFilePath: '.env',
     }),
     DatabaseModule,
-    RabbitMQModule.register({ name: 'notification-service' }),
+    KafkaModule.register({ name: 'notification-service' }),
     TypeOrmModule.forFeature([User]),
   ],
   controllers: [NotificationController, HealthController],
@@ -25,20 +25,20 @@ import { RabbitMQService } from '@app/rabbitmq';
 export class NotificationModule implements OnModuleInit {
   constructor(
     private readonly notificationService: NotificationService,
-    private readonly rabbitMQService: RabbitMQService,
+    private readonly kafkaService: KafkaService,
   ) {}
 
   async onModuleInit() {
-    // Subscribe to events
-    await this.rabbitMQService.subscribe('video.liked', async (data) => {
+    // Subscribe to Kafka topics
+    await this.kafkaService.subscribe('video.liked', async (data) => {
       await this.notificationService.handleVideoLiked(data);
     });
 
-    await this.rabbitMQService.subscribe('comment.created', async (data) => {
+    await this.kafkaService.subscribe('comment.created', async (data) => {
       await this.notificationService.handleCommentCreated(data);
     });
 
-    await this.rabbitMQService.subscribe('video.created', async (data) => {
+    await this.kafkaService.subscribe('video.created', async (data) => {
       await this.notificationService.handleVideoCreated(data);
     });
   }

@@ -3,20 +3,20 @@
 # Development Helper Scripts
 
 function start_infra() {
-    echo "🚀 Starting infrastructure (PostgreSQL, Redis, RabbitMQ)..."
-    docker-compose up -d postgres redis rabbitmq
+    echo "🚀 Starting infrastructure (PostgreSQL, Redis, Kafka, Zookeeper)..."
+    docker-compose up -d postgres redis zookeeper kafka
     echo "✅ Infrastructure started!"
     echo ""
     echo "Services:"
     echo "  - PostgreSQL: localhost:5432"
     echo "  - Redis: localhost:6379"
-    echo "  - RabbitMQ: localhost:5672"
-    echo "  - RabbitMQ Management: http://localhost:15672"
+    echo "  - Kafka: localhost:9092"
+    echo "  - Zookeeper: localhost:2181"
 }
 
 function stop_infra() {
     echo "🛑 Stopping infrastructure..."
-    docker-compose stop postgres redis rabbitmq
+    docker-compose stop postgres redis zookeeper kafka
     echo "✅ Infrastructure stopped!"
 }
 
@@ -34,7 +34,7 @@ function reset_db() {
     read -p "Are you sure? (yes/no): " confirm
     if [ "$confirm" = "yes" ]; then
         docker-compose down -v
-        docker-compose up -d postgres redis rabbitmq
+        docker-compose up -d postgres redis zookeeper kafka
         echo "✅ Database reset completed!"
     else
         echo "❌ Cancelled"

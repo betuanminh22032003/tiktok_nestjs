@@ -5,11 +5,14 @@ export const SERVICES = {
   NOTIFICATION_SERVICE: 'NOTIFICATION_SERVICE',
 };
 
-export const RABBITMQ_QUEUES = {
-  AUTH: 'auth_queue',
-  VIDEO: 'video_queue',
-  INTERACTION: 'interaction_queue',
-  NOTIFICATION: 'notification_queue',
+export const KAFKA_TOPICS = {
+  VIDEO_CREATED: 'video.created',
+  VIDEO_DELETED: 'video.deleted',
+  VIDEO_LIKED: 'video.liked',
+  VIDEO_UNLIKED: 'video.unliked',
+  VIDEO_VIEWED: 'video.viewed',
+  COMMENT_CREATED: 'comment.created',
+  COMMENT_DELETED: 'comment.deleted',
 };
 
 export const REDIS_KEYS = {

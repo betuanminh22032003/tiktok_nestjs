@@ -89,8 +89,8 @@ Write-Host "✅ Setup completed successfully!" -ForegroundColor Green
 Write-Host ""
 Write-Host "Next steps:" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "1. Start infrastructure (PostgreSQL, Redis, RabbitMQ):" -ForegroundColor White
-Write-Host "   docker-compose up -d postgres redis rabbitmq" -ForegroundColor Gray
+Write-Host "1. Start infrastructure (PostgreSQL, Redis, Kafka, Zookeeper):" -ForegroundColor White
+Write-Host "   docker-compose up -d postgres redis zookeeper kafka" -ForegroundColor Gray
 Write-Host ""
 Write-Host "2. Start services (in separate terminals):" -ForegroundColor White
 Write-Host "   npm run start:auth" -ForegroundColor Gray

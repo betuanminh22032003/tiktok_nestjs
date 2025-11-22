@@ -51,8 +51,7 @@
     "pg": "^8.11.3",
     "redis": "^4.6.12",
     "ioredis": "^5.3.2",
-    "amqplib": "^0.10.3",
-    "amqp-connection-manager": "^4.1.14",
+    "kafkajs": "^2.2.4",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
@@ -85,7 +84,6 @@
     "@types/multer": "^1.4.11",
     "@types/cookie-parser": "^1.4.6",
     "@types/uuid": "^9.0.7",
-    "@types/amqplib": "^0.10.4",
     "@typescript-eslint/eslint-plugin": "^6.16.0",
     "@typescript-eslint/parser": "^6.16.0",
     "eslint": "^8.56.0",
@@ -126,7 +124,7 @@
       "^@app/common(|/.*)$": "<rootDir>/libs/common/src/$1",
       "^@app/database(|/.*)$": "<rootDir>/libs/database/src/$1",
       "^@app/redis(|/.*)$": "<rootDir>/libs/redis/src/$1",
-      "^@app/rabbitmq(|/.*)$": "<rootDir>/libs/rabbitmq/src/$1",
+      "^@app/kafka(|/.*)$": "<rootDir>/libs/kafka/src/$1",
       "^@app/grpc(|/.*)$": "<rootDir>/libs/grpc/src/$1"
     }
   }

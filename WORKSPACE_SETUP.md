@@ -48,7 +48,7 @@ tiktok_nestjs/
 │   ├── common/
 │   ├── database/
 │   ├── grpc/
-│   ├── rabbitmq/
+│   ├── kafka/
 │   └── redis/
 │
 └── tiktok-frontend/
@@ -151,7 +151,7 @@ CMD ["node", "dist/apps/[service-name]/main.js"]
 docker compose up --build -d
 
 # Chỉ chạy specific services
-docker compose up -d postgres redis rabbitmq
+docker compose up -d postgres redis zookeeper kafka
 docker compose up -d auth-service video-service
 docker compose up -d api-gateway frontend
 
@@ -178,7 +178,8 @@ docker compose down -v
 | Notification Service | 3004 | 3004 | Notifications |
 | PostgreSQL | 5432 | 5432 | Database |
 | Redis | 6379 | 6379 | Cache |
-| RabbitMQ | 5672, 15672 | 5672, 15672 | Message Queue |
+| Kafka | 9092 | 9092 | Message Streaming |
+| Zookeeper | 2181 | 2181 | Kafka Coordination |
 | Prometheus | 9090 | 9090 | Metrics |
 | Grafana | 3005 | 3000 | Monitoring UI |
 
@@ -187,7 +188,7 @@ docker compose down -v
 ```
 Frontend:           http://localhost:3000
 API Gateway:        http://localhost:4000
-RabbitMQ Manager:   http://localhost:15672 (guest/guest)
+Kafka Broker:       localhost:9092
 Prometheus:         http://localhost:9090
 Grafana:            http://localhost:3005 (admin/admin)
 ```

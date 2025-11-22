@@ -24,8 +24,8 @@
       "@app/database/*": ["libs/database/src/*"],
       "@app/redis": ["libs/redis/src"],
       "@app/redis/*": ["libs/redis/src/*"],
-      "@app/rabbitmq": ["libs/rabbitmq/src"],
-      "@app/rabbitmq/*": ["libs/rabbitmq/src/*"],
+      "@app/kafka": ["libs/kafka/src"],
+      "@app/kafka/*": ["libs/kafka/src/*"],
       "@app/grpc": ["libs/grpc/src"],
       "@app/grpc/*": ["libs/grpc/src/*"]
     }

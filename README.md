@@ -50,7 +50,7 @@ cd tiktok_nestjs
 - ✅ **Social Interactions**: Like, comment, view counter
 - ✅ **Real-time Updates**: WebSocket cho likes và comments
 - ✅ **Feed Algorithm**: Phân trang và lazy loading
-- ✅ **Microservices**: Kiến trúc tách biệt với gRPC và RabbitMQ
+- ✅ **Microservices**: Kiến trúc tách biệt với gRPC và Kafka
 - ✅ **Caching**: Redis cho performance optimization
 - ✅ **Security**: Helmet, CORS, Rate Limiting, Input Validation
 - ✅ **Monitoring**: Prometheus + Grafana
@@ -102,7 +102,7 @@ cd tiktok_nestjs
                         │
                         ▼
                 ┌──────────────┐
-                │  RabbitMQ    │
+                │    Kafka     │
                 │  (Message    │
                 │   Queue)     │
                 └──────────────┘
@@ -116,7 +116,7 @@ cd tiktok_nestjs
 - **Database**: PostgreSQL 15
 - **ORM**: TypeORM
 - **Cache**: Redis 7
-- **Message Queue**: RabbitMQ 3
+- **Message Queue**: Apache Kafka 3.5+
 - **Communication**: gRPC, REST API
 - **Authentication**: JWT (Access + Refresh Token)
 - **WebSocket**: Socket.io
@@ -149,7 +149,7 @@ cd tiktok_nestjs
 - Docker Compose >= 2.x
 - PostgreSQL >= 15.x (nếu không dùng Docker)
 - Redis >= 7.x (nếu không dùng Docker)
-- RabbitMQ >= 3.x (nếu không dùng Docker)
+- Apache Kafka >= 3.x (nếu không dùng Docker)
 
 ## 🚀 Cài đặt
 
@@ -190,8 +190,10 @@ DB_NAME=tiktok_clone
 REDIS_HOST=localhost
 REDIS_PORT=6379
 
-# RabbitMQ
-RABBITMQ_URL=amqp://guest:guest@localhost:5672
+# Kafka
+KAFKA_BROKERS=localhost:9092
+KAFKA_CLIENT_ID=tiktok-service
+KAFKA_GROUP_ID=tiktok-group
 
 # JWT Secrets (ĐỔI TRONG PRODUCTION!)
 JWT_ACCESS_SECRET=your-super-secret-access-key-change-in-production
@@ -231,8 +233,8 @@ docker-compose down -v
 #### A. Chuẩn bị Infrastructure
 
 \`\`\`bash
-# Chạy PostgreSQL, Redis, RabbitMQ bằng Docker
-docker-compose up -d postgres redis rabbitmq
+# Chạy PostgreSQL, Redis, Kafka, Zookeeper bằng Docker
+docker-compose up -d postgres redis zookeeper kafka
 \`\`\`
 
 #### B. Chạy các Microservices
@@ -266,7 +268,7 @@ npm run start:gateway
 - Auth Service: http://localhost:3001/health
 - Video Service: http://localhost:3002/health
 - Interaction Service: http://localhost:3003/health
-- RabbitMQ Management: http://localhost:15672 (guest/guest)
+- Kafka: localhost:9092 (broker)
 - Prometheus: http://localhost:9090
 - Grafana: http://localhost:3001 (admin/admin)
 

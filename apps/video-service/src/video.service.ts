@@ -22,7 +22,7 @@ export class VideoService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly redisService: RedisService,
-    private readonly rabbitMQService: RabbitMQService,
+    private readonly kafkaService: KafkaService,
   ) {}
 
   async createVideo(data: CreateVideoDto) {
@@ -58,8 +58,8 @@ export class VideoService {
       // Invalidate feed cache
       await this.redisService.invalidateFeedCache(data.userId);
 
-      // Publish event to RabbitMQ
-      await this.rabbitMQService.publish('video.created', {
+      // Publish event to Kafka
+      await this.kafkaService.publish('video.deleted', {
         videoId: savedVideo.id,
         userId: data.userId,
         title: data.title,
