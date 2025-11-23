@@ -36,7 +36,16 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./apps/api-gateway/test/jest-e2e.json"
+    "test:e2e": "jest --config ./apps/api-gateway/test/jest-e2e.json",
+    "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js",
+    "migration:generate": "npm run typeorm -- migration:generate -d libs/database/src/data-source.ts",
+    "migration:create": "npm run typeorm -- migration:create",
+    "migration:run": "ts-node -r tsconfig-paths/register libs/database/src/scripts/run-migrations.ts",
+    "migration:revert": "npm run typeorm -- migration:revert -d libs/database/src/data-source.ts",
+    "seed:run": "ts-node -r tsconfig-paths/register libs/database/src/scripts/run-seed.ts",
+    "db:clear": "ts-node -r tsconfig-paths/register libs/database/src/scripts/clear-database.ts",
+    "db:reset": "npm run db:clear && npm run migration:run && npm run seed:run",
+    "db:setup": "npm run migration:run && npm run seed:run"
   },
   "dependencies": {
     "@nestjs/common": "^10.3.0",

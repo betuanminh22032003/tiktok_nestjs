@@ -18,7 +18,9 @@ import { Comment } from './entities/comment.entity';
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_NAME'),
         entities: [User, Video, Like, Comment],
-        synchronize: configService.get('NODE_ENV') === 'development',
+        // Use migrations in production, synchronize in development
+        synchronize: configService.get('NODE_ENV') === 'development' && configService.get('DB_SYNC', 'false') === 'true',
+        migrationsRun: configService.get('NODE_ENV') === 'production',
         logging: configService.get('NODE_ENV') === 'development',
         autoLoadEntities: true,
       }),

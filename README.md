@@ -593,6 +593,8 @@ All detailed documentation has been organized in the `/docs` folder:
 - 📒 **[SECURITY.md](docs/SECURITY.md)** - Security best practices
 - 📖 **[CODE_OF_CONDUCT.md](docs/CODE_OF_CONDUCT.md)** - Community guidelines
 - 📄 **[KAFKA_MIGRATION.md](docs/KAFKA_MIGRATION.md)** - Kafka migration notes
+- 📃 **[DATABASE_MIGRATION.md](docs/DATABASE_MIGRATION.md)** - Database migration & seeding
+- 📃 **[PORT_Mapping.md](docs/PORT_Mapping.md)** - Service port mapping
 
 ## 🤝 Contributing
 
