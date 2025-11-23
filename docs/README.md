@@ -6,6 +6,7 @@ Complete documentation for TikTok Clone Microservices project.
 
 - **[QUICKSTART.md](QUICKSTART.md)** - Quick setup and running guide
 - **[DEVELOPMENT.md](DEVELOPMENT.md)** - Development workflow and commands
+- **[NATIVE_DEVELOPMENT.md](NATIVE_DEVELOPMENT.md)** - Run microservices natively for debugging
 
 ## 🏗️ Architecture & Design
 
