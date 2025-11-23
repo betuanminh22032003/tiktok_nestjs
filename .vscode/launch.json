@@ -6,10 +6,15 @@
       "request": "launch",
       "name": "Debug Auth Service",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "start:auth:debug"],
+      "runtimeArgs": [
+        "run",
+        "start:auth:debug"
+      ],
       "console": "integratedTerminal",
       "restart": true,
-      "skipFiles": ["<node_internals>/**"],
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
       "env": {
         "NODE_ENV": "development"
       }
@@ -19,10 +24,15 @@
       "request": "launch",
       "name": "Debug Video Service",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "start:video:debug"],
+      "runtimeArgs": [
+        "run",
+        "start:video:debug"
+      ],
       "console": "integratedTerminal",
       "restart": true,
-      "skipFiles": ["<node_internals>/**"],
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
       "env": {
         "NODE_ENV": "development"
       }
@@ -32,10 +42,15 @@
       "request": "launch",
       "name": "Debug Interaction Service",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "start:interaction:debug"],
+      "runtimeArgs": [
+        "run",
+        "start:interaction:debug"
+      ],
       "console": "integratedTerminal",
       "restart": true,
-      "skipFiles": ["<node_internals>/**"],
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
       "env": {
         "NODE_ENV": "development"
       }
@@ -45,10 +60,15 @@
       "request": "launch",
       "name": "Debug Notification Service",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "start:notification:debug"],
+      "runtimeArgs": [
+        "run",
+        "start:notification:debug"
+      ],
       "console": "integratedTerminal",
       "restart": true,
-      "skipFiles": ["<node_internals>/**"],
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
       "env": {
         "NODE_ENV": "development"
       }
@@ -58,10 +78,15 @@
       "request": "launch",
       "name": "Debug API Gateway",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "start:gateway:debug"],
+      "runtimeArgs": [
+        "run",
+        "start:gateway:debug"
+      ],
       "console": "integratedTerminal",
       "restart": true,
-      "skipFiles": ["<node_internals>/**"],
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
       "env": {
         "NODE_ENV": "development"
       }
@@ -72,7 +97,9 @@
       "name": "Attach to Auth Service",
       "port": 9229,
       "restart": true,
-      "skipFiles": ["<node_internals>/**"]
+      "skipFiles": [
+        "<node_internals>/**"
+      ]
     },
     {
       "type": "node",
@@ -80,7 +107,9 @@
       "name": "Attach to Video Service",
       "port": 9230,
       "restart": true,
-      "skipFiles": ["<node_internals>/**"]
+      "skipFiles": [
+        "<node_internals>/**"
+      ]
     },
     {
       "type": "node",
@@ -88,7 +117,9 @@
       "name": "Attach to Interaction Service",
       "port": 9231,
       "restart": true,
-      "skipFiles": ["<node_internals>/**"]
+      "skipFiles": [
+        "<node_internals>/**"
+      ]
     },
     {
       "type": "node",
@@ -96,7 +127,9 @@
       "name": "Attach to Notification Service",
       "port": 9232,
       "restart": true,
-      "skipFiles": ["<node_internals>/**"]
+      "skipFiles": [
+        "<node_internals>/**"
+      ]
     },
     {
       "type": "node",
@@ -104,7 +137,9 @@
       "name": "Attach to API Gateway",
       "port": 9233,
       "restart": true,
-      "skipFiles": ["<node_internals>/**"]
+      "skipFiles": [
+        "<node_internals>/**"
+      ]
     }
   ],
   "compounds": [
