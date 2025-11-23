@@ -212,6 +212,52 @@ services:
       interval: 10s
       timeout: 10s
       retries: 5
+
+  # Kafka UI
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: tiktok_kafka_ui
+    depends_on:
+      - kafka
+    ports:
+      - "9000:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+    networks:
+      - tiktok_network
+
+  # Redis Commander (Redis UI)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: tiktok_redis_ui
+    depends_on:
+      - redis
+    ports:
+      - "8081:8081"
+    environment:
+      REDIS_HOSTS: local:redis:6379
+    networks:
+      - tiktok_network
+
+  # pgAdmin (PostgreSQL UI)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: tiktok_pgadmin
+    depends_on:
+      - postgres
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - tiktok_network
+
 networks:
   tiktok_network:
     driver: bridge
@@ -223,6 +269,7 @@ volumes:
   zookeeper_logs:
   kafka_data:
   rabbitmq_data:
+  pgadmin_data:
 "@
 
     Set-Content -Path "docker-compose.infra.yml" -Value $infraDockerCompose
@@ -346,10 +393,21 @@ foreach ($service in $services) {
   $cmd = $service.Command
   $cwd = $PWD.Path
 
-  # Build arguments to set the PowerShell window title, change directory and run the service command
+  # Create a temporary batch file to maintain window title
+  $batchFile = "$env:TEMP\start-$($service.Title.ToLower()).bat"
+  $batchContent = @"
+@echo off
+title $title
+cd /d "$cwd"
+$cmd
+pause
+"@
+  Set-Content -Path $batchFile -Value $batchContent -Encoding ASCII
+
+  # Build arguments to run the batch file
   $startInfo = New-Object System.Diagnostics.ProcessStartInfo
-  $startInfo.FileName = "powershell.exe"
-  $startInfo.Arguments = "-NoExit -Command `"& { `$Host.UI.RawUI.WindowTitle = '$title'; Set-Location -LiteralPath '$cwd'; $cmd }`""
+  $startInfo.FileName = "cmd.exe"
+  $startInfo.Arguments = "/k `"$batchFile`""
   $startInfo.WorkingDirectory = $cwd
   $startInfo.UseShellExecute = $true
   $startInfo.CreateNoWindow = $false
@@ -369,9 +427,20 @@ if (-not $SkipFrontend) {
     if (Test-Path "tiktok-frontend") {
         Write-Info "Starting Next.js frontend..."
 
+        # Create a temporary batch file to maintain window title
+        $batchFile = "$env:TEMP\start-frontend.bat"
+        $batchContent = @"
+@echo off
+title TIKTOK-FRONTEND
+cd /d "$PWD\tiktok-frontend"
+npm run dev
+pause
+"@
+        Set-Content -Path $batchFile -Value $batchContent -Encoding ASCII
+
         $startInfo = New-Object System.Diagnostics.ProcessStartInfo
-        $startInfo.FileName = "powershell.exe"
-        $startInfo.Arguments = "-NoExit -Command `"cd '$PWD\tiktok-frontend'; npm run dev`""
+        $startInfo.FileName = "cmd.exe"
+        $startInfo.Arguments = "/k `"$batchFile`""
         $startInfo.WorkingDirectory = "$PWD\tiktok-frontend"
         $startInfo.UseShellExecute = $true
         $startInfo.CreateNoWindow = $false
@@ -394,6 +463,11 @@ Write-Host "  - Redis: localhost:6379" -ForegroundColor White
 Write-Host "  - Kafka: localhost:9092" -ForegroundColor White
 Write-Host "  - Zookeeper: localhost:2181" -ForegroundColor White
 Write-Host "  - RabbitMQ: localhost:5672 (Management: http://localhost:15672)" -ForegroundColor White
+
+Write-Info "`nManagement UIs:"
+Write-Host "  - Kafka UI: http://localhost:9000" -ForegroundColor Cyan
+Write-Host "  - Redis Commander: http://localhost:8081" -ForegroundColor Cyan
+Write-Host "  - pgAdmin: http://localhost:5050 (Email: admin@admin.com, Password: admin)" -ForegroundColor Cyan
 
 Write-Info "\nMicroservices (Native):"
 Write-Host "  - Auth Service: http://localhost:4001 (gRPC: localhost:50051)" -ForegroundColor White
