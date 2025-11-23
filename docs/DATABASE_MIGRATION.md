@@ -3,6 +3,8 @@
 ## 📋 Overview
 Hướng dẫn sử dụng TypeORM migrations và database seeding cho TikTok Clone project.
 
+> 📚 **Related:** See [VERSION_MANAGEMENT.md](./VERSION_MANAGEMENT.md) for version tracking and deployment history.
+
 ## 🚀 Quick Start
 
 ### Setup Database (First Time)

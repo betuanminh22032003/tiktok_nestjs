@@ -7,3 +7,4 @@ export * from './dto';
 export * from './utils';
 export * from './constants';
 export * from './middleware';
+export * from './config/version.config';

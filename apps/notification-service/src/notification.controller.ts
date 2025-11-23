@@ -11,7 +11,12 @@ export class NotificationController {
   constructor(private readonly notificationService: NotificationService) {}
 
   @GrpcMethod('NotificationService', 'SendNotification')
-  async sendNotification(data: { userId: string; type: string; message: string; metadata?: NotificationMetadata }) {
+  async sendNotification(data: {
+    userId: string;
+    type: string;
+    message: string;
+    metadata?: NotificationMetadata;
+  }) {
     return this.notificationService.sendNotification(
       data.userId,
       data.type,

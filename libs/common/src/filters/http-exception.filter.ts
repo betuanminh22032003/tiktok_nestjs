@@ -28,7 +28,12 @@ export class AllExceptionsFilter implements ExceptionFilter {
       timestamp: new Date().toISOString(),
       path: request.url,
       method: request.method,
-      message: typeof message === 'string' ? message : (typeof message === 'object' && message !== null && 'message' in message) ? (message as { message: unknown }).message : message,
+      message:
+        typeof message === 'string'
+          ? message
+          : typeof message === 'object' && message !== null && 'message' in message
+            ? (message as { message: unknown }).message
+            : message,
     };
 
     this.logger.error(

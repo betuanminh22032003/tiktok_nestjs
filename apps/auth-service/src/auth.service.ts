@@ -1,17 +1,17 @@
-import {
-  Injectable,
-  UnauthorizedException,
-  ConflictException,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
-import * as bcrypt from 'bcrypt';
 import { User } from '@app/database/entities/user.entity';
 import { RedisService } from '@app/redis';
+import {
+  ConflictException,
+  Injectable,
+  Logger,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
+import { InjectRepository } from '@nestjs/typeorm';
+import * as bcrypt from 'bcrypt';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class AuthService {
@@ -69,12 +69,12 @@ export class AuthService {
     };
   }
 
-  async login(data: { emailOrUsername: string; password: string }) {
-    const { emailOrUsername, password } = data;
+  async login(data: { username: string; password: string }) {
+    const { username, password } = data;
 
     // Find user by email or username
     const user = await this.userRepository.findOne({
-      where: [{ email: emailOrUsername }, { username: emailOrUsername }],
+      where: [{ email: username }, { username }],
     });
 
     if (!user) {
@@ -196,7 +196,7 @@ export class AuthService {
   }
 
   private sanitizeUser(user: User) {
-    const { password, ...result } = user;
+    const { ...result } = user;
     return {
       ...result,
       createdAt: user.createdAt.toISOString(),

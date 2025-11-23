@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
-import { RpcException } from '@nestjs/microservices';
-import { User } from '@app/database/entities/user.entity';
 import { logger } from '@app/common/utils';
+import { User } from '@app/database/entities/user.entity';
+import { Injectable } from '@nestjs/common';
+import { RpcException } from '@nestjs/microservices';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
 interface NotificationMetadata {
   [key: string]: string | number | boolean | undefined;
@@ -30,7 +30,12 @@ export class NotificationService {
     private readonly userRepository: Repository<User>,
   ) {}
 
-  async sendNotification(userId: string, type: string, message: string, metadata?: NotificationMetadata) {
+  async sendNotification(
+    userId: string,
+    type: string,
+    message: string,
+    metadata?: NotificationMetadata,
+  ) {
     try {
       const notification: Notification = {
         id: this.generateId(),
@@ -118,7 +123,6 @@ export class NotificationService {
     }
   }
 
-  // Event handlers for RabbitMQ events
   async handleVideoLiked(data: { userId: string; videoId: string; totalLikes: number }) {
     logger.info(`Handling video.liked event for video ${data.videoId}`);
     // Get video owner and send notification

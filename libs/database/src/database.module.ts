@@ -5,6 +5,7 @@ import { User } from './entities/user.entity';
 import { Video } from './entities/video.entity';
 import { Like } from './entities/like.entity';
 import { Comment } from './entities/comment.entity';
+import { AppVersion } from './entities/app-version.entity';
 
 @Module({
   imports: [
@@ -17,9 +18,11 @@ import { Comment } from './entities/comment.entity';
         username: configService.get('DB_USERNAME'),
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_NAME'),
-        entities: [User, Video, Like, Comment],
+        entities: [User, Video, Like, Comment, AppVersion],
         // Use migrations in production, synchronize in development
-        synchronize: configService.get('NODE_ENV') === 'development' && configService.get('DB_SYNC', 'false') === 'true',
+        synchronize:
+          configService.get('NODE_ENV') === 'development' &&
+          configService.get('DB_SYNC', 'false') === 'true',
         migrationsRun: configService.get('NODE_ENV') === 'production',
         logging: configService.get('NODE_ENV') === 'development',
         autoLoadEntities: true,

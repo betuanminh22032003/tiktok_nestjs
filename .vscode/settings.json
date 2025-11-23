@@ -1,4 +1,34 @@
 {
+  // Format on save
+  "editor.formatOnSave": true,
+  // Use Prettier as default formatter when available
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  // Organize imports on save (TypeScript/JS) and run ESLint fixes (remove unused imports/vars when possible)
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": true,
+    "source.fixAll.eslint": true
+  },
+  // Trim trailing whitespace and ensure final newline
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  // Disable built-in TypeScript formatter so Prettier handles formatting
+  "typescript.format.enable": false,
+  // Ensure Prettier is used for these languages
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  // ESLint: validate TypeScript files as well
+  "eslint.validate": [
+    "javascript",
+    "typescript",
+    "typescriptreact"
+  ],
   "debug.console.fontSize": 14,
   "debug.console.lineHeight": 20,
   "debug.internalConsoleOptions": "neverOpen",

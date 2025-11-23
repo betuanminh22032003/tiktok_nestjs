@@ -45,7 +45,10 @@
     "seed:run": "ts-node -r tsconfig-paths/register libs/database/src/scripts/run-seed.ts",
     "db:clear": "ts-node -r tsconfig-paths/register libs/database/src/scripts/clear-database.ts",
     "db:reset": "npm run db:clear && npm run migration:run && npm run seed:run",
-    "db:setup": "npm run migration:run && npm run seed:run"
+    "db:setup": "npm run migration:run && npm run seed:run",
+    "version:check": "ts-node -r tsconfig-paths/register libs/database/src/scripts/check-version.ts",
+    "version:deploy": "ts-node -r tsconfig-paths/register libs/database/src/scripts/deploy-version.ts",
+    "version:history": "ts-node -r tsconfig-paths/register libs/database/src/scripts/version-history.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.3.0",

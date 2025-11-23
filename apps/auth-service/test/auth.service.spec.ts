@@ -1,19 +1,14 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { AuthService } from '../src/auth.service';
-import { JwtService } from '@nestjs/jwt';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { User } from '@app/database/entities/user.entity';
 import { RedisService } from '@app/redis';
-import { RabbitMQService } from '@app/rabbitmq';
+import { JwtService } from '@nestjs/jwt';
 import { RpcException } from '@nestjs/microservices';
+import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
+import { AuthService } from '../src/auth.service';
 
 describe('AuthService', () => {
   let service: AuthService;
-  let jwtService: JwtService;
-  let redisService: RedisService;
-  let userRepository: Repository<User>;
 
   const mockUser = {
     id: 'test-user-id',
@@ -42,11 +37,6 @@ describe('AuthService', () => {
     getSession: jest.fn(),
     deleteSession: jest.fn(),
   };
-
-  const mockRabbitMQService = {
-    publishMessage: jest.fn(),
-  };
-
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -63,17 +53,10 @@ describe('AuthService', () => {
           provide: RedisService,
           useValue: mockRedisService,
         },
-        {
-          provide: RabbitMQService,
-          useValue: mockRabbitMQService,
-        },
       ],
     }).compile();
 
     service = module.get<AuthService>(AuthService);
-    jwtService = module.get<JwtService>(JwtService);
-    redisService = module.get<RedisService>(RedisService);
-    userRepository = module.get(getRepositoryToken(User));
 
     // Reset mocks
     jest.clearAllMocks();
@@ -125,7 +108,7 @@ describe('AuthService', () => {
 
   describe('login', () => {
     const loginDto = {
-      email: 'test@example.com',
+      username: 'test@example.com',
       password: 'password123',
     };
 
@@ -145,7 +128,7 @@ describe('AuthService', () => {
       expect(result).toHaveProperty('accessToken');
       expect(result).toHaveProperty('refreshToken');
       expect(mockUserRepository.findOne).toHaveBeenCalledWith({
-        where: { email: loginDto.email },
+        where: { username: loginDto.username },
       });
     });
 
@@ -172,7 +155,7 @@ describe('AuthService', () => {
       mockRedisService.getSession.mockResolvedValue('session-data');
       mockUserRepository.findOne.mockResolvedValue(mockUser);
 
-      const result = await service.validateToken({ token });
+      const result = await service.validateToken(token);
 
       expect(result).toHaveProperty('valid', true);
       expect(result).toHaveProperty('userId', mockUser.id);
@@ -181,7 +164,7 @@ describe('AuthService', () => {
     it('should return invalid for expired token', async () => {
       mockJwtService.verifyAsync.mockRejectedValue(new Error('Token expired'));
 
-      const result = await service.validateToken({ token: 'expired-token' });
+      const result = await service.validateToken('expired-token');
 
       expect(result).toHaveProperty('valid', false);
     });
@@ -197,7 +180,7 @@ describe('AuthService', () => {
       mockJwtService.signAsync.mockResolvedValue('new-token');
       mockRedisService.setSession.mockResolvedValue(true);
 
-      const result = await service.refreshToken({ refreshToken });
+      const result = await service.refreshToken(refreshToken);
 
       expect(result).toHaveProperty('accessToken');
       expect(result).toHaveProperty('refreshToken');
@@ -206,9 +189,7 @@ describe('AuthService', () => {
     it('should throw error with invalid refresh token', async () => {
       mockJwtService.verifyAsync.mockRejectedValue(new Error('Invalid token'));
 
-      await expect(service.refreshToken({ refreshToken: 'invalid-token' })).rejects.toThrow(
-        RpcException,
-      );
+      await expect(service.refreshToken('invalid-token')).rejects.toThrow(RpcException);
     });
   });
 
@@ -216,7 +197,7 @@ describe('AuthService', () => {
     it('should successfully logout user', async () => {
       mockRedisService.deleteSession.mockResolvedValue(true);
 
-      const result = await service.logout({ userId: mockUser.id });
+      const result = await service.logout(mockUser.id);
 
       expect(result).toEqual({ success: true });
       expect(mockRedisService.deleteSession).toHaveBeenCalledWith(mockUser.id);
@@ -227,10 +208,10 @@ describe('AuthService', () => {
     it('should return user by id', async () => {
       mockUserRepository.findOne.mockResolvedValue(mockUser);
 
-      const result = await service.getUserById({ userId: mockUser.id });
+      const result = await service.getUserById(mockUser.id);
 
       expect(result).toHaveProperty('user');
-      expect(result.user.id).toBe(mockUser.id);
+      expect(result.id).toBe(mockUser.id);
       expect(mockUserRepository.findOne).toHaveBeenCalledWith({
         where: { id: mockUser.id },
       });
@@ -239,9 +220,7 @@ describe('AuthService', () => {
     it('should throw error if user not found', async () => {
       mockUserRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.getUserById({ userId: 'non-existent-id' })).rejects.toThrow(
-        RpcException,
-      );
+      await expect(service.getUserById('non-existent-id')).rejects.toThrow(RpcException);
     });
   });
 });

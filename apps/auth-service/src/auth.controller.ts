@@ -15,8 +15,8 @@ export class AuthController {
   }
 
   @GrpcMethod('AuthService', 'Login')
-  async login(data: { emailOrUsername: string; password: string }) {
-    this.logger.log(`Login request for: ${data.emailOrUsername}`);
+  async login(data: { username: string; password: string }) {
+    this.logger.log(`Login request for: ${data.username}`);
     return await this.authService.login(data);
   }
 
