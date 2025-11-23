@@ -1,12 +1,12 @@
-import { NestFactory } from '@nestjs/core';
-import { MicroserviceOptions, Transport } from '@nestjs/microservices';
-import { ValidationPipe } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { join } from 'path';
-import { VideoModule } from './video.module';
 import { AllExceptionsFilter } from '@app/common/filters';
 import { LoggingInterceptor } from '@app/common/interceptors';
 import { logger } from '@app/common/utils';
+import { ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { NestFactory } from '@nestjs/core';
+import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+import { join } from 'path';
+import { VideoModule } from './video.module';
 
 async function bootstrap() {
   // Create hybrid application (gRPC + HTTP)
@@ -39,7 +39,7 @@ async function bootstrap() {
   logger.info('Video gRPC service is listening on port 50052');
 
   // Start HTTP server for health checks
-  const port = configService.get('VIDEO_HTTP_PORT', 3002);
+  const port = configService.get('VIDEO_HTTP_PORT', 4002);
   await app.listen(port);
   logger.info(`Video HTTP server is running on port ${port}`);
 }

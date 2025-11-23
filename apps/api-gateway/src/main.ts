@@ -1,13 +1,13 @@
-import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import * as cookieParser from 'cookie-parser';
-import * as compression from 'compression';
-import helmet from 'helmet';
-import { ApiGatewayModule } from './api-gateway.module';
 import { AllExceptionsFilter } from '@app/common/filters';
 import { LoggingInterceptor, TransformInterceptor } from '@app/common/interceptors';
+import { Logger, ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { NestFactory } from '@nestjs/core';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import * as compression from 'compression';
+import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
+import { ApiGatewayModule } from './api-gateway.module';
 
 async function bootstrap() {
   const logger = new Logger('APIGateway');
@@ -53,7 +53,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 
-  const port = configService.get('PORT', 3000);
+  const port = configService.get('PORT', 4000);
   await app.listen(port);
 
   logger.log(`🚀 API Gateway is running on http://localhost:${port}`);

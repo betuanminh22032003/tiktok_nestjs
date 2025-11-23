@@ -1,12 +1,12 @@
-import { NestFactory } from '@nestjs/core';
-import { MicroserviceOptions, Transport } from '@nestjs/microservices';
-import { ValidationPipe } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { join } from 'path';
-import { InteractionModule } from './interaction.module';
 import { AllExceptionsFilter } from '@app/common/filters';
 import { LoggingInterceptor } from '@app/common/interceptors';
 import { logger } from '@app/common/utils';
+import { ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { NestFactory } from '@nestjs/core';
+import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+import { join } from 'path';
+import { InteractionModule } from './interaction.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(InteractionModule);
@@ -35,7 +35,7 @@ async function bootstrap() {
   await app.startAllMicroservices();
   logger.info('Interaction gRPC service is listening on port 50053');
 
-  const port = configService.get('INTERACTION_HTTP_PORT', 3003);
+  const port = configService.get('INTERACTION_HTTP_PORT', 4003);
   await app.listen(port);
   logger.info(`Interaction HTTP server is running on port ${port}`);
 }

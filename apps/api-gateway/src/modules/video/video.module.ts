@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
-import { ClientsModule, Transport } from '@nestjs/microservices';
-import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { VideoController } from './video.controller';
+import { JwtModule } from '@nestjs/jwt';
+import { ClientsModule, Transport } from '@nestjs/microservices';
 import { join } from 'path';
+import { VideoController } from './video.controller';
 
 @Module({
   imports: [
@@ -13,7 +13,7 @@ import { join } from 'path';
         transport: Transport.GRPC,
         options: {
           package: 'video',
-          protoPath: join(__dirname, '../../../../../proto/video.proto'),
+          protoPath: join(process.cwd(), 'proto', 'video.proto'),
           url: process.env.GRPC_VIDEO_URL || 'localhost:50052',
         },
       },

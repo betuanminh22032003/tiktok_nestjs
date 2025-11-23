@@ -1,9 +1,9 @@
-import { NestFactory } from '@nestjs/core';
-import { Transport, MicroserviceOptions } from '@nestjs/microservices';
-import { ValidationPipe, Logger } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { AuthModule } from './auth.module';
+import { NestFactory } from '@nestjs/core';
+import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { join } from 'path';
+import { AuthModule } from './auth.module';
 
 async function bootstrap() {
   const logger = new Logger('AuthService');
@@ -33,7 +33,7 @@ async function bootstrap() {
   logger.log('🚀 Auth Service is running on gRPC port 50051');
 
   // Also start HTTP for health checks
-  const port = configService.get('AUTH_HTTP_PORT', 3001);
+  const port = configService.get('AUTH_HTTP_PORT', 4001);
   await app.listen(port);
   logger.log(`🚀 Auth Service HTTP is running on port ${port}`);
 }

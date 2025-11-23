@@ -1,13 +1,13 @@
+import { RedisModule } from '@app/redis';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { join } from 'path';
-import { RedisModule } from '@app/redis';
-import { AuthModule } from './modules/auth/auth.module';
-import { VideoModule } from './modules/video/video.module';
-import { InteractionModule } from './modules/interaction/interaction.module';
-import { WebsocketModule } from './modules/websocket/websocket.module';
 import { HealthController } from './health.controller';
+import { AuthModule } from './modules/auth/auth.module';
+import { InteractionModule } from './modules/interaction/interaction.module';
+import { VideoModule } from './modules/video/video.module';
+import { WebsocketModule } from './modules/websocket/websocket.module';
 
 @Module({
   imports: [
@@ -24,7 +24,7 @@ import { HealthController } from './health.controller';
         transport: Transport.GRPC,
         options: {
           package: 'auth',
-          protoPath: join(__dirname, '../../../proto/auth.proto'),
+          protoPath: join(process.cwd(), 'proto', 'auth.proto'),
           url: process.env.GRPC_AUTH_URL || 'localhost:50051',
         },
       },
@@ -33,7 +33,7 @@ import { HealthController } from './health.controller';
         transport: Transport.GRPC,
         options: {
           package: 'video',
-          protoPath: join(__dirname, '../../../proto/video.proto'),
+          protoPath: join(process.cwd(), 'proto', 'video.proto'),
           url: process.env.GRPC_VIDEO_URL || 'localhost:50052',
         },
       },
@@ -42,7 +42,7 @@ import { HealthController } from './health.controller';
         transport: Transport.GRPC,
         options: {
           package: 'interaction',
-          protoPath: join(__dirname, '../../../proto/interaction.proto'),
+          protoPath: join(process.cwd(), 'proto', 'interaction.proto'),
           url: process.env.GRPC_INTERACTION_URL || 'localhost:50053',
         },
       },

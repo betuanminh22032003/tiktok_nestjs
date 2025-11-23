@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
-import { ClientsModule, Transport } from '@nestjs/microservices';
-import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { AuthController } from './auth.controller';
+import { JwtModule } from '@nestjs/jwt';
+import { ClientsModule, Transport } from '@nestjs/microservices';
 import { join } from 'path';
+import { AuthController } from './auth.controller';
 
 @Module({
   imports: [
@@ -13,7 +13,7 @@ import { join } from 'path';
         transport: Transport.GRPC,
         options: {
           package: 'auth',
-          protoPath: join(__dirname, '../../../../../proto/auth.proto'),
+          protoPath: join(process.cwd(), 'proto', 'auth.proto'),
           url: process.env.GRPC_AUTH_URL || 'localhost:50051',
         },
       },
