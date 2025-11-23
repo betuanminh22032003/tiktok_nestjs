@@ -289,10 +289,6 @@ REDIS_PORT=6379
 
 # Kafka
 KAFKA_BROKERS=localhost:9092
-
-# RabbitMQ
-RABBITMQ_URL=amqp://admin:admin@localhost:5672
-
 # JWT
 JWT_ACCESS_SECRET=your-secret-key-please-change-in-production
 JWT_REFRESH_SECRET=your-refresh-key-please-change-in-production
@@ -344,22 +340,26 @@ $services = @(
 )
 
 foreach ($service in $services) {
-    Write-Info "Starting $($service.Name)..."
+  Write-Info "Starting $($service.Name)..."
 
-    # Start each service in a new PowerShell window
-    $startInfo = New-Object System.Diagnostics.ProcessStartInfo
-    $startInfo.FileName = "powershell.exe"
-    $startInfo.Arguments = "-NoExit -Command `"cd '$PWD'; $($service.Command)`""
-    $startInfo.WorkingDirectory = $PWD
-    $startInfo.UseShellExecute = $true
-    $startInfo.CreateNoWindow = $false
+  $title = $service.Title
+  $cmd = $service.Command
+  $cwd = $PWD.Path
 
-    $process = New-Object System.Diagnostics.Process
-    $process.StartInfo = $startInfo
-    $null = $process.Start()
+  # Build arguments to set the PowerShell window title, change directory and run the service command
+  $startInfo = New-Object System.Diagnostics.ProcessStartInfo
+  $startInfo.FileName = "powershell.exe"
+  $startInfo.Arguments = "-NoExit -Command `"& { `$Host.UI.RawUI.WindowTitle = '$title'; Set-Location -LiteralPath '$cwd'; $cmd }`""
+  $startInfo.WorkingDirectory = $cwd
+  $startInfo.UseShellExecute = $true
+  $startInfo.CreateNoWindow = $false
 
-    Write-Success "$($service.Name) started in new window"
-    Start-Sleep -Seconds 2
+  $process = New-Object System.Diagnostics.Process
+  $process.StartInfo = $startInfo
+  $null = $process.Start()
+
+  Write-Success "$($service.Name) started in new window (title: $title)"
+  Start-Sleep -Seconds 2
 }
 
 # Start frontend if not skipped

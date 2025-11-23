@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Prefer runtime env (Next.js exposes NEXT_PUBLIC_* at build time)
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 // Create axios instance
 export const apiClient = axios.create({
