@@ -1,101 +1,143 @@
 'use client';
 
-import VideoCard from '@/components/VideoCard';
-import { videoAPI } from '@/lib/api';
-import { getSocket } from '@/lib/socket';
-import { useInfiniteQuery } from '@tanstack/react-query';
-import { Loader2 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { BottomNav } from '@/components/layout/BottomNav';
+import { HeaderLayout } from '@/components/layout/HeaderLayout';
+import { SidebarLayout } from '@/components/layout/SidebarLayout';
+import type { Comment } from '@/components/organisms/CommentDrawer';
+import { CommentDrawer } from '@/components/organisms/CommentDrawer';
+import { FeedScroller } from '@/components/organisms/FeedScroller';
+import type { Video } from '@/components/organisms/VideoCard';
+import React from 'react';
 
-export default function Home() {
-  const [activeVideoIndex, setActiveVideoIndex] = useState(0);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  // Initialize WebSocket
-  useEffect(() => {
-    getSocket();
-  }, []);
-
-  // Fetch video feed with infinite scroll
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
-    queryKey: ['video-feed'],
-    queryFn: ({ pageParam = 1 }) => videoAPI.getFeed(pageParam, 10),
-    getNextPageParam: (lastPage) => {
-      if (lastPage.data.hasMore) {
-        return lastPage.data.page + 1;
-      }
-      return undefined;
+// Mock data - replace with real API calls
+const mockVideos: Video[] = [
+  {
+    id: '1',
+    url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+    thumbnail: 'https://picsum.photos/400/600?random=1',
+    caption: 'Amazing video! Check this out 🔥 #trending #viral',
+    hashtags: ['trending', 'viral', 'fyp'],
+    music: {
+      name: 'Original Sound',
+      artist: 'User123',
     },
-    initialPageParam: 1,
-  });
+    user: {
+      id: '1',
+      username: 'user123',
+      displayName: 'John Doe',
+      avatarUrl: 'https://i.pravatar.cc/150?img=1',
+      verified: true,
+    },
+    stats: {
+      likes: 15200,
+      comments: 342,
+      shares: 128,
+    },
+    isLiked: false,
+    isSaved: false,
+  },
+];
 
-  const videos = data?.pages.flatMap((page) => page.data.videos) || [];
+const mockComments: Comment[] = [
+  {
+    id: '1',
+    user: {
+      id: '3',
+      username: 'commenter1',
+      displayName: 'Alex Johnson',
+      avatarUrl: 'https://i.pravatar.cc/150?img=3',
+      verified: false,
+    },
+    text: 'This is amazing! 🔥',
+    likes: 45,
+    isLiked: false,
+    createdAt: new Date(Date.now() - 3600000),
+  },
+];
 
-  // Handle scroll to change active video
-  useEffect(() => {
-    const handleScroll = () => {
-      const container = containerRef.current;
-      if (!container) return;
+export default function HomePage() {
+  const [videos, setVideos] = React.useState<Video[]>(mockVideos);
+  const [commentDrawerOpen, setCommentDrawerOpen] = React.useState(false);
+  const [selectedVideoId, setSelectedVideoId] = React.useState<string | null>(null);
+  const [loading, setLoading] = React.useState(false);
 
-      const scrollTop = container.scrollTop;
-      const videoHeight = window.innerHeight;
-      const newIndex = Math.round(scrollTop / videoHeight);
+  const user = {
+    id: '1',
+    username: 'currentuser',
+    avatarUrl: 'https://i.pravatar.cc/150?img=10',
+  };
 
-      if (newIndex !== activeVideoIndex) {
-        setActiveVideoIndex(newIndex);
-      }
-
-      // Load more videos when near the end
-      if (
-        scrollTop + videoHeight * 2 >= container.scrollHeight &&
-        hasNextPage &&
-        !isFetchingNextPage
-      ) {
-        fetchNextPage();
-      }
-    };
-
-    const container = containerRef.current;
-    if (container) {
-      container.addEventListener('scroll', handleScroll);
-      return () => container.removeEventListener('scroll', handleScroll);
-    }
-  }, [activeVideoIndex, hasNextPage, isFetchingNextPage, fetchNextPage]);
-
-  if (isLoading) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-black">
-        <Loader2 className="w-12 h-12 text-white animate-spin" />
-      </div>
+  const handleLike = (videoId: string) => {
+    setVideos((prev) =>
+      prev.map((video) =>
+        video.id === videoId
+          ? {
+              ...video,
+              isLiked: !video.isLiked,
+              stats: {
+                ...video.stats,
+                likes: video.isLiked ? video.stats.likes - 1 : video.stats.likes + 1,
+              },
+            }
+          : video,
+      ),
     );
-  }
+  };
 
-  if (!videos.length) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-black">
-        <div className="text-center text-white">
-          <h2 className="text-2xl font-bold mb-2">No videos yet</h2>
-          <p className="text-gray-400">Be the first to upload a video!</p>
-        </div>
-      </div>
+  const handleComment = (videoId: string) => {
+    setSelectedVideoId(videoId);
+    setCommentDrawerOpen(true);
+  };
+
+  const handleSave = (videoId: string) => {
+    setVideos((prev) =>
+      prev.map((video) => (video.id === videoId ? { ...video, isSaved: !video.isSaved } : video)),
     );
-  }
+  };
 
   return (
-    <div
-      ref={containerRef}
-      className="h-screen overflow-y-scroll snap-y snap-mandatory scrollbar-hide"
-      style={{ scrollBehavior: 'smooth' }}
-    >
-      {videos.map((video, index) => (
-        <VideoCard key={index} video={video} isActive={index === activeVideoIndex} />
-      ))}
+    <div className="min-h-screen bg-white dark:bg-dark-900">
+      <HeaderLayout
+        user={user}
+        notificationCount={5}
+        messageCount={2}
+        onSearch={(query) => console.log('Search:', query)}
+      />
 
-      {isFetchingNextPage && (
-        <div className="h-screen flex items-center justify-center bg-black">
-          <Loader2 className="w-12 h-12 text-white animate-spin" />
-        </div>
-      )}
+      <div className="flex">
+        <SidebarLayout
+          user={user}
+          suggestedUsers={[]}
+          onFollow={(userId) => console.log('Follow:', userId)}
+          onUnfollow={(userId) => console.log('Unfollow:', userId)}
+          onLogout={() => console.log('Logout')}
+        />
+
+        <main className="flex-1">
+          <FeedScroller
+            videos={videos}
+            onLike={handleLike}
+            onComment={handleComment}
+            onShare={(videoId) => console.log('Share:', videoId)}
+            onSave={handleSave}
+            onUserClick={(userId) => console.log('User click:', userId)}
+            onLoadMore={() => setLoading(true)}
+            loading={loading}
+            hasMore={true}
+          />
+        </main>
+      </div>
+
+      <BottomNav user={user} />
+
+      <CommentDrawer
+        isOpen={commentDrawerOpen}
+        onClose={() => setCommentDrawerOpen(false)}
+        comments={mockComments}
+        onAddComment={(text) => console.log('Add comment:', text)}
+        onLikeComment={(commentId) => console.log('Like comment:', commentId)}
+        onReply={(commentId, text) => console.log('Reply:', commentId, text)}
+      />
     </div>
   );
 }
