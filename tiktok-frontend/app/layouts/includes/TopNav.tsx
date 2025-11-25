@@ -1,6 +1,4 @@
 import { useUser } from '@/app/context/user';
-import useCreateBucketUrl from '@/app/hooks/useCreateBucketUrl';
-import useSearchProfilesByName from '@/app/hooks/useSearchProfilesByName';
 import { useGeneralStore } from '@/app/stores/general';
 import { RandomUsers } from '@/app/types';
 import debounce from 'debounce';
@@ -18,18 +16,30 @@ export default function TopNav() {
   const pathname = usePathname();
 
   const [searchProfiles, setSearchProfiles] = useState<RandomUsers[]>([]);
-  let [showMenu, setShowMenu] = useState<boolean>(false);
-  let { setIsLoginOpen, setIsEditProfileOpen } = useGeneralStore();
+  const [showMenu, setShowMenu] = useState<boolean>(false);
+  const { setIsLoginOpen, setIsEditProfileOpen } = useGeneralStore();
 
   useEffect(() => {
     setIsEditProfileOpen(false);
-  }, []);
+  }, [setIsEditProfileOpen]);
 
   const handleSearchName = debounce(async (event: { target: { value: string } }) => {
     if (event.target.value == '') return setSearchProfiles([]);
 
     try {
-      const result = await useSearchProfilesByName(event.target.value);
+      const { database, Query } = await import('@/libs/AppWriteClient');
+      const profileResult = await database.listDocuments(
+        String(process.env.NEXT_PUBLIC_DATABASE_ID),
+        String(process.env.NEXT_PUBLIC_COLLECTION_ID_PROFILE),
+        [Query.limit(5), Query.search('name', event.target.value)],
+      );
+
+      const result = profileResult.documents.map((profile) => ({
+        id: profile?.user_id,
+        name: profile?.name,
+        image: profile?.image,
+      }));
+
       if (result) return setSearchProfiles(result);
       setSearchProfiles([]);
     } catch (error) {
@@ -51,7 +61,11 @@ export default function TopNav() {
           className={`flex items-center justify-between gap-6 w-full px-4 mx-auto ${pathname === '/' ? 'max-w-[1150px]' : ''}`}
         >
           <Link href="/">
-            <img className="min-w-[115px] w-[115px]" src="/images/tiktok-logo.png" />
+            <img
+              className="min-w-[115px] w-[115px]"
+              src="/images/tiktok-logo.png"
+              alt="TikTok Logo"
+            />
           </Link>
 
           <div className="relative hidden md:flex items-center justify-end bg-[#F1F1F2] p-1 rounded-full max-w-[430px] w-full">
@@ -74,7 +88,8 @@ export default function TopNav() {
                         <img
                           className="rounded-md"
                           width="40"
-                          src={useCreateBucketUrl(profile?.image)}
+                          src={`${process.env.NEXT_PUBLIC_APPWRITE_URL}/storage/buckets/${process.env.NEXT_PUBLIC_BUCKET_ID}/files/${profile?.image}/view?project=${process.env.NEXT_PUBLIC_ENDPOINT}`}
+                          alt={profile?.name}
                         />
                         <div className="truncate ml-2">{profile?.name}</div>
                       </div>
@@ -112,12 +127,13 @@ export default function TopNav() {
               <div className="flex items-center">
                 <div className="relative">
                   <button
-                    onClick={() => setShowMenu((showMenu = !showMenu))}
+                    onClick={() => setShowMenu(!showMenu)}
                     className="mt-1 border border-gray-200 rounded-full"
                   >
                     <img
                       className="rounded-full w-[35px] h-[35px]"
-                      src={useCreateBucketUrl(userContext?.user?.image || '')}
+                      src={`${process.env.NEXT_PUBLIC_APPWRITE_URL}/storage/buckets/${process.env.NEXT_PUBLIC_BUCKET_ID}/files/${userContext?.user?.image}/view?project=${process.env.NEXT_PUBLIC_ENDPOINT}`}
+                      alt={userContext?.user?.name || 'User'}
                     />
                   </button>
 

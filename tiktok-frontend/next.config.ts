@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  webpack: (config, { isServer }) => {
+  webpack: (config: any, { isServer }: any) => {
     // Add a rule to handle the canvas.node binary module
     config.module.rules.push({ test: /\.node$/, use: 'raw-loader' });
 

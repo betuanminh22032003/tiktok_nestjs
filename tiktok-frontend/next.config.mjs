@@ -24,8 +24,8 @@ const config = {
       },
     ],
   },
-  transpilePackages: ['image-js', 'bresenham-zingl'],
-  serverExternalPackages: ['image-js', 'canvas'],
+  transpilePackages: ['bresenham-zingl'],
+  serverExternalPackages: ['canvas'],
   webpack: (config) => {
     // Fix for image-js and bresenham-zingl module resolution
     config.resolve.fallback = {
