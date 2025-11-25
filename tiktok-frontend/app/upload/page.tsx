@@ -1,262 +1,263 @@
-'use client';
+"use client"
 
-import { IconButton } from '@/components/atoms/IconButton';
-import { VideoTag } from '@/components/atoms/VideoTag';
-import { BottomNav } from '@/components/layout/BottomNav';
-import { HeaderLayout } from '@/components/layout/HeaderLayout';
-import { SidebarLayout } from '@/components/layout/SidebarLayout';
-import { FileVideo, Image as ImageIcon, Music, Upload, X } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import React from 'react';
+import React, { useEffect, useState } from "react";
+import UploadLayout from "../layouts/UploadLayout";
+import { BiLoaderCircle, BiSolidCloudUpload } from "react-icons/bi"
+import { AiOutlineCheckCircle } from "react-icons/ai";
+import { PiKnifeLight } from 'react-icons/pi'
+import { useRouter } from "next/navigation";
+import { useUser } from "@/app/context/user"
+import { UploadError } from "../types";
+import useCreatePost from "../hooks/useCreatePost";
 
-export default function UploadPage() {
-  const router = useRouter();
-  const [videoFile, setVideoFile] = React.useState<File | null>(null);
-  const [videoPreview, setVideoPreview] = React.useState<string | null>(null);
-  const [thumbnail, setThumbnail] = React.useState<File | null>(null);
-  const [caption, setCaption] = React.useState('');
-  const [hashtags, setHashtags] = React.useState<string[]>([]);
-  const [hashtagInput, setHashtagInput] = React.useState('');
-  const [music, setMusic] = React.useState('');
-  const [uploading, setUploading] = React.useState(false);
+export default function Upload() {
+    const contextUser = useUser()
+    const router = useRouter()
 
-  const videoInputRef = React.useRef<HTMLInputElement>(null);
-  const thumbnailInputRef = React.useRef<HTMLInputElement>(null);
+    let [fileDisplay, setFileDisplay] = useState<string>('');
+    let [caption, setCaption] = useState<string>('');
+    let [file, setFile] = useState<File | null>(null);
+    let [error, setError] = useState<UploadError | null>(null);
+    let [isUploading, setIsUploading] = useState<boolean>(false);
 
-  const user = {
-    id: '1',
-    username: 'currentuser',
-    avatarUrl: 'https://i.pravatar.cc/150?img=10',
-  };
+    useEffect(() => {
+        if (!contextUser?.user) router.push('/')
+    }, [contextUser])
 
-  const handleVideoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && file.type.startsWith('video/')) {
-      setVideoFile(file);
-      const url = URL.createObjectURL(file);
-      setVideoPreview(url);
+    const onChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const files = event.target.files;
+
+        if (files && files.length > 0) {
+            const file = files[0];
+            const fileUrl = URL.createObjectURL(file);
+            setFileDisplay(fileUrl);
+            setFile(file);
+        }
     }
-  };
 
-  const handleThumbnailSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && file.type.startsWith('image/')) {
-      setThumbnail(file);
+    const discard = () => {
+        setFileDisplay('')
+        setFile(null)
+        setCaption('')
     }
-  };
 
-  const handleAddHashtag = () => {
-    if (hashtagInput.trim() && !hashtags.includes(hashtagInput.trim())) {
-      setHashtags([...hashtags, hashtagInput.trim()]);
-      setHashtagInput('');
+    const clearVideo = () => {
+        setFileDisplay('')
+        setFile(null)
     }
-  };
 
-  const handleRemoveHashtag = (tag: string) => {
-    setHashtags(hashtags.filter((t) => t !== tag));
-  };
+    const validate = () => {
+        setError(null)
+        let isError = false
 
-  const handleSubmit = async () => {
-    if (!videoFile) return;
-
-    setUploading(true);
-    try {
-      // Implement upload logic here
-      console.log('Uploading video:', {
-        video: videoFile,
-        thumbnail,
-        caption,
-        hashtags,
-        music,
-      });
-
-      // Simulate upload
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      router.push('/');
-    } catch (error) {
-      console.error('Upload failed:', error);
-    } finally {
-      setUploading(false);
+        if (!file) {
+            setError({ type: 'File', message: 'A video is required'})
+            isError = true
+        } else if (!caption) {
+            setError({ type: 'caption', message: 'A caption is required'})
+            isError = true
+        }
+        return isError
     }
-  };
 
-  return (
-    <div className="min-h-screen bg-gray-50 dark:bg-dark-950">
-      <HeaderLayout user={user} />
+    const createNewPost = async () => {
+        let isError = validate()
+        if (isError) return
+        if (!file || !contextUser?.user) return
+        setIsUploading(true)
 
-      <div className="flex">
-        <SidebarLayout user={user} suggestedUsers={[]} onLogout={() => console.log('Logout')} />
+        try {
+            await useCreatePost(file, contextUser?.user?.id, caption)
+            router.push(`/profile/${contextUser?.user?.id}`)
+            setIsUploading(false)
+        } catch (error) {
+            console.log(error)
+            setIsUploading(false)
+            alert(error)
+        }
+    }
 
-        <main className="flex-1 p-4 md:p-8 pb-20 md:pb-8">
-          <div className="max-w-4xl mx-auto">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Upload Video</h1>
-
-            <div className="grid md:grid-cols-2 gap-8">
-              {/* Video Upload Section */}
-              <div className="space-y-6">
-                {/* Video Uploader */}
-                <div className="card p-6">
-                  <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
-                    Select Video
-                  </h2>
-
-                  {!videoPreview ? (
-                    <div
-                      onClick={() => videoInputRef.current?.click()}
-                      className="border-2 border-dashed border-gray-300 dark:border-dark-700 rounded-lg p-12 text-center cursor-pointer hover:border-primary-500 transition-colors"
-                    >
-                      <FileVideo className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                      <p className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                        Click to upload video
-                      </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        MP4, WebM, or MOV (Max 100MB)
-                      </p>
+    return (
+        <>
+            <UploadLayout>
+                <div className="w-full mt-[80px] mb-[40px] bg-white shadow-lg rounded-md py-6 md:px-10 px-4">
+                    <div>
+                        <h1 className="text-[23px] font-semibold">Upload video</h1>
+                        <h2 className="text-gray-400 mt-1">Post a video to your account</h2>
                     </div>
-                  ) : (
-                    <div className="relative rounded-lg overflow-hidden bg-black">
-                      <video
-                        src={videoPreview}
-                        controls
-                        className="w-full aspect-[9/16] object-contain"
-                      />
-                      <IconButton
-                        icon={X}
-                        onClick={() => {
-                          setVideoFile(null);
-                          setVideoPreview(null);
-                        }}
-                        variant="danger"
-                        className="absolute top-2 right-2"
-                      />
+
+                    <div className="mt-8 md:flex gap-6">
+
+                        {!fileDisplay ? 
+                            <label 
+                                htmlFor="fileInput"
+                                className="
+                                    md:mx-0
+                                    mx-auto
+                                    mt-4
+                                    mb-6
+                                    flex 
+                                    flex-col 
+                                    items-center 
+                                    justify-center 
+                                    w-full 
+                                    max-w-[260px] 
+                                    h-[470px] 
+                                    text-center 
+                                    p-3 
+                                    border-2 
+                                    border-dashed 
+                                    border-gray-300 
+                                    rounded-lg 
+                                    hover:bg-gray-100 
+                                    cursor-pointer
+                                "
+                            >
+                                <BiSolidCloudUpload size="40" color="#b3b3b1"/>
+                                <p className="mt-4 text-[17px]">Select video to upload</p>
+                                <p className="mt-1.5 text-gray-500 text-[13px]">Or drag and drop a file</p>
+                                <p className="mt-12 text-gray-400 text-sm">MP4</p>
+                                <p className="mt-2 text-gray-400 text-[13px]">Up to 30 minutes</p>
+                                <p className="mt-2 text-gray-400 text-[13px]">Less than 2 GB</p>
+                                <label 
+                                    htmlFor="fileInput" 
+                                    className="px-2 py-1.5 mt-8 text-white text-[15px] w-[80%] bg-[#F02C56] rounded-sm cursor-pointer"
+                                >
+                                    Select file
+                                </label>
+                                <input 
+                                    type="file" 
+                                    id="fileInput"
+                                    onChange={onChange}
+                                    hidden 
+                                    accept=".mp4" 
+                                />
+                            </label>
+                        :
+                            <div
+                                className="
+                                    md:mx-0
+                                    mx-auto
+                                    mt-4
+                                    md:mb-12
+                                    mb-16
+                                    flex 
+                                    items-center 
+                                    justify-center 
+                                    w-full 
+                                    max-w-[260px] 
+                                    h-[540px] 
+                                    p-3 
+                                    rounded-2xl
+                                    cursor-pointer
+                                    relative
+                                "
+                            >
+                                {isUploading ? (
+                                    <div className="absolute flex items-center justify-center z-20 bg-black h-full w-full rounded-[50px] bg-opacity-50">
+                                        <div className="mx-auto flex items-center justify-center gap-1">
+                                            <BiLoaderCircle className="animate-spin" color="#F12B56" size={30} />
+                                            <div className="text-white font-bold">Uploading...</div>
+                                        </div>
+                                    </div>
+                                ) : null}
+                                
+                                <img 
+                                    className="absolute z-20 pointer-events-none" 
+                                    src="/images/mobile-case.png"
+                                />
+                                <img 
+                                    className="absolute right-4 bottom-6 z-20" 
+                                    width="90" 
+                                    src="/images/tiktok-logo-white.png"
+                                />
+                                <video 
+                                    autoPlay
+                                    loop
+                                    muted
+                                    className="absolute rounded-xl object-cover z-10 p-[13px] w-full h-full" 
+                                    src={fileDisplay} 
+                                />
+
+                                <div className="absolute -bottom-12 flex items-center justify-between z-50 rounded-xl border w-full p-2 border-gray-300">
+                                    <div className="flex items-center truncate">
+                                        <AiOutlineCheckCircle size="16" className="min-w-[16px]"/>
+                                        <p className="text-[11px] pl-1 truncate text-ellipsis">{File.name}</p>
+                                    </div>
+                                    <button onClick={() => clearVideo()} className="text-[11px] ml-2 font-semibold">
+                                        Change
+                                    </button>
+                                </div>
+                            </div>
+                        }
+
+
+                        <div className="mt-4 mb-6">
+                            <div className="flex bg-[#F8F8F8] py-4 px-6">
+                                <div>
+                                    <PiKnifeLight className="mr-4" size="20"/>
+                                </div>
+                                <div>
+                                    <div className="text-semibold text-[15px] mb-1.5">Divide videos and edit</div>
+                                    <div className="text-semibold text-[13px] text-gray-400">
+                                        You can quickly divide videos into multiple parts, remove redundant parts and turn landscape videos into portrait videos
+                                    </div>
+                                </div>
+                                <div className="flex justify-end max-w-[130px] w-full h-full text-center my-auto">
+                                    <button className="px-8 py-1.5 text-white text-[15px] bg-[#F02C56] rounded-sm">
+                                        Edit
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="mt-5">
+                                <div className="flex items-center justify-between">
+                                    <div className="mb-1 text-[15px]">Caption</div>
+                                    <div className="text-gray-400 text-[12px]">{caption.length}/150</div>
+                                </div>
+                                <input 
+                                    maxLength={150}
+                                    type="text"
+                                    className="
+                                        w-full
+                                        border
+                                        p-2.5
+                                        rounded-md
+                                        focus:outline-none
+                                    "
+                                    value={caption}
+                                    onChange={event => setCaption(event.target.value)}
+                                />
+                            </div>
+
+                            <div className="flex gap-3">
+                                <button 
+                                    disabled={isUploading}
+                                    onClick={() => discard()}
+                                    className="px-10 py-2.5 mt-8 border text-[16px] hover:bg-gray-100 rounded-sm"
+                                >
+                                    Discard
+                                </button>
+                                <button 
+                                    disabled={isUploading}
+                                    onClick={() => createNewPost()}
+                                    className="px-10 py-2.5 mt-8 border text-[16px] text-white bg-[#F02C56] rounded-sm"
+                                >
+                                    {isUploading ? <BiLoaderCircle className="animate-spin" color="#ffffff" size={25} /> : 'Post'}
+                                </button>
+                            </div>
+
+                            {error ? (
+                                <div className="text-red-600 mt-4">
+                                    {error.message}
+                                </div>
+                            ) : null}
+
+                        </div>
+
                     </div>
-                  )}
-
-                  <input
-                    ref={videoInputRef}
-                    type="file"
-                    accept="video/*"
-                    onChange={handleVideoSelect}
-                    className="hidden"
-                  />
                 </div>
-
-                {/* Thumbnail Upload */}
-                {videoFile && (
-                  <div className="card p-6">
-                    <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
-                      Thumbnail (Optional)
-                    </h2>
-                    <div
-                      onClick={() => thumbnailInputRef.current?.click()}
-                      className="border-2 border-dashed border-gray-300 dark:border-dark-700 rounded-lg p-8 text-center cursor-pointer hover:border-primary-500 transition-colors"
-                    >
-                      <ImageIcon className="w-12 h-12 mx-auto mb-2 text-gray-400" />
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {thumbnail ? thumbnail.name : 'Click to upload thumbnail'}
-                      </p>
-                    </div>
-                    <input
-                      ref={thumbnailInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleThumbnailSelect}
-                      className="hidden"
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Video Details Section */}
-              <div className="space-y-6">
-                {/* Caption */}
-                <div className="card p-6">
-                  <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
-                    Caption
-                  </h2>
-                  <textarea
-                    value={caption}
-                    onChange={(e) => setCaption(e.target.value)}
-                    placeholder="Write a caption..."
-                    rows={4}
-                    maxLength={500}
-                    className="input-field resize-none"
-                  />
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 text-right">
-                    {caption.length}/500
-                  </p>
-                </div>
-
-                {/* Hashtags */}
-                <div className="card p-6">
-                  <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
-                    Hashtags
-                  </h2>
-                  <div className="flex gap-2 mb-3">
-                    <input
-                      value={hashtagInput}
-                      onChange={(e) => setHashtagInput(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && handleAddHashtag()}
-                      placeholder="Enter hashtag"
-                      className="input-field flex-1"
-                    />
-                    <button onClick={handleAddHashtag} className="btn-primary">
-                      Add
-                    </button>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {hashtags.map((tag) => (
-                      <VideoTag
-                        key={tag}
-                        label={`#${tag}`}
-                        variant="primary"
-                        size="md"
-                        onClick={() => handleRemoveHashtag(tag)}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                {/* Music */}
-                <div className="card p-6">
-                  <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white flex items-center gap-2">
-                    <Music className="w-5 h-5" />
-                    Music (Optional)
-                  </h2>
-                  <input
-                    value={music}
-                    onChange={(e) => setMusic(e.target.value)}
-                    placeholder="Enter music name"
-                    className="input-field"
-                  />
-                </div>
-
-                {/* Upload Button */}
-                <button
-                  onClick={handleSubmit}
-                  disabled={!videoFile || uploading}
-                  className="w-full btn-primary py-4 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {uploading ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Uploading...
-                    </span>
-                  ) : (
-                    <span className="flex items-center justify-center gap-2">
-                      <Upload className="w-5 h-5" />
-                      Upload Video
-                    </span>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        </main>
-      </div>
-
-      <BottomNav user={user} />
-    </div>
-  );
+            </UploadLayout>
+        </>
+    )
 }

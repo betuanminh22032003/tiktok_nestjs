@@ -24,6 +24,16 @@ const config = {
       },
     ],
   },
+  transpilePackages: ['image-js'],
+  webpack: (config, { isServer }) => {
+    // Fix for image-js and bresenham-zingl module resolution
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      fs: false,
+    };
+
+    return config;
+  },
 };
 
 export default config;
