@@ -1,11 +1,19 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import ReactPlayer from 'react-player';
-import { Heart, MessageCircle, Share2, Play, Pause } from 'lucide-react';
 import { interactionAPI } from '@/lib/api';
+import { joinVideoRoom, leaveVideoRoom, onVideoComment, onVideoLiked } from '@/lib/socket';
 import { useAuthStore } from '@/lib/store';
-import { joinVideoRoom, leaveVideoRoom, onVideoLiked, onVideoComment } from '@/lib/socket';
+import { Heart, MessageCircle, Play, Share2 } from 'lucide-react';
+import dynamic from 'next/dynamic';
+import { useEffect, useRef, useState } from 'react';
+
+// Suppress TypeScript errors for react-player
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+// Dynamic import with proper typing
+const ReactPlayer = dynamic(() => import('react-player'), {
+  ssr: false,
+}) as React.ComponentType<any>;
 
 interface VideoCardProps {
   video: {
@@ -128,9 +136,7 @@ export default function VideoCard({ video, isActive = false }: VideoCardProps) {
           className="absolute inset-0 flex items-center justify-center cursor-pointer"
           onClick={handlePlayPause}
         >
-          {!isPlaying && (
-            <Play className="w-20 h-20 text-white opacity-80" fill="white" />
-          )}
+          {!isPlaying && <Play className="w-20 h-20 text-white opacity-80" fill="white" />}
         </div>
 
         {/* Video Info */}
@@ -138,7 +144,11 @@ export default function VideoCard({ video, isActive = false }: VideoCardProps) {
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-full bg-gray-300 overflow-hidden">
               {video.user.avatar ? (
-                <img src={video.user.avatar} alt={video.user.username} className="w-full h-full object-cover" />
+                <img
+                  src={video.user.avatar}
+                  alt={video.user.username}
+                  className="w-full h-full object-cover"
+                />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-purple-500 text-white font-bold">
                   {video.user.username[0].toUpperCase()}
@@ -151,9 +161,7 @@ export default function VideoCard({ video, isActive = false }: VideoCardProps) {
             </div>
           </div>
           <h3 className="text-white font-semibold mb-1">{video.title}</h3>
-          {video.description && (
-            <p className="text-white/90 text-sm mb-2">{video.description}</p>
-          )}
+          {video.description && <p className="text-white/90 text-sm mb-2">{video.description}</p>}
         </div>
 
         {/* Action Buttons */}
@@ -163,9 +171,7 @@ export default function VideoCard({ video, isActive = false }: VideoCardProps) {
             onClick={handleLike}
             className="flex flex-col items-center gap-1 transition-transform hover:scale-110"
           >
-            <Heart
-              className={`w-8 h-8 ${isLiked ? 'text-red-500 fill-red-500' : 'text-white'}`}
-            />
+            <Heart className={`w-8 h-8 ${isLiked ? 'text-red-500 fill-red-500' : 'text-white'}`} />
             <span className="text-white text-xs font-semibold">
               {likesCount > 0 ? likesCount : ''}
             </span>

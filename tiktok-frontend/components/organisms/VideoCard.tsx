@@ -59,7 +59,7 @@ export const VideoCard: React.FC<VideoCardProps> = ({
       <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
         {/* Top Section - Username */}
         <div className="p-4 flex items-center justify-between">
-          <div className="flex items-center gap-3 pointer-events-auto">
+          <div className="flex items-center gap-3 pointer-events-auto bg-black/30 backdrop-blur-md rounded-full px-4 py-2.5 border border-white/10">
             <Avatar
               src={video.user.avatarUrl}
               alt={video.user.username}
@@ -68,11 +68,15 @@ export const VideoCard: React.FC<VideoCardProps> = ({
             />
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-white font-semibold text-base">
+                <span className="text-white font-bold text-base drop-shadow-lg">
                   {video.user.displayName || video.user.username}
                 </span>
                 {video.user.verified && (
-                  <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                  <svg
+                    className="w-5 h-5 text-blue-400 drop-shadow-glow"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
                     <path
                       fillRule="evenodd"
                       d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
@@ -82,7 +86,7 @@ export const VideoCard: React.FC<VideoCardProps> = ({
                 )}
               </div>
             </div>
-            <button className="ml-2 px-4 py-1.5 bg-primary-500 hover:bg-primary-600 text-white text-sm font-semibold rounded pointer-events-auto transition-colors">
+            <button className="ml-2 px-5 py-1.5 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-sm font-bold rounded-full pointer-events-auto transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
               Follow
             </button>
           </div>
@@ -116,14 +120,16 @@ export const VideoCard: React.FC<VideoCardProps> = ({
             </div>
 
             {/* Right Side - Actions */}
-            <div className="pointer-events-auto flex flex-col gap-4 items-center">
-              <div className="flex flex-col items-center gap-1">
+            <div className="pointer-events-auto flex flex-col gap-5 items-center">
+              <div className="flex flex-col items-center gap-2">
                 <button
                   onClick={onLike}
-                  className="w-12 h-12 rounded-full bg-gray-900/50 hover:bg-gray-900/70 flex items-center justify-center transition-colors"
+                  className="w-14 h-14 rounded-full bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-md hover:from-white/20 hover:to-white/10 flex items-center justify-center transition-all duration-300 border border-white/20 shadow-lg hover:shadow-xl transform hover:scale-110 active:scale-95"
                 >
                   <svg
-                    className={`w-7 h-7 ${video.isLiked ? 'text-primary-500 fill-current' : 'text-white'}`}
+                    className={`w-7 h-7 drop-shadow-lg ${
+                      video.isLiked ? 'text-red-500 fill-current animate-pulse' : 'text-white'
+                    }`}
                     fill={video.isLiked ? 'currentColor' : 'none'}
                     stroke="currentColor"
                     strokeWidth="2"
@@ -136,20 +142,20 @@ export const VideoCard: React.FC<VideoCardProps> = ({
                     />
                   </svg>
                 </button>
-                <span className="text-white text-xs font-semibold">
+                <span className="text-white text-sm font-bold drop-shadow-lg">
                   {video.stats.likes > 999
                     ? `${(video.stats.likes / 1000).toFixed(1)}K`
                     : video.stats.likes}
                 </span>
               </div>
 
-              <div className="flex flex-col items-center gap-1">
+              <div className="flex flex-col items-center gap-2">
                 <button
                   onClick={onComment}
-                  className="w-12 h-12 rounded-full bg-gray-900/50 hover:bg-gray-900/70 flex items-center justify-center transition-colors"
+                  className="w-14 h-14 rounded-full bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-md hover:from-white/20 hover:to-white/10 flex items-center justify-center transition-all duration-300 border border-white/20 shadow-lg hover:shadow-xl transform hover:scale-110 active:scale-95"
                 >
                   <svg
-                    className="w-7 h-7 text-white"
+                    className="w-7 h-7 text-white drop-shadow-lg"
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="2"
@@ -162,16 +168,20 @@ export const VideoCard: React.FC<VideoCardProps> = ({
                     />
                   </svg>
                 </button>
-                <span className="text-white text-xs font-semibold">{video.stats.comments}</span>
+                <span className="text-white text-sm font-bold drop-shadow-lg">
+                  {video.stats.comments}
+                </span>
               </div>
 
-              <div className="flex flex-col items-center gap-1">
+              <div className="flex flex-col items-center gap-2">
                 <button
                   onClick={onSave}
-                  className="w-12 h-12 rounded-full bg-gray-900/50 hover:bg-gray-900/70 flex items-center justify-center transition-colors"
+                  className="w-14 h-14 rounded-full bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-md hover:from-white/20 hover:to-white/10 flex items-center justify-center transition-all duration-300 border border-white/20 shadow-lg hover:shadow-xl transform hover:scale-110 active:scale-95"
                 >
                   <svg
-                    className={`w-7 h-7 ${video.isSaved ? 'text-yellow-500 fill-current' : 'text-white'}`}
+                    className={`w-7 h-7 drop-shadow-lg ${
+                      video.isSaved ? 'text-yellow-400 fill-current' : 'text-white'
+                    }`}
                     fill={video.isSaved ? 'currentColor' : 'none'}
                     stroke="currentColor"
                     strokeWidth="2"
@@ -184,16 +194,18 @@ export const VideoCard: React.FC<VideoCardProps> = ({
                     />
                   </svg>
                 </button>
-                <span className="text-white text-xs font-semibold">{video.stats.shares}</span>
+                <span className="text-white text-sm font-bold drop-shadow-lg">
+                  {video.stats.shares}
+                </span>
               </div>
 
-              <div className="flex flex-col items-center gap-1">
+              <div className="flex flex-col items-center gap-2">
                 <button
                   onClick={onShare}
-                  className="w-12 h-12 rounded-full bg-gray-900/50 hover:bg-gray-900/70 flex items-center justify-center transition-colors"
+                  className="w-14 h-14 rounded-full bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-md hover:from-white/20 hover:to-white/10 flex items-center justify-center transition-all duration-300 border border-white/20 shadow-lg hover:shadow-xl transform hover:scale-110 active:scale-95"
                 >
                   <svg
-                    className="w-7 h-7 text-white"
+                    className="w-7 h-7 text-white drop-shadow-lg"
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="2"

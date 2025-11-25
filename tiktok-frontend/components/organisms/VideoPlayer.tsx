@@ -1,9 +1,17 @@
 'use client';
 
 import { Maximize, Pause, Play, Volume2, VolumeX } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import React from 'react';
-import ReactPlayer from 'react-player';
 import { IconButton } from '../atoms/IconButton';
+
+// Suppress TypeScript errors for react-player
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+// Dynamic import with proper typing
+const ReactPlayer = dynamic(() => import('react-player'), {
+  ssr: false,
+}) as React.ComponentType<any>;
 
 export interface VideoPlayerProps {
   url: string;
@@ -18,9 +26,6 @@ export interface VideoPlayerProps {
   className?: string;
   controls?: boolean;
 }
-
-// Suppress TypeScript errors for react-player
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   url,
@@ -93,7 +98,6 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
       onMouseLeave={() => setShowControls(false)}
     >
       {/* Video Player */}
-      {/* @ts-expect-error - react-player type compatibility issues */}
       <ReactPlayer
         ref={playerRef}
         url={url}

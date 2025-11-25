@@ -42,6 +42,11 @@ const config: Config = {
         'fade-in': 'fadeIn 0.3s ease-in',
         'slide-up': 'slideUp 0.3s ease-out',
         'slide-down': 'slideDown 0.3s ease-out',
+        'gradient-x': 'gradient-x 3s ease infinite',
+        'gradient-y': 'gradient-y 3s ease infinite',
+        'gradient-xy': 'gradient-xy 3s ease infinite',
+        float: 'float 3s ease-in-out infinite',
+        glow: 'glow 2s ease-in-out infinite',
       },
       keyframes: {
         fadeIn: {
@@ -56,11 +61,40 @@ const config: Config = {
           '0%': { transform: 'translateY(-100%)' },
           '100%': { transform: 'translateY(0)' },
         },
+        'gradient-x': {
+          '0%, 100%': { 'background-position': '0% 50%' },
+          '50%': { 'background-position': '100% 50%' },
+        },
+        'gradient-y': {
+          '0%, 100%': { 'background-position': '50% 0%' },
+          '50%': { 'background-position': '50% 100%' },
+        },
+        'gradient-xy': {
+          '0%, 100%': { 'background-position': '0% 0%' },
+          '25%': { 'background-position': '100% 0%' },
+          '50%': { 'background-position': '100% 100%' },
+          '75%': { 'background-position': '0% 100%' },
+        },
+        float: {
+          '0%, 100%': { transform: 'translateY(0px)' },
+          '50%': { transform: 'translateY(-20px)' },
+        },
+        glow: {
+          '0%, 100%': { 'box-shadow': '0 0 20px rgba(168, 85, 247, 0.4)' },
+          '50%': { 'box-shadow': '0 0 30px rgba(236, 72, 153, 0.6)' },
+        },
       },
       boxShadow: {
-        card: '0 2px 8px rgba(0, 0, 0, 0.1)',
-        'card-hover': '0 4px 16px rgba(0, 0, 0, 0.15)',
-        button: '0 2px 4px rgba(254, 44, 85, 0.3)',
+        card: '0 4px 20px rgba(0, 0, 0, 0.08)',
+        'card-hover': '0 8px 30px rgba(0, 0, 0, 0.12)',
+        button: '0 4px 14px rgba(168, 85, 247, 0.4)',
+        glow: '0 0 20px rgba(168, 85, 247, 0.5)',
+        'glow-lg': '0 0 30px rgba(168, 85, 247, 0.6)',
+        'glow-pink': '0 0 20px rgba(236, 72, 153, 0.5)',
+      },
+      backgroundImage: {
+        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+        'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
       },
       spacing: {
         '18': '4.5rem',
