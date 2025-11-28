@@ -8,13 +8,13 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: tiktok_clone
     ports:
-      - "5432:5432"
+      - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - tiktok_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -24,13 +24,13 @@ services:
     image: redis:7-alpine
     container_name: tiktok_redis
     ports:
-      - "6379:6379"
+      - '6379:6379'
     volumes:
       - redis_data:/data
     networks:
       - tiktok_network
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -43,14 +43,14 @@ services:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
     ports:
-      - "2181:2181"
+      - '2181:2181'
     volumes:
       - zookeeper_data:/var/lib/zookeeper/data
       - zookeeper_logs:/var/lib/zookeeper/log
     networks:
       - tiktok_network
     healthcheck:
-      test: ["CMD", "nc", "-z", "localhost", "2181"]
+      test: ['CMD', 'nc', '-z', 'localhost', '2181']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -63,8 +63,8 @@ services:
       zookeeper:
         condition: service_healthy
     ports:
-      - "9092:9092"
-      - "9093:9093"
+      - '9092:9092'
+      - '9093:9093'
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
@@ -80,7 +80,7 @@ services:
     networks:
       - tiktok_network
     healthcheck:
-      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      test: ['CMD', 'kafka-broker-api-versions', '--bootstrap-server', 'localhost:9092']
       interval: 10s
       timeout: 10s
       retries: 5
@@ -96,11 +96,11 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3001
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_USERNAME: postgres
-      DB_PASSWORD: postgres
-      DB_NAME: tiktok_clone
+      AUTH_DB_HOST: postgres
+      AUTH_DB_PORT: 5432
+      AUTH_DB_USERNAME: postgres
+      AUTH_DB_PASSWORD: postgres
+      AUTH_DB_NAME: tiktok_clone
       REDIS_HOST: redis
       REDIS_PORT: 6379
       KAFKA_BROKERS: kafka:29092
@@ -110,8 +110,8 @@ services:
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-your-secret-key-please-change-in-production}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-your-refresh-key-please-change-in-production}
     ports:
-      - "3001:3001"
-      - "50051:50051"
+      - '3001:3001'
+      - '50051:50051'
     depends_on:
       postgres:
         condition: service_healthy
@@ -132,11 +132,11 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3002
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_USERNAME: postgres
-      DB_PASSWORD: postgres
-      DB_NAME: tiktok_clone
+      VIDEO_DB_HOST: postgres
+      VIDEO_DB_PORT: 5432
+      VIDEO_DB_USERNAME: postgres
+      VIDEO_DB_PASSWORD: postgres
+      VIDEO_DB_NAME: tiktok_clone
       REDIS_HOST: redis
       REDIS_PORT: 6379
       KAFKA_BROKERS: kafka:29092
@@ -144,8 +144,8 @@ services:
       KAFKA_GROUP_ID: video-service-group
       GRPC_VIDEO_URL: 0.0.0.0:50052
     ports:
-      - "3002:3002"
-      - "50052:50052"
+      - '3002:3002'
+      - '50052:50052'
     volumes:
       - upload_data:/app/uploads
     depends_on:
@@ -168,11 +168,11 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3003
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_USERNAME: postgres
-      DB_PASSWORD: postgres
-      DB_NAME: tiktok_clone
+      INTERACTION_DB_HOST: postgres
+      INTERACTION_DB_PORT: 5432
+      INTERACTION_DB_USERNAME: postgres
+      INTERACTION_DB_PASSWORD: postgres
+      INTERACTION_DB_NAME: tiktok_clone
       REDIS_HOST: redis
       REDIS_PORT: 6379
       KAFKA_BROKERS: kafka:29092
@@ -180,8 +180,8 @@ services:
       KAFKA_GROUP_ID: interaction-service-group
       GRPC_INTERACTION_URL: 0.0.0.0:50053
     ports:
-      - "3003:3003"
-      - "50053:50053"
+      - '3003:3003'
+      - '50053:50053'
     depends_on:
       postgres:
         condition: service_healthy
@@ -213,7 +213,7 @@ services:
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-your-refresh-key-please-change-in-production}
       CORS_ORIGIN: http://localhost:3006,http://localhost:4000,http://frontend:3000
     ports:
-      - "4000:3000"
+      - '4000:3000'
     depends_on:
       - auth-service
       - video-service
@@ -231,11 +231,11 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3004
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_USERNAME: postgres
-      DB_PASSWORD: postgres
-      DB_NAME: tiktok_clone
+      NOTIFICATION_DB_HOST: postgres
+      NOTIFICATION_DB_PORT: 5432
+      NOTIFICATION_DB_USERNAME: postgres
+      NOTIFICATION_DB_PASSWORD: postgres
+      NOTIFICATION_DB_NAME: tiktok_clone
       REDIS_HOST: redis
       REDIS_PORT: 6379
       KAFKA_BROKERS: kafka:29092
@@ -243,8 +243,8 @@ services:
       KAFKA_GROUP_ID: notification-service-group
       GRPC_NOTIFICATION_URL: 0.0.0.0:50054
     ports:
-      - "3004:3004"
-      - "50054:50054"
+      - '3004:3004'
+      - '50054:50054'
     depends_on:
       postgres:
         condition: service_healthy
@@ -261,7 +261,7 @@ services:
     image: prom/prometheus:latest
     container_name: tiktok_prometheus
     ports:
-      - "9090:9090"
+      - '9090:9090'
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus_data:/prometheus
@@ -275,7 +275,7 @@ services:
     image: grafana/grafana:latest
     container_name: tiktok_grafana
     ports:
-      - "3005:3000"   # changed from 3001:3000 to avoid host port conflict
+      - '3005:3000' # changed from 3001:3000 to avoid host port conflict
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
     volumes:
@@ -297,7 +297,7 @@ services:
       NEXT_PUBLIC_API_URL: http://api-gateway:3000
       NEXT_PUBLIC_WS_URL: http://api-gateway:3000
     ports:
-      - "3006:3000"
+      - '3006:3000'
     depends_on:
       - api-gateway
     networks:

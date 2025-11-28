@@ -137,20 +137,11 @@ export class InteractionService {
       logger.info(`User ${userId} commented on video ${videoId}`);
 
       return {
-        comment: {
-          id: savedComment.id,
-          userId: savedComment.userId,
-          videoId: savedComment.videoId,
-          content: savedComment.content,
-          createdAt: savedComment.createdAt.toISOString(),
-          user: {
-            id: user.id,
-            username: user.username,
-            fullName: user.fullName,
-            avatar: user.avatar,
-          },
-        },
-        commentsCount: totalComments,
+        id: savedComment.id,
+        userId: savedComment.userId,
+        videoId: savedComment.videoId,
+        content: savedComment.content,
+        createdAt: savedComment.createdAt.toISOString(),
       };
     } catch (error) {
       logger.error('Error adding comment:', error);
