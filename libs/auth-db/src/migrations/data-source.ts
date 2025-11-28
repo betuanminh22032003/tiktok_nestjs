@@ -1,16 +1,14 @@
 import { DataSource } from 'typeorm';
-import { ConfigService } from '@nestjs/config';
-import { User, RefreshToken } from '../entities';
-
-const configService = new ConfigService();
+import { RefreshToken } from '../entities/refresh-token.entity';
+import { User } from '../entities/user.entity';
 
 export const AuthDataSource = new DataSource({
   type: 'postgres',
-  host: configService.get('AUTH_DB_HOST', 'localhost'),
-  port: configService.get('AUTH_DB_PORT', 5432),
-  username: configService.get('AUTH_DB_USERNAME', 'postgres'),
-  password: configService.get('AUTH_DB_PASSWORD', 'postgres'),
-  database: configService.get('AUTH_DB_NAME', 'tiktok_auth'),
+  host: process.env.AUTH_DB_HOST || 'localhost',
+  port: parseInt(process.env.AUTH_DB_PORT) || 5432,
+  username: process.env.AUTH_DB_USERNAME || 'postgres',
+  password: process.env.AUTH_DB_PASSWORD || 'postgres',
+  database: process.env.AUTH_DB_NAME || 'tiktok_auth',
   entities: [User, RefreshToken],
   migrations: [__dirname + '/../migrations/*{.ts,.js}'],
   synchronize: false,

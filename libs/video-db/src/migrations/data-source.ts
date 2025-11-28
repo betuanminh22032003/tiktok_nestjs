@@ -1,16 +1,14 @@
 import { DataSource } from 'typeorm';
-import { ConfigService } from '@nestjs/config';
-import { Video, VideoView } from '../entities';
-
-const configService = new ConfigService();
+import { VideoView } from '../entities/video-view.entity';
+import { Video } from '../entities/video.entity';
 
 export const VideoDataSource = new DataSource({
   type: 'postgres',
-  host: configService.get('VIDEO_DB_HOST', 'localhost'),
-  port: configService.get('VIDEO_DB_PORT', 5433),
-  username: configService.get('VIDEO_DB_USERNAME', 'postgres'),
-  password: configService.get('VIDEO_DB_PASSWORD', 'postgres'),
-  database: configService.get('VIDEO_DB_NAME', 'tiktok_video'),
+  host: process.env.VIDEO_DB_HOST || 'localhost',
+  port: parseInt(process.env.VIDEO_DB_PORT) || 5433,
+  username: process.env.VIDEO_DB_USERNAME || 'postgres',
+  password: process.env.VIDEO_DB_PASSWORD || 'postgres',
+  database: process.env.VIDEO_DB_NAME || 'tiktok_video',
   entities: [Video, VideoView],
   migrations: [__dirname + '/../migrations/*{.ts,.js}'],
   synchronize: false,

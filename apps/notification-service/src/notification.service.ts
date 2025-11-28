@@ -1,11 +1,5 @@
 import { logger } from '@app/common/utils';
-import {
-  Notification,
-  NotificationDelivery,
-  NotificationPreference,
-  NotificationType,
-  NotificationStatus
-} from '@app/notification-db';
+import { Notification, NotificationDelivery, NotificationPreference } from '@app/notification-db';
 import { Injectable } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -17,6 +11,10 @@ interface NotificationMetadata {
 
 @Injectable()
 export class NotificationService {
+  // In-memory storage for demo purposes
+  // In production, use the database repositories
+  private notifications: Map<string, any[]> = new Map();
+
   constructor(
     @InjectRepository(Notification, 'notification')
     private readonly notificationRepository: Repository<Notification>,
@@ -26,17 +24,6 @@ export class NotificationService {
     private readonly notificationPreferenceRepository: Repository<NotificationPreference>,
   ) {}
 
-@Injectable()
-export class NotificationService {
-  // In-memory storage for demo purposes
-  // In production, use a proper database table
-  private notifications: Map<string, Notification[]> = new Map();
-
-  constructor(
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
-  ) {}
-
   async sendNotification(
     userId: string,
     type: string,
@@ -44,7 +31,7 @@ export class NotificationService {
     metadata?: NotificationMetadata,
   ) {
     try {
-      const notification: Notification = {
+      const notification = {
         id: this.generateId(),
         userId,
         type,
@@ -60,12 +47,6 @@ export class NotificationService {
       this.notifications.set(userId, userNotifications);
 
       logger.info(`Notification sent to user ${userId}: ${type}`);
-
-      // Here you would integrate with:
-      // - WebSocket to send real-time notification
-      // - Firebase Cloud Messaging for push notifications
-      // - Email service
-      // - SMS service
 
       return {
         success: true,

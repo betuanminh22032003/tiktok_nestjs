@@ -8,7 +8,6 @@ import { RefreshToken, User } from './entities';
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
-        name: 'auth',
         type: 'postgres',
         host: configService.get('AUTH_DB_HOST', 'localhost'),
         port: configService.get('AUTH_DB_PORT', 5432),
@@ -25,7 +24,7 @@ import { RefreshToken, User } from './entities';
       }),
       inject: [ConfigService],
     }),
-    TypeOrmModule.forFeature([User, RefreshToken], 'auth'),
+    TypeOrmModule.forFeature([User, RefreshToken]),
   ],
   exports: [TypeOrmModule],
 })

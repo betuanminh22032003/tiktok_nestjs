@@ -1,10 +1,10 @@
+import { AuthDbModule } from '@app/auth-db';
+import { KafkaModule } from '@app/kafka';
+import { RedisModule } from '@app/redis';
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import { AuthDbModule } from '@app/auth-db';
-import { RedisModule } from '@app/redis';
-import { KafkaModule } from '@app/kafka';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { HealthController } from './health.controller';
@@ -21,10 +21,18 @@ import { LocalStrategy } from './strategies/local.strategy';
     RedisModule,
     KafkaModule.register({ name: 'auth-service' }),
     PassportModule,
-    JwtModule.register({}),
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        secret: configService.get<string>('JWT_SECRET'),
+        signOptions: {
+          expiresIn: configService.get<string>('JWT_EXPIRES_IN', '1h'),
+        },
+      }),
+      inject: [ConfigService],
+    }),
   ],
   controllers: [AuthController, HealthController],
   providers: [AuthService, JwtStrategy, LocalStrategy],
-})
 })
 export class AuthModule {}

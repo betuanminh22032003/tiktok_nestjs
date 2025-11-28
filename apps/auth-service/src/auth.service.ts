@@ -1,4 +1,4 @@
-import { User, RefreshToken } from '@app/auth-db';
+import { RefreshToken, User } from '@app/auth-db';
 import { RedisService } from '@app/redis';
 import {
   ConflictException,
@@ -18,9 +18,9 @@ export class AuthService {
   private readonly logger = new Logger(AuthService.name);
 
   constructor(
-    @InjectRepository(User, 'auth')
+    @InjectRepository(User)
     private userRepository: Repository<User>,
-    @InjectRepository(RefreshToken, 'auth')
+    @InjectRepository(RefreshToken)
     private refreshTokenRepository: Repository<RefreshToken>,
     private jwtService: JwtService,
     private configService: ConfigService,
