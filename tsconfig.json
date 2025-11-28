@@ -48,6 +48,30 @@
       ],
       "@app/grpc/*": [
         "libs/grpc/src/*"
+      ],
+      "@app/auth-db": [
+        "libs/auth-db/src"
+      ],
+      "@app/auth-db/*": [
+        "libs/auth-db/src/*"
+      ],
+      "@app/video-db": [
+        "libs/video-db/src"
+      ],
+      "@app/video-db/*": [
+        "libs/video-db/src/*"
+      ],
+      "@app/interaction-db": [
+        "libs/interaction-db/src"
+      ],
+      "@app/interaction-db/*": [
+        "libs/interaction-db/src/*"
+      ],
+      "@app/notification-db": [
+        "libs/notification-db/src"
+      ],
+      "@app/notification-db/*": [
+        "libs/notification-db/src/*"
       ]
     }
   }

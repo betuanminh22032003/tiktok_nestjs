@@ -99,6 +99,42 @@
       "compilerOptions": {
         "tsConfigPath": "libs/grpc/tsconfig.lib.json"
       }
+    },
+    "auth-db": {
+      "type": "library",
+      "root": "libs/auth-db",
+      "entryFile": "index",
+      "sourceRoot": "libs/auth-db/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/auth-db/tsconfig.lib.json"
+      }
+    },
+    "video-db": {
+      "type": "library",
+      "root": "libs/video-db",
+      "entryFile": "index",
+      "sourceRoot": "libs/video-db/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/video-db/tsconfig.lib.json"
+      }
+    },
+    "interaction-db": {
+      "type": "library",
+      "root": "libs/interaction-db",
+      "entryFile": "index",
+      "sourceRoot": "libs/interaction-db/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/interaction-db/tsconfig.lib.json"
+      }
+    },
+    "notification-db": {
+      "type": "library",
+      "root": "libs/notification-db",
+      "entryFile": "index",
+      "sourceRoot": "libs/notification-db/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/notification-db/tsconfig.lib.json"
+      }
     }
   }
 }

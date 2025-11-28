@@ -1,15 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { InteractionController } from './interaction.controller';
 import { InteractionService } from './interaction.service';
-import { DatabaseModule } from '@app/database';
+import { InteractionDbModule } from '@app/interaction-db';
 import { RedisModule } from '@app/redis';
 import { KafkaModule } from '@app/kafka';
-import { Video } from '@app/database/entities/video.entity';
-import { User } from '@app/database/entities/user.entity';
-import { Like } from '@app/database/entities/like.entity';
-import { Comment } from '@app/database/entities/comment.entity';
 import { HealthController } from './health.controller';
 
 @Module({
@@ -18,10 +13,9 @@ import { HealthController } from './health.controller';
       isGlobal: true,
       envFilePath: '.env',
     }),
-    DatabaseModule,
+    InteractionDbModule,
     RedisModule,
     KafkaModule.register({ name: 'interaction-service' }),
-    TypeOrmModule.forFeature([Video, User, Like, Comment]),
   ],
   controllers: [InteractionController, HealthController],
   providers: [InteractionService],

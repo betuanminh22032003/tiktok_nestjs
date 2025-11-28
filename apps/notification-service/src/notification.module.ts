@@ -1,11 +1,9 @@
 import { Module, OnModuleInit } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { NotificationController } from './notification.controller';
 import { NotificationService } from './notification.service';
-import { DatabaseModule } from '@app/database';
+import { NotificationDbModule } from '@app/notification-db';
 import { KafkaModule } from '@app/kafka';
-import { User } from '@app/database/entities/user.entity';
 import { HealthController } from './health.controller';
 import { KafkaService } from '@app/kafka';
 
@@ -15,9 +13,8 @@ import { KafkaService } from '@app/kafka';
       isGlobal: true,
       envFilePath: '.env',
     }),
-    DatabaseModule,
+    NotificationDbModule,
     KafkaModule.register({ name: 'notification-service' }),
-    TypeOrmModule.forFeature([User]),
   ],
   controllers: [NotificationController, HealthController],
   providers: [NotificationService],

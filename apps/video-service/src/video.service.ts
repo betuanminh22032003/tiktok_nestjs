@@ -1,7 +1,6 @@
 import { CreateVideoDto, UpdateVideoStatsDto } from '@app/common/dto/video.dto';
 import { logger } from '@app/common/utils';
-import { User } from '@app/database/entities/user.entity';
-import { Video } from '@app/database/entities/video.entity';
+import { Video, VideoView } from '@app/video-db';
 import { KafkaService } from '@app/kafka';
 import { RedisService } from '@app/redis';
 import { Injectable } from '@nestjs/common';
@@ -12,10 +11,10 @@ import { ILike, Repository } from 'typeorm';
 @Injectable()
 export class VideoService {
   constructor(
-    @InjectRepository(Video)
+    @InjectRepository(Video, 'video')
     private readonly videoRepository: Repository<Video>,
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
+    @InjectRepository(VideoView, 'video')
+    private readonly videoViewRepository: Repository<VideoView>,
     private readonly redisService: RedisService,
     private readonly kafkaService: KafkaService,
   ) {}

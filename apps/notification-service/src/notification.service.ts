@@ -1,5 +1,11 @@
 import { logger } from '@app/common/utils';
-import { User } from '@app/database/entities/user.entity';
+import {
+  Notification,
+  NotificationDelivery,
+  NotificationPreference,
+  NotificationType,
+  NotificationStatus
+} from '@app/notification-db';
 import { Injectable } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -9,15 +15,16 @@ interface NotificationMetadata {
   [key: string]: string | number | boolean | undefined;
 }
 
-interface Notification {
-  id: string;
-  userId: string;
-  type: string;
-  message: string;
-  metadata?: NotificationMetadata;
-  read: boolean;
-  createdAt: Date;
-}
+@Injectable()
+export class NotificationService {
+  constructor(
+    @InjectRepository(Notification, 'notification')
+    private readonly notificationRepository: Repository<Notification>,
+    @InjectRepository(NotificationDelivery, 'notification')
+    private readonly notificationDeliveryRepository: Repository<NotificationDelivery>,
+    @InjectRepository(NotificationPreference, 'notification')
+    private readonly notificationPreferenceRepository: Repository<NotificationPreference>,
+  ) {}
 
 @Injectable()
 export class NotificationService {

@@ -1,0 +1,32 @@
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { Like, Comment, CommentLike, Follow, Share } from './entities';
+
+@Module({
+  imports: [
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        name: 'interaction',
+        type: 'postgres',
+        host: configService.get('INTERACTION_DB_HOST', 'localhost'),
+        port: configService.get('INTERACTION_DB_PORT', 5434),
+        username: configService.get('INTERACTION_DB_USERNAME', 'postgres'),
+        password: configService.get('INTERACTION_DB_PASSWORD', 'postgres'),
+        database: configService.get('INTERACTION_DB_NAME', 'tiktok_interaction'),
+        entities: [Like, Comment, CommentLike, Follow, Share],
+        synchronize:
+          configService.get('NODE_ENV') === 'development' &&
+          configService.get('INTERACTION_DB_SYNC', 'false') === 'true',
+        migrationsRun: configService.get('NODE_ENV') === 'production',
+        logging: configService.get('NODE_ENV') === 'development',
+        autoLoadEntities: true,
+      }),
+      inject: [ConfigService],
+    }),
+    TypeOrmModule.forFeature([Like, Comment, CommentLike, Follow, Share], 'interaction'),
+  ],
+  exports: [TypeOrmModule],
+})
+export class InteractionDbModule {}

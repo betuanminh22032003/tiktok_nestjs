@@ -48,7 +48,16 @@
     "db:setup": "npm run migration:run && npm run seed:run",
     "version:check": "ts-node -r tsconfig-paths/register libs/database/src/scripts/check-version.ts",
     "version:deploy": "ts-node -r tsconfig-paths/register libs/database/src/scripts/deploy-version.ts",
-    "version:history": "ts-node -r tsconfig-paths/register libs/database/src/scripts/version-history.ts"
+    "version:history": "ts-node -r tsconfig-paths/register libs/database/src/scripts/version-history.ts",
+    "migration:auth:generate": "npm run typeorm -- migration:generate -d libs/auth-db/src/migrations/data-source.ts",
+    "migration:auth:run": "npm run typeorm -- migration:run -d libs/auth-db/src/migrations/data-source.ts",
+    "migration:video:generate": "npm run typeorm -- migration:generate -d libs/video-db/src/migrations/data-source.ts",
+    "migration:video:run": "npm run typeorm -- migration:run -d libs/video-db/src/migrations/data-source.ts",
+    "migration:interaction:generate": "npm run typeorm -- migration:generate -d libs/interaction-db/src/migrations/data-source.ts",
+    "migration:interaction:run": "npm run typeorm -- migration:run -d libs/interaction-db/src/migrations/data-source.ts",
+    "migration:notification:generate": "npm run typeorm -- migration:generate -d libs/notification-db/src/migrations/data-source.ts",
+    "migration:notification:run": "npm run typeorm -- migration:run -d libs/notification-db/src/migrations/data-source.ts",
+    "migration:all:run": "npm run migration:auth:run && npm run migration:video:run && npm run migration:interaction:run && npm run migration:notification:run"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.9.14",
