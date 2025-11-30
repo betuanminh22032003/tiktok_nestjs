@@ -16,21 +16,17 @@ RUN apk add --no-cache \
 
 WORKDIR /app
 
-# Copy workspace package files (root package.json and lock)
+# Copy only frontend package files
 COPY package*.json ./
 
-# Copy frontend package.json
-COPY tiktok-frontend/package*.json ./tiktok-frontend/
-
-# Install dependencies with cache mount (workspace aware)
+# Install dependencies with cache mount (standalone frontend)
 RUN --mount=type=cache,target=/root/.npm \
-    npm ci --workspace=tiktok-frontend --include-workspace-root --prefer-offline --no-audit --no-fund
+    npm ci --prefer-offline --no-audit --no-fund
 
 # Copy frontend source code
-COPY tiktok-frontend/ ./tiktok-frontend/
+COPY . .
 
 # Build the application
-WORKDIR /app/tiktok-frontend
 RUN npm run build
 
 # =============================================================================
@@ -45,9 +41,9 @@ RUN addgroup -g 1001 -S nodejs && \
 WORKDIR /app
 
 # Copy necessary files from builder
-COPY --from=builder --chown=nextjs:nodejs /app/tiktok-frontend/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/tiktok-frontend/.next/static ./.next/static
-COPY --from=builder --chown=nextjs:nodejs /app/tiktok-frontend/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
 # Switch to non-root user
 USER nextjs

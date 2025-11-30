@@ -7,13 +7,12 @@
   "license": "MIT",
   "workspaces": [
     "apps/*",
-    "libs/*",
-    "tiktok-frontend"
+    "libs/*"
   ],
   "scripts": {
-    "install:all": "npm install",
-    "dev:frontend": "npm run dev --workspace=tiktok-frontend",
-    "build:frontend": "npm run build --workspace=tiktok-frontend",
+    "install:all": "npm install && cd tiktok-frontend && npm install",
+    "dev:frontend": "cd tiktok-frontend && npm run dev",
+    "build:frontend": "cd tiktok-frontend && npm run build",
     "prebuild": "rimraf dist",
     "build": "nest build",
     "format": "prettier --write \"apps/**/*.ts\" \"libs/**/*.ts\"",
