@@ -18,15 +18,29 @@ git clone https://github.com/betuanminh22032003/tiktok_nestjs.git
 cd tiktok_nestjs
 
 # Chạy tất cả (auto setup everything!)
-.\run.ps1
+.\dev.ps1
 ```
 
 **Sau 5-10 phút, truy cập:**
+
 - 🌐 Frontend: http://localhost:3000
 - 🔌 API: http://localhost:4000
 - 📚 Swagger: http://localhost:4000/api/docs
 
 > 💡 Script tự động kiểm tra, cài đặt dependencies, tạo .env, và start tất cả containers!
+
+### 🛠️ Development Commands
+
+```powershell
+# Development (Hot reload enabled)
+.\dev.ps1                # Start everything
+.\dev.ps1 infra         # Infrastructure only
+.\dev.ps1 services      # Services only
+.\dev.ps1 stop          # Stop everything
+.\dev.ps1 status        # Check status
+```
+
+📖 **Detailed script documentation**: [scripts/README.md](scripts/README.md)
 
 ## 📋 Mục Lục
 
@@ -46,6 +60,7 @@ cd tiktok_nestjs
 ## ✨ Tính năng
 
 ### Backend
+
 - ✅ **Authentication & Authorization**: JWT với Access Token và Refresh Token trong HttpOnly Cookies
 - ✅ **Video Management**: Upload, stream, và quản lý video
 - ✅ **Social Interactions**: Like, comment, view counter
@@ -58,6 +73,7 @@ cd tiktok_nestjs
 - ✅ **Logging**: Winston với Sentry integration
 
 ### Frontend (NextJS - Đang phát triển)
+
 - 🔄 Video feed với vertical scroll
 - 🔄 Auto-play video khi hiển thị
 - 🔄 Real-time likes và comments
@@ -112,6 +128,7 @@ cd tiktok_nestjs
 ## 🛠️ Công nghệ
 
 ### Backend
+
 - **Framework**: NestJS 10.x (Monorepo)
 - **Language**: TypeScript 5.x
 - **Database**: PostgreSQL 15
@@ -128,6 +145,7 @@ cd tiktok_nestjs
 - **Monitoring**: Prometheus, Grafana
 
 ### Frontend
+
 - **Framework**: Next.js 14 (App Router)
 - **Language**: TypeScript
 - **Styling**: TailwindCSS, ShadcnUI
@@ -137,6 +155,7 @@ cd tiktok_nestjs
 - **HTTP Client**: Axios
 
 ### DevOps
+
 - **Containerization**: Docker, Docker Compose
 - **CI/CD**: GitHub Actions
 - **Cloud**: AWS EC2
@@ -176,11 +195,14 @@ cp .env.example .env
 Chỉnh sửa file `.env` với thông tin của bạn:
 
 \`\`\`env
+
 # Application
+
 NODE_ENV=development
 PORT=3000
 
 # Database
+
 DB_HOST=localhost
 DB_PORT=5432
 DB_USERNAME=postgres
@@ -188,26 +210,31 @@ DB_PASSWORD=postgres
 DB_NAME=tiktok_clone
 
 # Redis
+
 REDIS_HOST=localhost
 REDIS_PORT=6379
 
 # Kafka
+
 KAFKA_BROKERS=localhost:9092
 KAFKA_CLIENT_ID=tiktok-service
 KAFKA_GROUP_ID=tiktok-group
 
 # JWT Secrets (ĐỔI TRONG PRODUCTION!)
+
 JWT_ACCESS_SECRET=your-super-secret-access-key-change-in-production
 JWT_REFRESH_SECRET=your-super-secret-refresh-key-change-in-production
 JWT_ACCESS_EXPIRATION=15m
 JWT_REFRESH_EXPIRATION=7d
 
 # gRPC URLs
+
 GRPC_AUTH_URL=localhost:50051
 GRPC_VIDEO_URL=localhost:50052
 GRPC_INTERACTION_URL=localhost:50053
 
 # CORS
+
 CORS_ORIGIN=http://localhost:3000,http://localhost:3001
 \`\`\`
 
@@ -216,16 +243,21 @@ CORS_ORIGIN=http://localhost:3000,http://localhost:3001
 ### Option 1: Chạy với Docker (Khuyến nghị)
 
 \`\`\`bash
+
 # Build và chạy tất cả services
+
 docker-compose up -d
 
 # Xem logs
+
 docker-compose logs -f
 
 # Dừng services
+
 docker-compose down
 
 # Dừng và xóa volumes
+
 docker-compose down -v
 \`\`\`
 
@@ -234,7 +266,9 @@ docker-compose down -v
 #### A. Chuẩn bị Infrastructure
 
 \`\`\`bash
+
 # Chạy PostgreSQL, Redis, Kafka, Zookeeper bằng Docker
+
 docker-compose up -d postgres redis zookeeper kafka
 \`\`\`
 
@@ -282,15 +316,15 @@ POST /api/auth/register
 POST /api/auth/login
 POST /api/auth/logout
 POST /api/auth/refresh
-GET  /api/auth/me
+GET /api/auth/me
 \`\`\`
 
 ### Video Endpoints
 
 \`\`\`http
-POST   /api/videos (upload)
-GET    /api/videos (feed)
-GET    /api/videos/:id
+POST /api/videos (upload)
+GET /api/videos (feed)
+GET /api/videos/:id
 DELETE /api/videos/:id
 \`\`\`
 
@@ -300,7 +334,7 @@ DELETE /api/videos/:id
 POST /api/interactions/like
 POST /api/interactions/unlike
 POST /api/interactions/comment
-GET  /api/interactions/comments/:videoId
+GET /api/interactions/comments/:videoId
 POST /api/interactions/view
 \`\`\`
 
@@ -311,16 +345,21 @@ Chi tiết xem tại: http://localhost:3000/api/docs
 ### Unit Tests
 
 \`\`\`bash
+
 # Run all tests
+
 npm run test
 
 # Run tests with coverage
+
 npm run test:cov
 
 # Run tests in watch mode
+
 npm run test:watch
 
 # Test specific service
+
 npm run test -- auth-service
 \`\`\`
 
@@ -336,6 +375,7 @@ npm run test:e2e
 npm install -g artillery
 
 # Test API Gateway
+
 artillery quick --count 100 --num 10 http://localhost:3000/health
 \`\`\`
 
@@ -368,19 +408,24 @@ Pipeline tự động với GitHub Actions:
 #### 1. Chuẩn bị EC2 Instance
 
 \`\`\`bash
+
 # SSH vào EC2
+
 ssh -i your-key.pem ubuntu@your-ec2-ip
 
 # Cài đặt Docker
+
 curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
 sudo usermod -aG docker ubuntu
 
 # Cài đặt Docker Compose
+
 sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 sudo chmod +x /usr/local/bin/docker-compose
 
 # Clone repository
+
 git clone https://github.com/betuanminh22032003/tiktok_nestjs.git
 cd tiktok_nestjs
 \`\`\`
@@ -388,6 +433,7 @@ cd tiktok_nestjs
 #### 2. Configure Security Groups
 
 Mở các ports sau trên AWS Security Group:
+
 - 22 (SSH)
 - 80 (HTTP)
 - 443 (HTTPS)
@@ -397,18 +443,23 @@ Mở các ports sau trên AWS Security Group:
 #### 3. Deploy
 
 \`\`\`bash
+
 # Set environment variables
+
 cp .env.example .env
-nano .env  # Edit với production values
+nano .env # Edit với production values
 
 # Generate strong secrets
-openssl rand -base64 32  # Cho JWT_ACCESS_SECRET
-openssl rand -base64 32  # Cho JWT_REFRESH_SECRET
+
+openssl rand -base64 32 # Cho JWT_ACCESS_SECRET
+openssl rand -base64 32 # Cho JWT_REFRESH_SECRET
 
 # Run với Docker Compose
+
 docker-compose -f docker-compose.yml up -d
 
 # Check logs
+
 docker-compose logs -f
 \`\`\`
 
@@ -416,8 +467,8 @@ docker-compose logs -f
 
 \`\`\`nginx
 server {
-    listen 80;
-    server_name your-domain.com;
+listen 80;
+server_name your-domain.com;
 
     location / {
         proxy_pass http://localhost:3000;
@@ -427,6 +478,7 @@ server {
         proxy_set_header Host $host;
         proxy_cache_bypass $http_upgrade;
     }
+
 }
 \`\`\`
 
@@ -444,15 +496,18 @@ sudo certbot --nginx -d your-domain.com
 Access: http://localhost:9090
 
 Metrics endpoints:
+
 - `/metrics` - Tất cả services expose metrics
 
 ### Grafana Dashboards
 
 Access: http://localhost:3001
+
 - Username: `admin`
 - Password: `admin`
 
 Import dashboards:
+
 1. NestJS Dashboard
 2. PostgreSQL Dashboard
 3. Redis Dashboard
@@ -461,10 +516,13 @@ Import dashboards:
 ### Logs
 
 \`\`\`bash
+
 # View logs
+
 docker-compose logs -f [service-name]
 
 # Application logs location
+
 ./logs/application-YYYY-MM-DD.log
 ./logs/error-YYYY-MM-DD.log
 \`\`\`
@@ -481,89 +539,89 @@ docker-compose logs -f [service-name]
 
 \`\`\`
 tiktok_nestjs/
-├── apps/                          # Microservices
-│   ├── api-gateway/              # API Gateway service
-│   │   ├── src/
-│   │   │   ├── modules/
-│   │   │   │   ├── auth/        # Auth endpoints
-│   │   │   │   ├── video/       # Video endpoints
-│   │   │   │   ├── interaction/ # Interaction endpoints
-│   │   │   │   └── websocket/   # WebSocket gateway
-│   │   │   ├── main.ts
-│   │   │   └── api-gateway.module.ts
-│   │   ├── Dockerfile
-│   │   └── tsconfig.app.json
-│   │
-│   ├── auth-service/             # Authentication service
-│   │   ├── src/
-│   │   │   ├── strategies/      # JWT, Local strategies
-│   │   │   ├── auth.controller.ts
-│   │   │   ├── auth.service.ts
-│   │   │   ├── auth.module.ts
-│   │   │   └── main.ts
-│   │   ├── Dockerfile
-│   │   └── tsconfig.app.json
-│   │
-│   ├── video-service/            # Video management service
-│   ├── interaction-service/      # Likes, comments, views
-│   └── notification-service/     # Notifications
+├── apps/ # Microservices
+│ ├── api-gateway/ # API Gateway service
+│ │ ├── src/
+│ │ │ ├── modules/
+│ │ │ │ ├── auth/ # Auth endpoints
+│ │ │ │ ├── video/ # Video endpoints
+│ │ │ │ ├── interaction/ # Interaction endpoints
+│ │ │ │ └── websocket/ # WebSocket gateway
+│ │ │ ├── main.ts
+│ │ │ └── api-gateway.module.ts
+│ │ ├── Dockerfile
+│ │ └── tsconfig.app.json
+│ │
+│ ├── auth-service/ # Authentication service
+│ │ ├── src/
+│ │ │ ├── strategies/ # JWT, Local strategies
+│ │ │ ├── auth.controller.ts
+│ │ │ ├── auth.service.ts
+│ │ │ ├── auth.module.ts
+│ │ │ └── main.ts
+│ │ ├── Dockerfile
+│ │ └── tsconfig.app.json
+│ │
+│ ├── video-service/ # Video management service
+│ ├── interaction-service/ # Likes, comments, views
+│ └── notification-service/ # Notifications
 │
-├── libs/                          # Shared libraries
-│   ├── common/                   # Common utilities
-│   │   ├── src/
-│   │   │   ├── decorators/      # Custom decorators
-│   │   │   ├── guards/          # Auth guards
-│   │   │   ├── interceptors/    # Logging, transform
-│   │   │   ├── filters/         # Exception filters
-│   │   │   ├── dto/             # DTOs
-│   │   │   ├── interfaces/      # TypeScript interfaces
-│   │   │   ├── constants/       # Constants
-│   │   │   └── utils/           # Utilities
-│   │   └── tsconfig.lib.json
-│   │
-│   ├── database/                 # Database module
-│   │   ├── src/
-│   │   │   ├── entities/        # TypeORM entities
-│   │   │   └── database.module.ts
-│   │   └── tsconfig.lib.json
-│   │
-│   ├── redis/                    # Redis module
-│   │   ├── src/
-│   │   │   ├── redis.service.ts
-│   │   │   └── redis.module.ts
-│   │   └── tsconfig.lib.json
-│   │
-│   ├── rabbitmq/                 # RabbitMQ module
-│   │   ├── src/
-│   │   │   ├── rabbitmq.service.ts
-│   │   │   └── rabbitmq.module.ts
-│   │   └── tsconfig.lib.json
-│   │
-│   └── grpc/                     # gRPC module
-│       ├── src/
-│       │   ├── grpc-client.options.ts
-│       │   └── grpc.module.ts
-│       └── tsconfig.lib.json
+├── libs/ # Shared libraries
+│ ├── common/ # Common utilities
+│ │ ├── src/
+│ │ │ ├── decorators/ # Custom decorators
+│ │ │ ├── guards/ # Auth guards
+│ │ │ ├── interceptors/ # Logging, transform
+│ │ │ ├── filters/ # Exception filters
+│ │ │ ├── dto/ # DTOs
+│ │ │ ├── interfaces/ # TypeScript interfaces
+│ │ │ ├── constants/ # Constants
+│ │ │ └── utils/ # Utilities
+│ │ └── tsconfig.lib.json
+│ │
+│ ├── database/ # Database module
+│ │ ├── src/
+│ │ │ ├── entities/ # TypeORM entities
+│ │ │ └── database.module.ts
+│ │ └── tsconfig.lib.json
+│ │
+│ ├── redis/ # Redis module
+│ │ ├── src/
+│ │ │ ├── redis.service.ts
+│ │ │ └── redis.module.ts
+│ │ └── tsconfig.lib.json
+│ │
+│ ├── rabbitmq/ # RabbitMQ module
+│ │ ├── src/
+│ │ │ ├── rabbitmq.service.ts
+│ │ │ └── rabbitmq.module.ts
+│ │ └── tsconfig.lib.json
+│ │
+│ └── grpc/ # gRPC module
+│ ├── src/
+│ │ ├── grpc-client.options.ts
+│ │ └── grpc.module.ts
+│ └── tsconfig.lib.json
 │
-├── proto/                         # gRPC Protocol Buffers
-│   ├── auth.proto
-│   ├── video.proto
-│   ├── interaction.proto
-│   └── notification.proto
+├── proto/ # gRPC Protocol Buffers
+│ ├── auth.proto
+│ ├── video.proto
+│ ├── interaction.proto
+│ └── notification.proto
 │
-├── monitoring/                    # Monitoring configs
-│   └── prometheus.yml
+├── monitoring/ # Monitoring configs
+│ └── prometheus.yml
 │
 ├── .github/
-│   └── workflows/
-│       └── ci-cd.yml             # CI/CD pipeline
+│ └── workflows/
+│ └── ci-cd.yml # CI/CD pipeline
 │
-├── docker-compose.yml            # Docker orchestration
-├── package.json                  # Dependencies
-├── nest-cli.json                 # NestJS CLI config
-├── tsconfig.json                 # TypeScript config
-├── .env.example                  # Environment template
-└── README.md                     # This file
+├── docker-compose.yml # Docker orchestration
+├── package.json # Dependencies
+├── nest-cli.json # NestJS CLI config
+├── tsconfig.json # TypeScript config
+├── .env.example # Environment template
+└── README.md # This file
 \`\`\`
 
 ## 🔒 Security Best Practices
@@ -613,6 +671,7 @@ This project is licensed under the MIT License.
 ## 👨‍💻 Author
 
 **Be Tuan Minh**
+
 - GitHub: [@betuanminh22032003](https://github.com/betuanminh22032003)
 
 ## 🙏 Acknowledgments
