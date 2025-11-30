@@ -432,7 +432,7 @@ try {
     }
 }
 
-Write-Header "🚀 All Services Started Successfully!"
+Write-Header "All Services Started Successfully!"
 
 Write-Info "Infrastructure Services (Docker):"
 Write-Host "  - PostgreSQL: localhost:5432" -ForegroundColor White
@@ -445,7 +445,7 @@ Write-Host "  - Kafka UI: http://localhost:9000" -ForegroundColor Cyan
 Write-Host "  - Redis Commander: http://localhost:8081" -ForegroundColor Cyan
 Write-Host "  - pgAdmin: http://localhost:5050 (admin@admin.com / admin)" -ForegroundColor Cyan
 
-Write-Info "`nMicroservices (Native with Hot Reload 🔥):"
+Write-Info "`nMicroservices (Native with Hot Reload):"
 Write-Host "  - Auth Service: http://localhost:4001 (gRPC: localhost:50051)" -ForegroundColor White
 Write-Host "  - Video Service: http://localhost:4002 (gRPC: localhost:50052)" -ForegroundColor White
 Write-Host "  - Interaction Service: http://localhost:4003 (gRPC: localhost:50053)" -ForegroundColor White
@@ -453,28 +453,28 @@ Write-Host "  - Notification Service: http://localhost:4004 (gRPC: localhost:500
 Write-Host "  - API Gateway: http://localhost:4000" -ForegroundColor White
 
 if (-not $SkipFrontend) {
-    Write-Info "`nFrontend (Next.js with Hot Reload 🔥):"
+    Write-Info "`nFrontend (Next.js with Hot Reload):"
     Write-Host "  - TikTok App: http://localhost:3000" -ForegroundColor White
 }
 
-Write-Info "`n📋 Quick Commands:"
+Write-Info "`nQuick Commands:"
 Write-Host "  - Stop all services: .\run-native.ps1 -StopOnly" -ForegroundColor Yellow
 Write-Host "  - Start only infrastructure: .\run-native.ps1 -InfraOnly" -ForegroundColor Yellow
 Write-Host "  - Skip infrastructure: .\run-native.ps1 -SkipInfra" -ForegroundColor Yellow
 Write-Host "  - Skip frontend: .\run-native.ps1 -SkipFrontend" -ForegroundColor Yellow
 
-Write-Info "`n🔧 Debug Commands:"
+Write-Info "`nDebug Commands:"
 Write-Host "  - Infrastructure logs: docker-compose -f docker-compose.infra.yml logs -f" -ForegroundColor Gray
 Write-Host "  - Stop infrastructure: docker-compose -f docker-compose.infra.yml down" -ForegroundColor Gray
 Write-Host "  - Service status: .\status-native.ps1" -ForegroundColor Gray
 
-Write-Success "`n✅ Development environment ready!"
+Write-Success "`nDevelopment environment ready!"
 Write-Host "   All services are running with hot reload enabled." -ForegroundColor Green
 Write-Host "   Check individual PowerShell windows for service logs." -ForegroundColor Green
 Write-Host "   Press Ctrl+C in any service window to stop that service." -ForegroundColor Yellow
 
 # Show current running services
-Write-Info "`n🔍 Running Services Check:"
+Write-Info "`nRunning Services Check:"
 $nodeProcesses = Get-Process -Name node -ErrorAction SilentlyContinue
 if ($nodeProcesses) {
     Write-Host "  Found $($nodeProcesses.Count) Node.js processes running" -ForegroundColor Green
