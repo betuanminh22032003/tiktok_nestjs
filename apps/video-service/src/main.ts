@@ -19,7 +19,7 @@ async function bootstrap() {
     options: {
       package: 'video',
       protoPath: join(__dirname, '../../../proto/video.proto'),
-      url: `0.0.0.0:${configService.get('VIDEO_GRPC_PORT', 50052)}`,
+      url: `localhost:${configService.get('VIDEO_GRPC_PORT', 50052)}`,
     },
   });
 

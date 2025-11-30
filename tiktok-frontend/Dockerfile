@@ -55,7 +55,7 @@ USER nextjs
 # Set environment variables
 ENV NODE_ENV=production
 ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
+ENV HOSTNAME="localhost"
 
 # Expose port
 EXPOSE 3000
