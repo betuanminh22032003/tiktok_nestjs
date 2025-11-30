@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 import 'reflect-metadata';
 import { AppDataSource } from '../data-source';
-import { DatabaseSeeder } from '../seeders/database.seeder';
 
 async function runMigrations() {
   try {

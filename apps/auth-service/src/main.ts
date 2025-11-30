@@ -33,8 +33,8 @@ async function bootstrap() {
   logger.log('🚀 Auth Service is running on gRPC port 50051');
 
   // Also start HTTP for health checks
-  const port = configService.get('AUTH_HTTP_PORT', 4001);
-  await app.listen(port);
+  const port = configService.get('AUTH_HTTP_PORT', 9081);
+  await app.listen(port, '127.0.0.1');
   logger.log(`🚀 Auth Service HTTP is running on port ${port}`);
 }
 

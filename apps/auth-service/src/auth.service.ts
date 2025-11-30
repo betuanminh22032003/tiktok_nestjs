@@ -198,7 +198,7 @@ export class AuthService {
   }
 
   private sanitizeUser(user: User) {
-    const { ...result } = user;
+    const { password, ...result } = user;
     return {
       ...result,
       createdAt: user.createdAt.toISOString(),

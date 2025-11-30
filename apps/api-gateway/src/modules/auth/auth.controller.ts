@@ -1,26 +1,26 @@
 import {
-  Controller,
-  Post,
+  ACCESS_TOKEN_COOKIE,
+  CurrentUser,
+  generateCookieOptions,
+  REFRESH_TOKEN_COOKIE,
+} from '@app/common';
+import { LoginDto, RegisterDto } from '@app/common/dto';
+import { JwtAuthGuard } from '@app/common/guards';
+import {
   Body,
-  Res,
+  Controller,
+  Get,
   HttpStatus,
   Inject,
   OnModuleInit,
-  Get,
-  UseGuards,
+  Post,
   Req,
+  Res,
+  UseGuards,
 } from '@nestjs/common';
 import { ClientGrpc } from '@nestjs/microservices';
-import { Response, Request } from 'express';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { RegisterDto, LoginDto } from '@app/common/dto';
-import { JwtAuthGuard } from '@app/common/guards';
-import {
-  CurrentUser,
-  generateCookieOptions,
-  ACCESS_TOKEN_COOKIE,
-  REFRESH_TOKEN_COOKIE,
-} from '@app/common';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Request, Response } from 'express';
 import { lastValueFrom, Observable } from 'rxjs';
 
 interface AuthResponse {
@@ -71,53 +71,72 @@ export class AuthController implements OnModuleInit {
   @Post('register')
   @ApiOperation({ summary: 'Register a new user' })
   @ApiResponse({ status: 201, description: 'User registered successfully' })
+  @ApiResponse({ status: 400, description: 'Validation error' })
+  @ApiResponse({ status: 409, description: 'Email or username already exists' })
   async register(@Body() registerDto: RegisterDto, @Res() res: Response) {
-    const result = (await lastValueFrom(this.authService.register(registerDto))) as AuthResponse;
+    try {
+      const result = (await lastValueFrom(this.authService.register(registerDto))) as AuthResponse;
 
-    const cookieOptions = generateCookieOptions(process.env.NODE_ENV === 'production');
+      const cookieOptions = generateCookieOptions(process.env.NODE_ENV === 'production');
 
-    res.cookie(ACCESS_TOKEN_COOKIE, result.accessToken, {
-      ...cookieOptions,
-      maxAge: 15 * 60 * 1000, // 15 minutes
-    });
+      res.cookie(ACCESS_TOKEN_COOKIE, result.accessToken, {
+        ...cookieOptions,
+        maxAge: 15 * 60 * 1000, // 15 minutes
+      });
 
-    res.cookie(REFRESH_TOKEN_COOKIE, result.refreshToken, {
-      ...cookieOptions,
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    });
+      res.cookie(REFRESH_TOKEN_COOKIE, result.refreshToken, {
+        ...cookieOptions,
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      });
 
-    return res.status(HttpStatus.CREATED).json({
-      success: true,
-      data: {
-        user: result.user,
-      },
-    });
+      return res.status(HttpStatus.CREATED).json({
+        success: true,
+        message: 'User registered successfully',
+        data: {
+          user: result.user,
+        },
+      });
+    } catch (error) {
+      return res.status(error.status || HttpStatus.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: error.message || 'Registration failed',
+      });
+    }
   }
 
   @Post('login')
   @ApiOperation({ summary: 'Login user' })
   @ApiResponse({ status: 200, description: 'User logged in successfully' })
+  @ApiResponse({ status: 401, description: 'Invalid credentials' })
   async login(@Body() loginDto: LoginDto, @Res() res: Response) {
-    const result = (await lastValueFrom(this.authService.login(loginDto))) as AuthResponse;
+    try {
+      const result = (await lastValueFrom(this.authService.login(loginDto))) as AuthResponse;
 
-    const cookieOptions = generateCookieOptions(process.env.NODE_ENV === 'production');
+      const cookieOptions = generateCookieOptions(process.env.NODE_ENV === 'production');
 
-    res.cookie(ACCESS_TOKEN_COOKIE, result.accessToken, {
-      ...cookieOptions,
-      maxAge: 15 * 60 * 1000,
-    });
+      res.cookie(ACCESS_TOKEN_COOKIE, result.accessToken, {
+        ...cookieOptions,
+        maxAge: 15 * 60 * 1000, // 15 minutes
+      });
 
-    res.cookie(REFRESH_TOKEN_COOKIE, result.refreshToken, {
-      ...cookieOptions,
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+      res.cookie(REFRESH_TOKEN_COOKIE, result.refreshToken, {
+        ...cookieOptions,
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      });
 
-    return res.status(HttpStatus.OK).json({
-      success: true,
-      data: {
-        user: result.user,
-      },
-    });
+      return res.status(HttpStatus.OK).json({
+        success: true,
+        message: 'User logged in successfully',
+        data: {
+          user: result.user,
+        },
+      });
+    } catch (error) {
+      return res.status(error.status || HttpStatus.UNAUTHORIZED).json({
+        success: false,
+        message: error.message || 'Login failed',
+      });
+    }
   }
 
   @Post('logout')
