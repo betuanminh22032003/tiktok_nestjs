@@ -305,7 +305,7 @@ services:
       - api-gateway
     networks:
       - tiktok_network
-    restart: unless-stopped
+    restart: always
 
 volumes:
   postgres_data:

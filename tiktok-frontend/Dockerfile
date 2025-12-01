@@ -1,48 +1,62 @@
-# ============================================
-# 1) BASE IMAGE
-# ============================================
+# ───────────────────────────────────────────────
+#   BASE: Cài đặt OS + NodeJS chung
+# ───────────────────────────────────────────────
 FROM node:20-alpine AS base
 WORKDIR /app
-RUN apk add --no-cache libc6-compat
 
-# ============================================
-# 2) DEPENDENCIES (tối ưu cache)
-# ============================================
+# Bật npm ci dùng cho CI/CD
+ENV CI=true
+
+# ───────────────────────────────────────────────
+#   DEPS: Cài dependencies (cache tốt nhất)
+# ───────────────────────────────────────────────
 FROM base AS deps
-COPY package.json package-lock.json* ./
-RUN npm ci
 
-# ============================================
-# 3) BUILDER (build .next)
-# ============================================
+# Cài thêm dependencies build (nếu dùng canvas)
+RUN apk add --no-cache python3 make g++ pixman-dev cairo-dev pango-dev
+
+COPY package.json package-lock.json* ./
+
+# Nếu có package-lock.json → npm ci
+# Nếu không có → npm install
+RUN if [ -f package-lock.json ]; then \
+        npm ci --ignore-scripts; \
+    else \
+        npm install --ignore-scripts; \
+    fi
+
+# ───────────────────────────────────────────────
+#   BUILDER: Build Next.js
+# ───────────────────────────────────────────────
 FROM base AS builder
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
-# ============================================
-# 4) RUNNER (chỉ giữ production artifacts)
-# ============================================
+# ───────────────────────────────────────────────
+#   RUNTIME: Nhẹ nhất (chỉ 50MB)
+# ───────────────────────────────────────────────
 FROM node:20-alpine AS runner
 WORKDIR /app
+
 ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN apk add --no-cache libc6-compat && \
-    addgroup -S nextjs && adduser -S nextjs -G nextjs
+# Tạo user non-root
+RUN addgroup --system nextjs && adduser --system nextjs --ingroup nextjs
 
-# output build
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/package.json ./
+# Copy output cho runtime
+COPY --from=builder --chown=nextjs:nextjs /app/.next ./.next
+COPY --from=builder --chown=nextjs:nextjs /app/public ./public
+COPY --from=builder --chown=nextjs:nextjs /app/package.json ./package.json
 
-# copy production modules
-COPY --from=deps /app/node_modules ./node_modules
+# Cài dependencies cần cho runtime (không cần dev deps)
+COPY package*.json ./
+RUN npm install --omit=dev --ignore-scripts
 
-RUN chown -R nextjs:nextjs /app
 USER nextjs
 
 EXPOSE 3000
+
 CMD ["npm", "start"]

@@ -3,7 +3,7 @@ import { toast } from 'react-hot-toast'
 import { apiClient } from './api-client'
 
 // Socket.IO configuration
-const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001'
+const SOCKET_URL ='http://localhost:4000'
 
 export interface SocketEvents {
   // Connection events
@@ -306,10 +306,18 @@ class SocketManager {
   }
 }
 
-// Create singleton instance
-export const socketManager = new SocketManager()
+// Lazy singleton: do NOT instantiate on server (prevents SSR connections)
+let socketManager: SocketManager | null = null
 
-// Export hooks for React components
-export const useSocket = () => socketManager
+export function getSocketManager(): SocketManager | null {
+  if (typeof window === 'undefined') return null
+  if (!socketManager) socketManager = new SocketManager()
+  return socketManager
+}
 
-export default socketManager
+// Export hooks for React components (may return null during SSR)
+export const useSocket = (): SocketManager | null => {
+  return getSocketManager()
+}
+
+export default getSocketManager

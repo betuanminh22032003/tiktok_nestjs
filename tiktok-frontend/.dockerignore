@@ -49,5 +49,6 @@ docs
 .editorconfig
 vitest.config.ts
 vitest.setup.ts
-tsconfig.json
-next-env.d.ts
+# include tsconfig so path aliases work inside Docker
+# tsconfig.json
+# next-env.d.ts

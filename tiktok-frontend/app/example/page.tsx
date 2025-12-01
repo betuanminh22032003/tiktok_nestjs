@@ -9,7 +9,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import { store, persistor } from '@/libs/store'
 import { swrConfig } from '@/libs/swr-hooks'
-import { socketManager } from '@/libs/socket-manager'
+import { getSocketManager } from '@/libs/socket-manager'
 import VideoCard from '@/app/components/VideoCard'
 import { PageTransition, LoadingSpinner, FadeIn } from '@/libs/animations'
 import { cn } from '@/libs/utils'
@@ -119,7 +119,8 @@ function VideoFeed({ videos }: VideoFeedProps) {
 
   useEffect(() => {
     // Monitor socket connection
-    const status = socketManager.getConnectionStatus()
+    const manager = getSocketManager()
+    const status = manager ? manager.getConnectionStatus() : { connected: false, reconnectAttempts: 0 }
     setIsConnected(status.connected)
 
     const handleKeyPress = (e: KeyboardEvent) => {
