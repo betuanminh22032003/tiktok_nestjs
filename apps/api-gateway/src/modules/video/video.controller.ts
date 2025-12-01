@@ -1,30 +1,30 @@
+import { CurrentUser } from '@app/common/decorators/current-user.decorator';
+import { GetVideoFeedDto } from '@app/common/dto/video.dto';
+import { JwtAuthGuard } from '@app/common/guards/jwt-auth.guard';
 import {
-  Controller,
-  Post,
-  Get,
-  Delete,
-  Body,
-  Param,
-  Query,
-  UseGuards,
-  Inject,
-  UploadedFile,
-  UseInterceptors,
   BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Inject,
+  Param,
+  Post,
+  Query,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ClientGrpc } from '@nestjs/microservices';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
-  ApiTags,
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
   ApiOperation,
   ApiResponse,
-  ApiBearerAuth,
-  ApiConsumes,
-  ApiBody,
+  ApiTags,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from '@app/common/guards/jwt-auth.guard';
-import { CurrentUser } from '@app/common/decorators/current-user.decorator';
-import { CreateVideoDto, GetVideoFeedDto } from '@app/common/dto/video.dto';
 import { lastValueFrom, Observable } from 'rxjs';
 
 interface JwtPayload {
@@ -99,35 +99,48 @@ export class VideoController {
     schema: {
       type: 'object',
       properties: {
-        title: { type: 'string', example: 'My awesome video' },
-        description: { type: 'string', example: 'Video description' },
-        videoUrl: { type: 'string', example: 'https://cdn.example.com/video.mp4' },
-        thumbnailUrl: { type: 'string', example: 'https://cdn.example.com/thumb.jpg' },
-        duration: { type: 'number', example: 60 },
-        video: { type: 'string', format: 'binary' },
+        file: { type: 'string', format: 'binary', description: 'Video file' },
+        text: { type: 'string', example: 'My awesome video caption' },
+        userId: { type: 'string', example: 'user-id' },
       },
-      required: ['title', 'videoUrl'],
+      required: ['file', 'text'],
     },
   })
-  @UseInterceptors(FileInterceptor('video'))
+  @UseInterceptors(FileInterceptor('file'))
   async createVideo(
     @CurrentUser() user: JwtPayload,
-    @Body() createVideoDto: CreateVideoDto,
+    @Body() body: { text?: string; userId?: string },
     @UploadedFile() file?: Express.Multer.File,
   ) {
-    // In a real app, upload file to S3/CloudFlare and get URL
-    // For now, we'll use the provided URL or placeholder
+    if (!file) {
+      throw new BadRequestException('Video file is required');
+    }
+
+    // Generate video URL from uploaded file
+    const baseUrl = `http://localhost:4000`; // TODO: get from config
+    const videoUrl = `${baseUrl}/uploads/videos/${file.filename}`;
+
+    // Use 'text' field as title (matching frontend)
+    const title = body.text || 'Untitled Video';
+    const description = body.text || '';
+
+    // In production, extract duration using ffmpeg
+    const duration = 30; // default 30 seconds
+
     const videoData = {
       userId: user.sub,
-      title: createVideoDto.title,
-      description: createVideoDto.description,
-      videoUrl: createVideoDto.videoUrl || 'https://example.com/placeholder.mp4',
-      thumbnailUrl: createVideoDto.thumbnailUrl,
-      duration: createVideoDto.duration || 0,
+      title,
+      description,
+      videoUrl,
+      thumbnailUrl: '',
+      duration,
     };
 
     const result = await lastValueFrom(this.videoService.createVideo(videoData));
-    return result;
+    return {
+      success: true,
+      data: result,
+    };
   }
 
   @Get('feed')

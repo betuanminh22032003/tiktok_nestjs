@@ -3,17 +3,24 @@ import { LoggingInterceptor, TransformInterceptor } from '@app/common/intercepto
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as compression from 'compression';
-import * as cookieParser from 'cookie-parser';
 import helmet from 'helmet';
+import { join } from 'path';
 import { ApiGatewayModule } from './api-gateway.module';
+const cookieParser = require('cookie-parser');
 
 async function bootstrap() {
   const logger = new Logger('APIGateway');
-  const app = await NestFactory.create(ApiGatewayModule);
+  const app = await NestFactory.create<NestExpressApplication>(ApiGatewayModule);
 
   const configService = app.get(ConfigService);
+
+  // Serve static files (uploaded videos, images)
+  app.useStaticAssets(join(process.cwd(), 'uploads'), {
+    prefix: '/uploads/',
+  });
 
   // Security
   app.use(helmet());

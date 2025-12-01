@@ -2,7 +2,7 @@ import useSWR from 'swr'
 import useSWRInfinite from 'swr/infinite'
 import useSWRMutation from 'swr/mutation'
 import { apiClient, apiEndpoints } from './api-client'
-import type { User, Video, Comment, Notification } from './store'
+import type { Comment, Notification, User, Video } from './store'
 
 // Generic fetcher function
 const fetcher = (url: string) => apiClient.get(url)
@@ -78,7 +78,8 @@ export function useLogout() {
       // Continue with logout even if API call fails
     } finally {
       apiClient.clearTokens()
-      window.location.href = '/login'
+      // Stay on current page, don't redirect
+      window.location.reload()
     }
   }
 

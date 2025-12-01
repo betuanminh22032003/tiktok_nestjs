@@ -113,9 +113,8 @@ class ApiClient {
   private onRefreshFailure() {
     this.refreshSubscribers = []
     this.clearTokens()
-    // Redirect to login or show auth modal
+    // Just show error, don't redirect
     toast.error('Session expired. Please login again.')
-    window.location.href = '/login'
   }
 
   private handleError(error: AxiosError) {
@@ -304,19 +303,19 @@ class ApiClient {
 
   // Video/Post methods
   async getAllPosts() {
-    return this.get('/videos')
+    return this.get('api/videos')
   }
 
   async getPostById(postId: string) {
-    return this.get(`/videos/${postId}`)
+    return this.get(`api/videos/${postId}`)
   }
 
   async getPostsByUserId(userId: string) {
-    return this.get(`/videos/user/${userId}`)
+    return this.get(`api/videos/user/${userId}`)
   }
 
   async createPost(postData: FormData) {
-    return this.post('/videos', postData, {
+    return this.post('api/videos', postData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -324,32 +323,32 @@ class ApiClient {
   }
 
   async deletePost(postId: string) {
-    return this.delete(`/videos/${postId}`)
+    return this.delete(`api/videos/${postId}`)
   }
 
   // Interaction methods
   async getCommentsByPostId(postId: string) {
-    return this.get(`/interactions/${postId}/comments`)
+    return this.get(`api/interactions/${postId}/comments`)
   }
 
   async createComment(postId: string, comment: string) {
-    return this.post(`/interactions/${postId}/comments`, { comment })
+    return this.post(`api/interactions/${postId}/comments`, { comment })
   }
 
   async deleteComment(commentId: string) {
-    return this.delete(`/interactions/comments/${commentId}`)
+    return this.delete(`api/interactions/comments/${commentId}`)
   }
 
   async getLikesByPostId(postId: string) {
-    return this.get(`/interactions/${postId}/likes`)
+    return this.get(`api/interactions/${postId}/likes`)
   }
 
   async createLike(postId: string) {
-    return this.post(`/interactions/${postId}/likes`)
+    return this.post(`api/interactions/${postId}/likes`)
   }
 
   async deleteLike(postId: string) {
-    return this.delete(`/interactions/${postId}/likes`)
+    return this.delete(`api/interactions/${postId}/likes`)
   }
 }
 
@@ -380,35 +379,35 @@ export const apiEndpoints = {
 
   // Video endpoints
   videos: {
-    list: '/videos',
-    create: '/videos',
-    detail: (videoId: string) => `/videos/${videoId}`,
-    update: (videoId: string) => `/videos/${videoId}`,
-    delete: (videoId: string) => `/videos/${videoId}`,
-    like: (videoId: string) => `/videos/${videoId}/like`,
-    unlike: (videoId: string) => `/videos/${videoId}/unlike`,
-    share: (videoId: string) => `/videos/${videoId}/share`,
-    trending: '/videos/trending',
-    search: '/videos/search',
-    upload: '/videos/upload',
+    list: 'api/videos',
+    create: 'api/videos',
+    detail: (videoId: string) => `api/videos/${videoId}`,
+    update: (videoId: string) => `api/videos/${videoId}`,
+    delete: (videoId: string) => `api/videos/${videoId}`,
+    like: (videoId: string) => `api/videos/${videoId}/like`,
+    unlike: (videoId: string) => `api/videos/${videoId}/unlike`,
+    share: (videoId: string) => `api/videos/${videoId}/share`,
+    trending: 'api/videos/trending',
+    search: 'api/videos/search',
+    upload: 'api/videos/upload',
   },
 
   // Comment endpoints
   comments: {
-    list: (videoId: string) => `/videos/${videoId}/comments`,
-    create: (videoId: string) => `/videos/${videoId}/comments`,
-    update: (commentId: string) => `/comments/${commentId}`,
-    delete: (commentId: string) => `/comments/${commentId}`,
-    like: (commentId: string) => `/comments/${commentId}/like`,
-    unlike: (commentId: string) => `/comments/${commentId}/unlike`,
+    list: (videoId: string) => `api/videos/${videoId}/comments`,
+    create: (videoId: string) => `api/videos/${videoId}/comments`,
+    update: (commentId: string) => `api/comments/${commentId}`,
+    delete: (commentId: string) => `api/comments/${commentId}`,
+    like: (commentId: string) => `api/comments/${commentId}/like`,
+    unlike: (commentId: string) => `api/comments/${commentId}/unlike`,
   },
 
   // Notification endpoints
   notifications: {
-    list: '/notifications',
-    markAsRead: (notificationId: string) => `/notifications/${notificationId}/read`,
-    markAllAsRead: '/notifications/read-all',
-    count: '/notifications/unread-count',
+    list: 'api/notifications',
+    markAsRead: (notificationId: string) => `api/notifications/${notificationId}/read`,
+    markAllAsRead: 'api/notifications/read-all',
+    count: 'api/notifications/unread-count',
   },
 }
 
