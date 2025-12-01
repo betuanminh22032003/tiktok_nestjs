@@ -90,6 +90,24 @@ export class VideoController {
     this.videoService = this.client.getService<VideoServiceClient>('VideoService');
   }
 
+  @Get()
+  @ApiOperation({ summary: 'Get all videos (feed)' })
+  @ApiResponse({ status: 200, description: 'Videos retrieved successfully' })
+  async getAllVideos(
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('userId') userId?: string,
+  ) {
+    const feedData = {
+      userId,
+      page: page || 1,
+      limit: limit || 10,
+    };
+
+    const result = await lastValueFrom(this.videoService.getFeed(feedData));
+    return result;
+  }
+
   @Post()
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
