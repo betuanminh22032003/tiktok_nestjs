@@ -24,6 +24,7 @@ class ApiClient {
     this.instance = axios.create({
       baseURL: API_BASE_URL,
       timeout: REQUEST_TIMEOUT,
+      withCredentials: true, // Enable sending cookies with requests
       headers: {
         'Content-Type': 'application/json',
       },
@@ -33,15 +34,9 @@ class ApiClient {
   }
 
   private setupInterceptors() {
-    // Request interceptor to add auth token
+    // Request interceptor - cookies are sent automatically with withCredentials
     this.instance.interceptors.request.use(
-      config => {
-        const token = this.getToken()
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`
-        }
-        return config
-      },
+      config => config,
       error => Promise.reject(error)
     )
 
@@ -157,21 +152,17 @@ class ApiClient {
   }
 
   public clearTokens() {
+    // HttpOnly cookies are cleared by the server on logout
+    // Remove any client-side tokens if they exist (fallback)
     Cookies.remove(TOKEN_KEY)
     Cookies.remove(REFRESH_TOKEN_KEY)
   }
 
   public isTokenValid(): boolean {
-    const token = this.getToken()
-    if (!token) return false
-
-    try {
-      const decoded: any = jwtDecode(token)
-      const currentTime = Date.now() / 1000
-      return decoded.exp > currentTime
-    } catch {
-      return false
-    }
+    // Since cookies are HttpOnly, we can't validate client-side
+    // Just return true and let the backend validate
+    // The /api/auth/me endpoint will return 401 if invalid
+    return true
   }
 
   public getTokenPayload(): any | null {

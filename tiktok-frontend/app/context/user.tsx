@@ -3,7 +3,6 @@
 import { apiClient } from '@/libs/api-client'
 import { useRouter } from 'next/navigation'
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react'
-import useCreateProfile from '../hooks/useCreateProfile'
 import { User, UserContextTypes } from '../types'
 
 const UserContext = createContext<UserContextTypes | null>(null)
@@ -14,20 +13,20 @@ const UserProvider = ({ children }: { children: ReactNode }) => {
 
   const checkUser = async () => {
     try {
-      // This should be implemented to check if user is authenticated
-      // For now, we'll check if there's a stored user token
-      const token = localStorage.getItem('authToken')
-      if (!token) {
+      // Check if user is authenticated via cookies (HttpOnly)
+      // The backend sets cookies automatically
+      const response = (await apiClient.get('api/auth/me')) as any
+
+      if (response && response.id) {
+        setUser({
+          id: response.id,
+          name: response.username || response.fullName || '',
+          bio: response.bio || '',
+          image: response.avatar || '',
+        })
+      } else {
         setUser(null)
-        return
       }
-
-      // You'll need to implement a "me" endpoint in your backend
-      // const currentUser = await apiClient.getCurrentUser()
-      // const profile = await useGetProfileByUserId(currentUser.id)
-      // setUser({ id: currentUser.id, name: currentUser.name, bio: profile?.bio, image: profile?.image });
-
-      setUser(null) // Placeholder until you implement authentication
     } catch (error) {
       setUser(null)
     }
@@ -41,14 +40,17 @@ const UserProvider = ({ children }: { children: ReactNode }) => {
     try {
       const response = (await apiClient.register({ username: name, email, password })) as any
 
-      // Store the auth token
-      if (response.token) {
-        localStorage.setItem('authToken', response.token)
+      // Cookies are set by backend automatically (HttpOnly)
+      // Response contains user data and tokens
+      if (response.success && response.data?.user) {
+        const userData = response.data.user
+        setUser({
+          id: userData.id,
+          name: userData.username || userData.fullName || '',
+          bio: userData.bio || '',
+          image: userData.avatar || '',
+        })
       }
-
-      // Create profile
-      await useCreateProfile(response.user.id, name, '', '')
-      await checkUser()
     } catch (error) {
       console.error(error)
       throw error
@@ -60,25 +62,34 @@ const UserProvider = ({ children }: { children: ReactNode }) => {
       // Backend expects 'username' field, but we can use email as username
       const response = (await apiClient.login({ username: email, password })) as any
 
-      // Store the auth token
-      if (response.token) {
-        localStorage.setItem('authToken', response.token)
+      // Cookies are set by backend automatically (HttpOnly)
+      // Response contains user data and tokens
+      if (response.success && response.data?.user) {
+        const userData = response.data.user
+        setUser({
+          id: userData.id,
+          name: userData.username || userData.fullName || '',
+          bio: userData.bio || '',
+          image: userData.avatar || '',
+        })
       }
-
-      checkUser()
     } catch (error) {
       console.error(error)
+      throw error
     }
   }
 
   const logout = async () => {
     try {
       await apiClient.logout()
-      localStorage.removeItem('authToken')
+      // Cookies are cleared by backend
       setUser(null)
-      router.refresh()
+      router.push('/')
     } catch (error) {
       console.error(error)
+      // Clear user even if API call fails
+      setUser(null)
+      router.push('/')
     }
   }
 
