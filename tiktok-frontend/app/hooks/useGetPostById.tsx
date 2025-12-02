@@ -1,15 +1,15 @@
-import { ApiResponse, Post } from '@/app/types'
+import { PostWithProfile } from '@/app/types'
 import { apiClient } from '@/libs/api-client'
 
-const useGetPostById = async (id: string): Promise<Post | null> => {
+const useGetPostById = async (id: string): Promise<PostWithProfile | null> => {
   try {
-    const response = (await apiClient.getPostById(id)) as { data: ApiResponse<{ video: Post }> }
-    if (response?.data?.data?.video) {
-      const video = response.data.data.video
-      // Map API response to our Post type
+    const response = (await apiClient.getPostById(id)) as any
+    if (response?.data?.video) {
+      const video = response.data.video
+      // Map API response to PostWithProfile type
       return {
         id: video.id,
-        user_id: video.user_id,
+        user_id: video.user?.id || video.userId,
         video_url: video.videoUrl || video.video_url || '',
         text: video.description || video.text || '',
         created_at: video.createdAt || video.created_at || '',
@@ -20,6 +20,14 @@ const useGetPostById = async (id: string): Promise<Post | null> => {
         duration: video.duration,
         views: video.views,
         createdAt: video.createdAt,
+        // Map user object to profile
+        profile: video.user
+          ? {
+              user_id: video.user.id,
+              name: video.user.fullName || video.user.username || 'Unknown',
+              image: video.user.avatar || '',
+            }
+          : undefined,
       }
     }
     return null

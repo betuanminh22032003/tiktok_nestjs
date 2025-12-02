@@ -1,14 +1,14 @@
-import { ApiResponse, Post, VideosResponse } from '@/app/types'
+import { PostWithProfile } from '@/app/types'
 import { apiClient } from '@/libs/api-client'
 
-const useGetAllPosts = async (): Promise<Post[]> => {
+const useGetAllPosts = async (): Promise<PostWithProfile[]> => {
   try {
-    const response = (await apiClient.getAllPosts()) as ApiResponse<VideosResponse>
-    if (response?.data?.videos && Array.isArray(response.data.videos)) {
-      // Map API response to our Post type, handling both old and new field names
-      return response.data.videos.map(video => ({
+    const response = (await apiClient.getAllPosts()) as any
+    if (response?.videos && Array.isArray(response.videos)) {
+      // Map API response to PostWithProfile type
+      return response.videos.map((video: any) => ({
         id: video.id,
-        user_id: video.user_id,
+        user_id: video.user?.id || video.userId,
         video_url: video.videoUrl || video.video_url || '',
         text: video.description || video.text || '',
         created_at: video.createdAt || video.created_at || '',
@@ -19,6 +19,14 @@ const useGetAllPosts = async (): Promise<Post[]> => {
         duration: video.duration,
         views: video.views,
         createdAt: video.createdAt,
+        // Map user object to profile
+        profile: video.user
+          ? {
+              user_id: video.user.id,
+              name: video.user.fullName || video.user.username || 'Unknown',
+              image: video.user.avatar || '',
+            }
+          : undefined,
       }))
     }
     return []

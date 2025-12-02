@@ -1,16 +1,14 @@
-import { ApiResponse, Post, VideosResponse } from '@/app/types'
+import { PostWithProfile } from '@/app/types'
 import { apiClient } from '@/libs/api-client'
 
-const useGetPostsByUserId = async (userId: string): Promise<Post[]> => {
+const useGetPostsByUserId = async (userId: string): Promise<PostWithProfile[]> => {
   try {
-    const response = (await apiClient.getPostsByUserId(userId)) as {
-      data: ApiResponse<VideosResponse>
-    }
-    if (response?.data?.data?.videos && Array.isArray(response.data.data.videos)) {
-      // Map API response to our Post type
-      return response.data.data.videos.map(video => ({
+    const response = (await apiClient.getPostsByUserId(userId)) as any
+    if (response?.videos && Array.isArray(response.videos)) {
+      // Map API response to PostWithProfile type
+      return response.videos.map((video: any) => ({
         id: video.id,
-        user_id: video.user_id,
+        user_id: video.user?.id || video.userId,
         video_url: video.videoUrl || video.video_url || '',
         text: video.description || video.text || '',
         created_at: video.createdAt || video.created_at || '',
@@ -21,6 +19,14 @@ const useGetPostsByUserId = async (userId: string): Promise<Post[]> => {
         duration: video.duration,
         views: video.views,
         createdAt: video.createdAt,
+        // Map user object to profile
+        profile: video.user
+          ? {
+              user_id: video.user.id,
+              name: video.user.fullName || video.user.username || 'Unknown',
+              image: video.user.avatar || '',
+            }
+          : undefined,
       }))
     }
     return []

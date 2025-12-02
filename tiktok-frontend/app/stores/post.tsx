@@ -3,11 +3,11 @@ import { createJSONStorage, devtools, persist } from 'zustand/middleware'
 import useGetAllPosts from '../hooks/useGetAllPosts'
 import useGetPostById from '../hooks/useGetPostById'
 import useGetPostsByUser from '../hooks/useGetPostsByUserId'
-import { Post, PostWithProfile } from '../types'
+import { PostWithProfile } from '../types'
 
 interface PostStore {
   allPosts: PostWithProfile[]
-  postsByUser: Post[]
+  postsByUser: PostWithProfile[]
   postById: PostWithProfile | null
   setAllPosts: () => void
   setPostsByUser: (userId: string) => void
@@ -28,11 +28,11 @@ export const usePostStore = create<PostStore>()(
         },
         setPostsByUser: async (userId: string) => {
           const result = await useGetPostsByUser(userId)
-          set({ postsByUser: result as any })
+          set({ postsByUser: result })
         },
         setPostById: async (postId: string) => {
           const result = await useGetPostById(postId)
-          set({ postById: result as any })
+          set({ postById: result })
         },
       }),
       {
