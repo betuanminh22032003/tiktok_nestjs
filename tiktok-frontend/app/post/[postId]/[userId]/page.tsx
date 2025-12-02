@@ -11,12 +11,12 @@ import { PostPageTypes } from '@/app/types'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { use, useEffect } from 'react'
 import { AiOutlineClose } from 'react-icons/ai'
 import { BiChevronDown, BiChevronUp } from 'react-icons/bi'
 
-export default async function Post({ params }: PostPageTypes) {
-  const { postId, userId } = await params
+export default function Post({ params }: PostPageTypes) {
+  const { postId, userId } = use(params)
 
   const { postById, postsByUser, setPostById, setPostsByUser } = usePostStore()
   const { setLikesByPost } = useLikeStore()
