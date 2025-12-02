@@ -40,25 +40,55 @@ export interface Like {
   post_id: string
 }
 
+export interface ViewsCount {
+  low: number
+  high: number
+  unsigned: boolean
+}
+
 export interface Post {
   id: string
-  user_id: string
-  video_url: string
-  text: string
-  created_at: string
+  user_id?: string
+  title?: string
+  description?: string
+  videoUrl?: string
+  video_url?: string
+  thumbnailUrl?: string
+  duration?: number
+  views?: ViewsCount
+  text?: string
+  created_at?: string
+  createdAt?: string
 }
 
 export interface PostWithProfile {
   id: string
-  user_id: string
-  video_url: string
-  text: string
-  created_at: string
-  profile: {
+  user_id?: string
+  title?: string
+  description?: string
+  videoUrl?: string
+  video_url?: string
+  thumbnailUrl?: string
+  duration?: number
+  views?: ViewsCount
+  text?: string
+  created_at?: string
+  createdAt?: string
+  profile?: {
     user_id: string
     name: string
     image: string
   }
+}
+
+export interface ApiResponse<T> {
+  success: boolean
+  data: T
+  timestamp: string
+}
+
+export interface VideosResponse {
+  videos: Post[]
 }
 
 export interface CommentWithProfile {

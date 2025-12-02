@@ -16,8 +16,7 @@ export default function Home() {
       <MainLayout>
         <div className="ml-auto mt-[80px] w-[calc(100%-90px)] max-w-[690px]">
           <ClientOnly>
-            {Array.isArray(allPosts) &&
-              allPosts.map((post, index) => <PostMain post={post} key={index} />)}
+            {allPosts && allPosts.map((post, index) => <PostMain post={post} key={index} />)}
           </ClientOnly>
         </div>
       </MainLayout>

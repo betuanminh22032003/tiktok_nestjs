@@ -1,17 +1,25 @@
+import { ApiResponse, Post, VideosResponse } from '@/app/types'
 import { apiClient } from '@/libs/api-client'
 
-const useGetAllPosts = async () => {
+const useGetAllPosts = async (): Promise<Post[]> => {
   try {
-    const response = await apiClient.getAllPosts()
-    // Handle different response formats
-    if (Array.isArray(response)) {
-      return response
-    }
-    if (response?.data && Array.isArray(response.data)) {
-      return response.data
-    }
-    if (response?.videos && Array.isArray(response.videos)) {
-      return response.videos
+    const response = (await apiClient.getAllPosts()) as { data: ApiResponse<VideosResponse> }
+    if (response?.data?.data?.videos && Array.isArray(response.data.data.videos)) {
+      // Map API response to our Post type, handling both old and new field names
+      return response.data.data.videos.map(video => ({
+        id: video.id,
+        user_id: video.user_id,
+        video_url: video.videoUrl || video.video_url || '',
+        text: video.description || video.text || '',
+        created_at: video.createdAt || video.created_at || '',
+        title: video.title,
+        description: video.description,
+        videoUrl: video.videoUrl,
+        thumbnailUrl: video.thumbnailUrl,
+        duration: video.duration,
+        views: video.views,
+        createdAt: video.createdAt,
+      }))
     }
     return []
   } catch (error) {
