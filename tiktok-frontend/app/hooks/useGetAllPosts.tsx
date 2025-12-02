@@ -3,10 +3,10 @@ import { apiClient } from '@/libs/api-client'
 
 const useGetAllPosts = async (): Promise<Post[]> => {
   try {
-    const response = (await apiClient.getAllPosts()) as { data: ApiResponse<VideosResponse> }
-    if (response?.data?.data?.videos && Array.isArray(response.data.data.videos)) {
+    const response = (await apiClient.getAllPosts()) as ApiResponse<VideosResponse>
+    if (response?.data?.videos && Array.isArray(response.data.videos)) {
       // Map API response to our Post type, handling both old and new field names
-      return response.data.data.videos.map(video => ({
+      return response.data.videos.map(video => ({
         id: video.id,
         user_id: video.user_id,
         video_url: video.videoUrl || video.video_url || '',
