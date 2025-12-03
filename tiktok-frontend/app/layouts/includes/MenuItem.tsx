@@ -1,8 +1,6 @@
 'use client'
 
-import { AiOutlineHome } from 'react-icons/ai'
-import { RiGroupLine } from 'react-icons/ri'
-import { BsCameraVideo } from 'react-icons/bs'
+import { AiOutlineHome, RiGroupLine, BsCameraVideo } from '@/app/components/icons'
 import { MenuItemTypes } from '@/app/types'
 
 export default function MenuItem({ iconString, colorString, sizeString }: MenuItemTypes) {

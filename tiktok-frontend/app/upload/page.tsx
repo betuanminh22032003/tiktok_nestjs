@@ -1,12 +1,15 @@
 'use client'
 
+import {
+  AiOutlineCheckCircle,
+  BiLoaderCircle,
+  BiSolidCloudUpload,
+  PiKnifeLight,
+} from '@/app/components/icons'
 import { useUser } from '@/app/context/user'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
-import { AiOutlineCheckCircle } from 'react-icons/ai'
-import { BiLoaderCircle, BiSolidCloudUpload } from 'react-icons/bi'
-import { PiKnifeLight } from 'react-icons/pi'
 import useCreatePost from '../hooks/useCreatePost'
 import UploadLayout from '../layouts/UploadLayout'
 import { UploadError } from '../types'

@@ -11,7 +11,7 @@ import { useProfileStore } from '@/app/stores/profile'
 import { User } from '@/app/types'
 import Image from 'next/image'
 import React, { useEffect } from 'react'
-import { BsPencil } from 'react-icons/bs'
+import { BsPencil } from '@/app/components/icons'
 
 export default function Profile({ params }: { params: Promise<{ id: string }> }) {
   const { id } = React.use(params)

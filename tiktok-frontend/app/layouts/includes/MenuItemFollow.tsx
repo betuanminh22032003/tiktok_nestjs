@@ -2,7 +2,7 @@ import useCreateBucketUrl from '@/app/hooks/useCreateBucketUrl'
 import { MenuItemFollowCompTypes } from '@/app/types'
 import Image from 'next/image'
 import Link from 'next/link'
-import { AiOutlineCheck } from 'react-icons/ai'
+import { AiOutlineCheck } from '@/app/components/icons'
 
 export default function MenuItemFollow({ user }: MenuItemFollowCompTypes) {
   return (

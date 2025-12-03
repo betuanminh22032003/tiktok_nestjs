@@ -1,19 +1,19 @@
-import { AiFillHeart } from 'react-icons/ai'
-import { FaShare, FaCommentDots } from 'react-icons/fa'
-import { useEffect, useState } from 'react'
-import { useUser } from '../context/user'
-import { BiLoaderCircle } from 'react-icons/bi'
-import { useGeneralStore } from '../stores/general'
+import { AiFillHeart } from '@/app/components/icons'
 import { useRouter } from 'next/navigation'
-import { Comment, Like, PostMainLikesCompTypes } from '../types'
+import { useEffect, useState } from 'react'
+import { BiLoaderCircle } from 'react-icons/bi'
+import { FaCommentDots, FaShare } from 'react-icons/fa'
+import { useUser } from '../context/user'
+import useCreateLike from '../hooks/useCreateLike'
+import useDeleteLike from '../hooks/useDeleteLike'
 import useGetCommentsByPostId from '../hooks/useGetCommentsByPostId'
 import useGetLikesByPostId from '../hooks/useGetLikesByPostId'
 import useIsLiked from '../hooks/useIsLiked'
-import useCreateLike from '../hooks/useCreateLike'
-import useDeleteLike from '../hooks/useDeleteLike'
+import { useGeneralStore } from '../stores/general'
+import { Comment, Like, PostMainLikesCompTypes } from '../types'
 
 export default function PostMainLikes({ post }: PostMainLikesCompTypes) {
-  let { setIsLoginOpen } = useGeneralStore()
+  const { setIsLoginOpen } = useGeneralStore()
 
   const router = useRouter()
   const contextUser = useUser()
@@ -32,12 +32,12 @@ export default function PostMainLikes({ post }: PostMainLikesCompTypes) {
   }, [likes, contextUser])
 
   const getAllCommentsByPost = async () => {
-    let result = await useGetCommentsByPostId(post?.id)
+    const result = await useGetCommentsByPostId(post?.id)
     setComments((result as Comment[]) || [])
   }
 
   const getAllLikesByPost = async () => {
-    let result = await useGetLikesByPostId(post?.id)
+    const result = await useGetLikesByPostId(post?.id)
     setLikes((result as Like[]) || [])
   }
 
@@ -48,7 +48,7 @@ export default function PostMainLikes({ post }: PostMainLikesCompTypes) {
       setUserLiked(false)
       return
     }
-    let res = useIsLiked(contextUser?.user?.id, post?.id, likes)
+    const res = useIsLiked(contextUser?.user?.id, post?.id, likes)
     setUserLiked(res ? true : false)
   }
 
@@ -74,7 +74,7 @@ export default function PostMainLikes({ post }: PostMainLikesCompTypes) {
       return
     }
 
-    let res = useIsLiked(contextUser?.user?.id, post?.id, likes)
+    const res = useIsLiked(contextUser?.user?.id, post?.id, likes)
 
     if (!res) {
       like()

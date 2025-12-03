@@ -10,9 +10,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { Cropper } from 'react-advanced-cropper'
-import { AiOutlineClose } from 'react-icons/ai'
-import { BiLoaderCircle } from 'react-icons/bi'
-import { BsPencil } from 'react-icons/bs'
+import { AiOutlineClose, BiLoaderCircle, BsPencil } from '@/app/components/icons'
 import TextInput from '../TextInput'
 
 export default function EditProfileOverlay() {

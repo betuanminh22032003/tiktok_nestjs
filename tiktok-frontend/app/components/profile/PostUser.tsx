@@ -2,9 +2,7 @@ import useCreateBucketUrl from '@/app/hooks/useCreateBucketUrl'
 import { PostUserCompTypes } from '@/app/types'
 import Link from 'next/link'
 import { useEffect } from 'react'
-import { AiOutlineLoading3Quarters } from 'react-icons/ai'
-import { BiErrorCircle } from 'react-icons/bi'
-import { SiSoundcharts } from 'react-icons/si'
+import { AiOutlineLoading3Quarters, BiErrorCircle, SiSoundcharts } from '@/app/components/icons'
 
 export default function PostUser({ post }: PostUserCompTypes) {
   useEffect(() => {

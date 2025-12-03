@@ -12,8 +12,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { use, useEffect } from 'react'
-import { AiOutlineClose } from 'react-icons/ai'
-import { BiChevronDown, BiChevronUp } from 'react-icons/bi'
+import { AiOutlineClose, BiChevronDown, BiChevronUp } from '@/app/components/icons'
 
 export default function Post({ params }: PostPageTypes) {
   const { postId, userId } = use(params)

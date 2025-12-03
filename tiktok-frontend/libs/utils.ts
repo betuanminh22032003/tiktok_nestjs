@@ -2,7 +2,11 @@ import { type ClassValue, clsx } from 'clsx'
 import dayjs from 'dayjs'
 import duration from 'dayjs/plugin/duration'
 import relativeTime from 'dayjs/plugin/relativeTime'
-import _ from 'lodash'
+// Use specific lodash imports for better tree-shaking
+import cloneDeep from 'lodash/cloneDeep'
+import debounce from 'lodash/debounce'
+import merge from 'lodash/merge'
+import throttle from 'lodash/throttle'
 import { twMerge } from 'tailwind-merge'
 import { z } from 'zod'
 
@@ -34,22 +38,14 @@ export const dateUtils = {
  * Lodash utility exports for common operations
  */
 export const utils = {
-  debounce: _.debounce,
-  throttle: _.throttle,
-  groupBy: _.groupBy,
-  orderBy: _.orderBy,
-  uniqBy: _.uniqBy,
-  chunk: _.chunk,
-  isEmpty: _.isEmpty,
-  isEqual: _.isEqual,
-  pick: _.pick,
-  omit: _.omit,
-  cloneDeep: _.cloneDeep,
-  merge: _.merge,
-  get: _.get,
-  set: _.set,
-  has: _.has,
+  debounce,
+  throttle,
+  cloneDeep,
+  merge,
 }
+
+// Re-export commonly used lodash functions
+export { cloneDeep, debounce, merge, throttle }
 
 /**
  * Common validation schemas using Zod

@@ -8,10 +8,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { AiOutlinePlus } from 'react-icons/ai'
-import { BiSearch, BiUser } from 'react-icons/bi'
-import { BsThreeDotsVertical } from 'react-icons/bs'
-import { FiLogOut } from 'react-icons/fi'
+import { AiOutlinePlus, BiSearch, BiUser, BsThreeDotsVertical, FiLogOut } from '@/app/components/icons'
 
 export default function TopNav() {
   const userContext = useUser()
