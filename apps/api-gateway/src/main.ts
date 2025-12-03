@@ -1,5 +1,9 @@
 import { AllExceptionsFilter } from '@app/common/filters';
-import { LoggingInterceptor, TransformInterceptor } from '@app/common/interceptors';
+import {
+  HttpCacheInterceptor,
+  LoggingInterceptor,
+  TransformInterceptor,
+} from '@app/common/interceptors';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
@@ -53,7 +57,11 @@ async function bootstrap() {
 
   // Global Filters and Interceptors
   app.useGlobalFilters(new AllExceptionsFilter());
-  app.useGlobalInterceptors(new LoggingInterceptor(), new TransformInterceptor());
+  app.useGlobalInterceptors(
+    new LoggingInterceptor(),
+    new TransformInterceptor(),
+    app.get(HttpCacheInterceptor),
+  );
 
   // Swagger API Documentation
   const config = new DocumentBuilder()

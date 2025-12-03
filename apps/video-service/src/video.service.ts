@@ -77,7 +77,28 @@ export class VideoService {
 
   async getVideos(userId?: string, page: number = 1, limit: number = 10) {
     try {
+      // Check Redis cache first
+      const cacheKey = `videos:feed:${page}:${limit}`;
+      const cachedData = await this.redisService.get(cacheKey);
+      if (cachedData) {
+        return JSON.parse(cachedData);
+      }
+
+      // Optimize query: select only needed fields
       const videos = await this.videoRepository.find({
+        select: [
+          'id',
+          'userId',
+          'title',
+          'description',
+          'videoUrl',
+          'thumbnailUrl',
+          'duration',
+          'views',
+          'likesCount',
+          'commentsCount',
+          'createdAt',
+        ],
         skip: (page - 1) * limit,
         take: limit,
         order: { createdAt: 'DESC' },
@@ -103,7 +124,7 @@ export class VideoService {
         },
       }));
 
-      return {
+      const result = {
         videos: enrichedVideos,
         pagination: {
           page,
@@ -111,6 +132,10 @@ export class VideoService {
           total: await this.videoRepository.count(),
         },
       };
+
+      // Cache result for 5 minutes
+      await this.redisService.set(cacheKey, JSON.stringify(result), 300);
+      return result;
     } catch (error) {
       throw new RpcException(`Error getting videos: ${error.message}`);
     }
@@ -123,7 +148,27 @@ export class VideoService {
 
   async getUserVideos(userId: string, page: number = 1, limit: number = 10) {
     try {
+      // Check Redis cache
+      const cacheKey = `videos:user:${userId}:${page}:${limit}`;
+      const cachedData = await this.redisService.get(cacheKey);
+      if (cachedData) {
+        return JSON.parse(cachedData);
+      }
+
       const videos = await this.videoRepository.find({
+        select: [
+          'id',
+          'userId',
+          'title',
+          'description',
+          'videoUrl',
+          'thumbnailUrl',
+          'duration',
+          'views',
+          'likesCount',
+          'commentsCount',
+          'createdAt',
+        ],
         where: { userId },
         skip: (page - 1) * limit,
         take: limit,
@@ -149,7 +194,7 @@ export class VideoService {
         },
       }));
 
-      return {
+      const result = {
         videos: enrichedVideos,
         pagination: {
           page,
@@ -157,6 +202,10 @@ export class VideoService {
           total: await this.videoRepository.count({ where: { userId } }),
         },
       };
+
+      // Cache for 5 minutes
+      await this.redisService.set(cacheKey, JSON.stringify(result), 300);
+      return result;
     } catch (error) {
       throw new RpcException(`Error getting user videos: ${error.message}`);
     }
@@ -164,9 +213,29 @@ export class VideoService {
 
   async searchVideos(query: string, page: number = 1, limit: number = 10) {
     try {
-      // Simple search implementation
+      // Check Redis cache for search results
+      const cacheKey = `videos:search:${query}:${page}:${limit}`;
+      const cachedData = await this.redisService.get(cacheKey);
+      if (cachedData) {
+        return JSON.parse(cachedData);
+      }
+
+      // Optimize search with select
       const videos = await this.videoRepository
         .createQueryBuilder('video')
+        .select([
+          'video.id',
+          'video.userId',
+          'video.title',
+          'video.description',
+          'video.videoUrl',
+          'video.thumbnailUrl',
+          'video.duration',
+          'video.views',
+          'video.likesCount',
+          'video.commentsCount',
+          'video.createdAt',
+        ])
         .where('video.title ILIKE :query', { query: `%${query}%` })
         .orWhere('video.description ILIKE :query', { query: `%${query}%` })
         .skip((page - 1) * limit)
@@ -193,7 +262,7 @@ export class VideoService {
         },
       }));
 
-      return {
+      const result = {
         videos: enrichedVideos,
         pagination: {
           page,
@@ -201,6 +270,10 @@ export class VideoService {
           total: enrichedVideos.length,
         },
       };
+
+      // Cache search results for 10 minutes
+      await this.redisService.set(cacheKey, JSON.stringify(result), 600);
+      return result;
     } catch (error) {
       throw new RpcException(`Error searching videos: ${error.message}`);
     }

@@ -54,5 +54,11 @@ import { WebsocketModule } from './modules/websocket/websocket.module';
     WebsocketModule,
   ],
   controllers: [HealthController],
+  providers: [
+    {
+      provide: 'APP_INTERCEPTOR',
+      useClass: require('@app/common').HttpCacheInterceptor,
+    },
+  ],
 })
 export class ApiGatewayModule {}

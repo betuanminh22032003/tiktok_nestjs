@@ -8,4 +8,5 @@ export * from './interceptors';
 export * from './interfaces';
 export * from './middleware';
 export * from './services/database-setup.service';
+export * from './services/dataloader.service';
 export * from './utils';
