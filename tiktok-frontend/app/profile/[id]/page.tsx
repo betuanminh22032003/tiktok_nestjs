@@ -1,6 +1,8 @@
 'use client'
 
 import ClientOnly from '@/app/components/ClientOnly'
+import FollowButton from '@/app/components/FollowButton'
+import { BsPencil } from '@/app/components/icons'
 import PostUser from '@/app/components/profile/PostUser'
 import { useUser } from '@/app/context/user'
 import useCreateBucketUrl from '@/app/hooks/useCreateBucketUrl'
@@ -9,9 +11,9 @@ import { useGeneralStore } from '@/app/stores/general'
 import { usePostStore } from '@/app/stores/post'
 import { useProfileStore } from '@/app/stores/profile'
 import { User } from '@/app/types'
+import { useFollowers, useFollowing, useUser as useSWRUser } from '@/libs/swr-hooks'
 import Image from 'next/image'
 import React, { useEffect } from 'react'
-import { BsPencil } from '@/app/components/icons'
 
 export default function Profile({ params }: { params: Promise<{ id: string }> }) {
   const { id } = React.use(params)
@@ -20,10 +22,15 @@ export default function Profile({ params }: { params: Promise<{ id: string }> })
   const { setCurrentProfile, currentProfile } = useProfileStore()
   let { isEditProfileOpen, setIsEditProfileOpen } = useGeneralStore()
 
+  // Fetch user data with SWR
+  const { user: profileUser } = useSWRUser(id)
+  const { followers, total: followersCount } = useFollowers(id, 1, 1)
+  const { following, total: followingCount } = useFollowing(id, 1, 1)
+
   useEffect(() => {
     setCurrentProfile(id)
     setPostsByUser(id)
-  }, [])
+  }, [id, setCurrentProfile, setPostsByUser])
 
   return (
     <>
@@ -63,27 +70,25 @@ export default function Profile({ params }: { params: Promise<{ id: string }> })
                   <span>Edit profile</span>
                 </button>
               ) : (
-                <button className="item-center mt-3 flex rounded-md bg-[#F02C56] px-8 py-1.5 text-[15px] font-semibold text-white">
-                  Follow
-                </button>
+                <FollowButton userId={id} size="md" />
               )}
             </div>
           </div>
 
           <div className="flex items-center pt-4">
             <div className="mr-4">
-              <span className="font-bold">10K</span>
+              <span className="font-bold">{followingCount || 0}</span>
               <span className="pl-1.5 text-[15px] font-light text-gray-500">Following</span>
             </div>
             <div className="mr-4">
-              <span className="font-bold">44K</span>
+              <span className="font-bold">{followersCount || 0}</span>
               <span className="pl-1.5 text-[15px] font-light text-gray-500">Followers</span>
             </div>
           </div>
 
           <ClientOnly>
             <p className="mr-4 max-w-[500px] pl-1.5 pt-4 text-[15px] font-light text-gray-500">
-              {currentProfile?.bio}
+              {profileUser?.bio || currentProfile?.bio || 'No bio yet'}
             </p>
           </ClientOnly>
 

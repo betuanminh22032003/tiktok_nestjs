@@ -378,13 +378,15 @@ export const apiEndpoints = {
 
   // User endpoints
   users: {
-    profile: (userId: string) => `/users/${userId}`,
-    follow: (userId: string) => `/users/${userId}/follow`,
-    unfollow: (userId: string) => `/users/${userId}/unfollow`,
-    followers: (userId: string) => `/users/${userId}/followers`,
-    following: (userId: string) => `/users/${userId}/following`,
-    videos: (userId: string) => `/users/${userId}/videos`,
-    search: '/users/search',
+    profile: (userId: string) => `api/users/${userId}`,
+    update: (userId: string) => `api/users/${userId}`,
+    follow: (userId: string) => `api/users/${userId}/follow`,
+    unfollow: (userId: string) => `api/users/${userId}/follow`,
+    followStatus: (userId: string) => `api/users/${userId}/follow-status`,
+    followers: (userId: string) => `api/users/${userId}/followers`,
+    following: (userId: string) => `api/users/${userId}/following`,
+    videos: (userId: string) => `api/videos/user/${userId}`,
+    search: 'api/users/search',
   },
 
   // Video endpoints
@@ -402,14 +404,22 @@ export const apiEndpoints = {
     upload: 'api/videos/upload',
   },
 
-  // Comment endpoints
+  // Comment endpoints (via interactions)
   comments: {
-    list: (videoId: string) => `api/videos/${videoId}/comments`,
-    create: (videoId: string) => `api/videos/${videoId}/comments`,
-    update: (commentId: string) => `api/comments/${commentId}`,
-    delete: (commentId: string) => `api/comments/${commentId}`,
-    like: (commentId: string) => `api/comments/${commentId}/like`,
-    unlike: (commentId: string) => `api/comments/${commentId}/unlike`,
+    list: (videoId: string) => `api/interactions/comments/${videoId}`,
+    create: (videoId: string) => `api/interactions/comment`,
+    delete: (commentId: string) => `api/interactions/comment/${commentId}`,
+  },
+
+  // Interaction endpoints
+  interactions: {
+    like: 'api/interactions/like',
+    unlike: 'api/interactions/unlike',
+    likeStatus: (videoId: string) => `api/interactions/like-status/${videoId}`,
+    comment: 'api/interactions/comment',
+    comments: `api/interactions/comments`,
+    deleteComment: (commentId: string) => `api/interactions/comment/${commentId}`,
+    view: 'api/interactions/view',
   },
 
   // Notification endpoints

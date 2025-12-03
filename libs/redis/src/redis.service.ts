@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 
@@ -157,5 +157,38 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
 
   async exists(key: string): Promise<number> {
     return await this.client.exists(key);
+  }
+
+  // Follow/Followers Count
+  async incrementFollowersCount(userId: string): Promise<number> {
+    const key = `user:${userId}:followers`;
+    return await this.client.incr(key);
+  }
+
+  async decrementFollowersCount(userId: string): Promise<number> {
+    const key = `user:${userId}:followers`;
+    return await this.client.decr(key);
+  }
+
+  async getFollowersCount(userId: string): Promise<number> {
+    const key = `user:${userId}:followers`;
+    const count = await this.client.get(key);
+    return count ? parseInt(count, 10) : 0;
+  }
+
+  async incrementFollowingCount(userId: string): Promise<number> {
+    const key = `user:${userId}:following`;
+    return await this.client.incr(key);
+  }
+
+  async decrementFollowingCount(userId: string): Promise<number> {
+    const key = `user:${userId}:following`;
+    return await this.client.decr(key);
+  }
+
+  async getFollowingCount(userId: string): Promise<number> {
+    const key = `user:${userId}:following`;
+    const count = await this.client.get(key);
+    return count ? parseInt(count, 10) : 0;
   }
 }

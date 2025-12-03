@@ -57,10 +57,10 @@ export class DataLoaderService {
           // Resolve all requests and cache results
           requests.forEach((request, index) => {
             const result = results[index];
-            const key = `${key}:${request.id}`;
+            const cacheKey = `${key}:${request.id}`;
 
             // Cache the result
-            this.cache.set(key, {
+            this.cache.set(cacheKey, {
               data: result,
               expiry: Date.now() + this.CACHE_TTL,
             });

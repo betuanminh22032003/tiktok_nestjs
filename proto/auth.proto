@@ -9,6 +9,9 @@ service AuthService {
   rpc RefreshToken (RefreshTokenRequest) returns (AuthResponse);
   rpc Logout (LogoutRequest) returns (LogoutResponse);
   rpc GetUserById (GetUserRequest) returns (UserResponse);
+  rpc UpdateProfile (UpdateProfileRequest) returns (UserResponse);
+  rpc SearchUsers (SearchUsersRequest) returns (SearchUsersResponse);
+  rpc GetUsersByIds (GetUsersByIdsRequest) returns (UsersListResponse);
 }
 
 message RegisterRequest {
@@ -63,4 +66,32 @@ message AuthResponse {
   UserResponse user = 1;
   string accessToken = 2;
   string refreshToken = 3;
+}
+
+message UpdateProfileRequest {
+  string userId = 1;
+  string fullName = 2;
+  string bio = 3;
+  string avatar = 4;
+}
+
+message SearchUsersRequest {
+  string query = 1;
+  int32 page = 2;
+  int32 limit = 3;
+}
+
+message SearchUsersResponse {
+  repeated UserResponse users = 1;
+  int32 page = 2;
+  int32 limit = 3;
+  int32 total = 4;
+}
+
+message GetUsersByIdsRequest {
+  repeated string userIds = 1;
+}
+
+message UsersListResponse {
+  repeated UserResponse users = 1;
 }

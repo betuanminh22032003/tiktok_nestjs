@@ -46,4 +46,26 @@ export class AuthController {
     this.logger.log(`Get user by id: ${data.userId}`);
     return await this.authService.getUserById(data.userId);
   }
+
+  @GrpcMethod('AuthService', 'UpdateProfile')
+  async updateProfile(data: { userId: string; fullName?: string; bio?: string; avatar?: string }) {
+    this.logger.log(`Update profile for userId: ${data.userId}`);
+    return await this.authService.updateProfile(data.userId, {
+      fullName: data.fullName,
+      bio: data.bio,
+      avatar: data.avatar,
+    });
+  }
+
+  @GrpcMethod('AuthService', 'SearchUsers')
+  async searchUsers(data: { query: string; page: number; limit: number }) {
+    this.logger.log(`Search users with query: ${data.query}`);
+    return await this.authService.searchUsers(data.query, data.page, data.limit);
+  }
+
+  @GrpcMethod('AuthService', 'GetUsersByIds')
+  async getUsersByIds(data: { userIds: string[] }) {
+    this.logger.log(`Get users by ids: ${data.userIds?.length || 0} users`);
+    return await this.authService.getUsersByIds(data.userIds);
+  }
 }

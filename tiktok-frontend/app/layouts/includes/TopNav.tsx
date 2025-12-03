@@ -79,18 +79,18 @@ const TopNav = memo(function TopNav() {
                       className="flex w-full cursor-pointer items-center justify-between p-1 px-2 hover:bg-[#F12B56] hover:text-white"
                     >
                       <div className="flex items-center">
-                        {profile?.image ? (
+                        {profile?.avatarUrl ? (
                           <Image
                             alt="Profile Image"
                             className="rounded-md"
                             width={40}
                             height={40}
-                            src={useCreateBucketUrl(profile.image)!}
+                            src={useCreateBucketUrl(profile.avatarUrl)!}
                           />
                         ) : (
                           <div className="h-[40px] w-[40px] rounded-md bg-gray-200" />
                         )}
-                        <div className="ml-2 truncate">{profile?.name}</div>
+                        <div className="ml-2 truncate">{profile?.displayName}</div>
                       </div>
                     </Link>
                   </div>
@@ -126,7 +126,7 @@ const TopNav = memo(function TopNav() {
               <div className="flex items-center">
                 <div className="relative">
                   <button
-                    onClick={() => setShowMenu((showMenu = !showMenu))}
+                    onClick={() => setShowMenu(!showMenu)}
                     className="mt-1 rounded-full border border-gray-200"
                   >
                     {userContext?.user?.image ? (

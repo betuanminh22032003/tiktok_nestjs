@@ -60,7 +60,6 @@ async function bootstrap() {
   app.useGlobalInterceptors(
     new LoggingInterceptor(),
     new TransformInterceptor(),
-    app.get(HttpCacheInterceptor),
   );
 
   // Swagger API Documentation

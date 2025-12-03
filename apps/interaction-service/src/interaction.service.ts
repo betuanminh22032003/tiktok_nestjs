@@ -252,4 +252,165 @@ export class InteractionService {
       throw new RpcException(error.message || 'Failed to get like status');
     }
   }
+
+  async followUser(followerId: string, followingId: string) {
+    try {
+      // Check if already following
+      const existingFollow = await this.followRepository.findOne({
+        where: { followerId, followingId },
+      });
+
+      if (existingFollow) {
+        throw new RpcException('Already following this user');
+      }
+
+      // Create follow relationship
+      const follow = this.followRepository.create({
+        followerId,
+        followingId,
+      });
+
+      await this.followRepository.save(follow);
+
+      // Update Redis counters
+      await Promise.all([
+        this.redisService.incrementFollowersCount(followingId),
+        this.redisService.incrementFollowingCount(followerId),
+      ]);
+
+      const followersCount = await this.redisService.getFollowersCount(followingId);
+      const followingCount = await this.redisService.getFollowingCount(followerId);
+
+      // Publish event
+      await this.kafkaService.publish('user.followed', {
+        followerId,
+        followingId,
+        followersCount,
+        followingCount,
+      });
+
+      logger.info(`User ${followerId} followed user ${followingId}`);
+
+      return {
+        success: true,
+        followersCount,
+        isFollowing: true,
+      };
+    } catch (error) {
+      logger.error('Error following user:', error);
+      throw new RpcException(error.message || 'Failed to follow user');
+    }
+  }
+
+  async unfollowUser(followerId: string, followingId: string) {
+    try {
+      // Check if following
+      const existingFollow = await this.followRepository.findOne({
+        where: { followerId, followingId },
+      });
+
+      if (!existingFollow) {
+        throw new RpcException('Not following this user');
+      }
+
+      // Remove follow relationship
+      await this.followRepository.remove(existingFollow);
+
+      // Update Redis counters
+      const followersCount = await this.redisService.getFollowersCount(followingId);
+      const followingCount = await this.redisService.getFollowingCount(followerId);
+
+      if (followersCount > 0) {
+        await this.redisService.decrementFollowersCount(followingId);
+      }
+      if (followingCount > 0) {
+        await this.redisService.decrementFollowingCount(followerId);
+      }
+
+      // Publish event
+      await this.kafkaService.publish('user.unfollowed', {
+        followerId,
+        followingId,
+      });
+
+      logger.info(`User ${followerId} unfollowed user ${followingId}`);
+
+      return {
+        success: true,
+        isFollowing: false,
+      };
+    } catch (error) {
+      logger.error('Error unfollowing user:', error);
+      throw new RpcException(error.message || 'Failed to unfollow user');
+    }
+  }
+
+  async getFollowStatus(followerId: string, followingId: string) {
+    try {
+      const existingFollow = await this.followRepository.findOne({
+        where: { followerId, followingId },
+      });
+
+      return {
+        isFollowing: !!existingFollow,
+        followerId,
+        followingId,
+      };
+    } catch (error) {
+      logger.error('Error getting follow status:', error);
+      throw new RpcException(error.message || 'Failed to get follow status');
+    }
+  }
+
+  async getFollowers(userId: string, page = 1, limit = 20) {
+    try {
+      const skip = (page - 1) * limit;
+
+      const [followers, total] = await this.followRepository.findAndCount({
+        where: { followingId: userId },
+        order: { createdAt: 'DESC' },
+        skip,
+        take: limit,
+      });
+
+      const followerIds = followers.map((f) => f.followerId);
+
+      return {
+        followerIds,
+        page,
+        limit,
+        total,
+        hasMore: skip + followers.length < total,
+      };
+    } catch (error) {
+      logger.error('Error getting followers:', error);
+      throw new RpcException(error.message || 'Failed to get followers');
+    }
+  }
+
+  async getFollowing(userId: string, page = 1, limit = 20) {
+    try {
+      const skip = (page - 1) * limit;
+
+      const [following, total] = await this.followRepository.findAndCount({
+        where: { followerId: userId },
+        order: { createdAt: 'DESC' },
+        skip,
+        take: limit,
+      });
+
+      const followingIds = following.map((f) => f.followingId);
+
+      return {
+        followingIds,
+        page,
+        limit,
+        total,
+        hasMore: skip + following.length < total,
+      };
+    } catch (error) {
+      logger.error('Error getting following:', error);
+      throw new RpcException(error.message || 'Failed to get following');
+    }
+  }
 }

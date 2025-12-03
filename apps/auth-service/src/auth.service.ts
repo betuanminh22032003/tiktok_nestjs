@@ -204,4 +204,71 @@ export class AuthService {
       createdAt: user.createdAt.toISOString(),
     };
   }
+
+  async updateProfile(userId: string, data: { fullName?: string; bio?: string; avatar?: string }) {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (data.fullName !== undefined) {
+      user.fullName = data.fullName;
+    }
+    if (data.bio !== undefined) {
+      user.bio = data.bio;
+    }
+    if (data.avatar !== undefined) {
+      user.avatar = data.avatar;
+    }
+
+    const updatedUser = await this.userRepository.save(user);
+    return this.sanitizeUser(updatedUser);
+  }
+
+  async searchUsers(query: string, page = 1, limit = 20) {
+    if (!query || query.trim().length < 2) {
+      return {
+        users: [],
+        page,
+        limit,
+        total: 0,
+      };
+    }
+
+    const skip = (page - 1) * limit;
+    const searchPattern = `%${query.toLowerCase()}%`;
+
+    const [users, total] = await this.userRepository
+      .createQueryBuilder('user')
+      .where('LOWER(user.username) LIKE :pattern', { pattern: searchPattern })
+      .orWhere('LOWER(user.fullName) LIKE :pattern', { pattern: searchPattern })
+      .skip(skip)
+      .take(limit)
+      .getManyAndCount();
+
+    return {
+      users: users.map((user) => this.sanitizeUser(user)),
+      page,
+      limit,
+      total,
+    };
+  }
+
+  async getUsersByIds(userIds: string[]) {
+    if (!userIds || userIds.length === 0) {
+      return { users: [] };
+    }
+
+    const users = await this.userRepository
+      .createQueryBuilder('user')
+      .where('user.id IN (:...userIds)', { userIds })
+      .getMany();
+
+    return {
+      users: users.map((user) => this.sanitizeUser(user)),
+    };
+  }
 }

@@ -8,6 +8,11 @@ service InteractionService {
   rpc AddComment (CommentRequest) returns (CommentResponse);
   rpc GetComments (GetCommentsRequest) returns (CommentsListResponse);
   rpc RecordView (ViewRequest) returns (ViewResponse);
+  rpc FollowUser (FollowRequest) returns (FollowResponse);
+  rpc UnfollowUser (UnfollowRequest) returns (FollowResponse);
+  rpc GetFollowStatus (FollowStatusRequest) returns (FollowStatusResponse);
+  rpc GetFollowers (GetFollowersRequest) returns (FollowersListResponse);
+  rpc GetFollowing (GetFollowingRequest) returns (FollowingListResponse);
 }
 
 message LikeRequest {
@@ -63,4 +68,59 @@ message ViewRequest {
 message ViewResponse {
   bool success = 1;
   int64 totalViews = 2;
+}
+
+message FollowRequest {
+  string followerId = 1;
+  string followingId = 2;
+}
+
+message UnfollowRequest {
+  string followerId = 1;
+  string followingId = 2;
+}
+
+message FollowResponse {
+  bool success = 1;
+  bool isFollowing = 2;
+  int32 followersCount = 3;
+}
+
+message FollowStatusRequest {
+  string followerId = 1;
+  string followingId = 2;
+}
+
+message FollowStatusResponse {
+  bool isFollowing = 1;
+  string followerId = 2;
+  string followingId = 3;
+}
+
+message GetFollowersRequest {
+  string userId = 1;
+  int32 page = 2;
+  int32 limit = 3;
+}
+
+message FollowersListResponse {
+  repeated string followerIds = 1;
+  int32 page = 2;
+  int32 limit = 3;
+  int32 total = 4;
+  bool hasMore = 5;
+}
+
+message GetFollowingRequest {
+  string userId = 1;
+  int32 page = 2;
+  int32 limit = 3;
+}
+
+message FollowingListResponse {
+  repeated string followingIds = 1;
+  int32 page = 2;
+  int32 limit = 3;
+  int32 total = 4;
+  bool hasMore = 5;
 }

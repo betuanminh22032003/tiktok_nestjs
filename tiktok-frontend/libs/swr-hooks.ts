@@ -6,7 +6,7 @@ import type { Comment, Notification, User, Video } from './store'
 
 // Optimized fetcher with error handling
 const fetcher = async (url: string) => {
-  const response = await apiClient.get(url)
+  const response = (await apiClient.get(url)) as { data: any }
   return response.data
 }
 
@@ -156,7 +156,23 @@ export function useUserVideos(userId: string, page = 1, limit = 20) {
 export function useFollowUser(userId: string) {
   const { trigger, isMutating } = useSWRMutation(
     apiEndpoints.users.follow(userId),
-    mutationFetchers.post
+    mutationFetchers.post,
+    {
+      optimisticData: (currentData: any) => {
+        if (currentData?.data) {
+          return {
+            ...currentData,
+            data: {
+              ...currentData.data,
+              isFollowing: true,
+              followersCount: (currentData.data.followersCount || 0) + 1,
+            },
+          }
+        }
+        return currentData
+      },
+      revalidate: false,
+    }
   )
 
   return {
@@ -168,12 +184,93 @@ export function useFollowUser(userId: string) {
 export function useUnfollowUser(userId: string) {
   const { trigger, isMutating } = useSWRMutation(
     apiEndpoints.users.unfollow(userId),
-    mutationFetchers.delete
+    mutationFetchers.delete,
+    {
+      optimisticData: (currentData: any) => {
+        if (currentData?.data) {
+          return {
+            ...currentData,
+            data: {
+              ...currentData.data,
+              isFollowing: false,
+              followersCount: Math.max((currentData.data.followersCount || 0) - 1, 0),
+            },
+          }
+        }
+        return currentData
+      },
+      revalidate: false,
+    }
   )
 
   return {
     unfollow: trigger,
     isLoading: isMutating,
+  }
+}
+
+export function useFollowStatus(userId: string) {
+  const { data, error, isLoading, mutate } = useSWR(
+    userId ? apiEndpoints.users.followStatus(userId) : null,
+    fetcher,
+    {
+      ...swrConfig,
+      dedupingInterval: 10000,
+    }
+  )
+
+  return {
+    isFollowing: (data as any)?.data?.isFollowing || false,
+    isLoading,
+    error,
+    mutate,
+  }
+}
+
+export function useFollowers(userId: string, page = 1, limit = 20) {
+  const { data, error, isLoading, mutate } = useSWR(
+    userId ? `${apiEndpoints.users.followers(userId)}?page=${page}&limit=${limit}` : null,
+    fetcher,
+    swrConfig
+  )
+
+  return {
+    followers: (data as any)?.data?.users as User[] | undefined,
+    total: (data as any)?.data?.total || 0,
+    hasMore: (data as any)?.data?.hasMore || false,
+    isLoading,
+    error,
+    mutate,
+  }
+}
+
+export function useFollowing(userId: string, page = 1, limit = 20) {
+  const { data, error, isLoading, mutate } = useSWR(
+    userId ? `${apiEndpoints.users.following(userId)}?page=${page}&limit=${limit}` : null,
+    fetcher,
+    swrConfig
+  )
+
+  return {
+    following: (data as any)?.data?.users as User[] | undefined,
+    total: (data as any)?.data?.total || 0,
+    hasMore: (data as any)?.data?.hasMore || false,
+    isLoading,
+    error,
+    mutate,
+  }
+}
+
+export function useUpdateProfile(userId: string) {
+  const { trigger, isMutating, error } = useSWRMutation(
+    apiEndpoints.users.update(userId),
+    mutationFetchers.put
+  )
+
+  return {
+    updateProfile: trigger,
+    isLoading: isMutating,
+    error,
   }
 }
 
@@ -191,7 +288,7 @@ export function useSearchUsers(query: string) {
   )
 
   return {
-    users: (data as any)?.data as User[] | undefined,
+    users: ((data as any)?.data?.users || (data as any)?.data || []) as User[],
     isLoading,
     error,
   }
@@ -282,8 +379,10 @@ export function useSearchVideos(query: string) {
 // Optimistic like/unlike with instant UI update
 export function useLikeVideo(videoId: string) {
   const { trigger, isMutating } = useSWRMutation(
-    apiEndpoints.videos.like(videoId),
-    mutationFetchers.post,
+    apiEndpoints.interactions.like,
+    async (url: string) => {
+      return mutationFetchers.post(url, { arg: { videoId } })
+    },
     {
       optimisticData: (currentData: any) => {
         // Instant UI update
@@ -305,15 +404,17 @@ export function useLikeVideo(videoId: string) {
   )
 
   return {
-    like: trigger,
+    like: () => trigger(),
     isLoading: isMutating,
   }
 }
 
 export function useUnlikeVideo(videoId: string) {
   const { trigger, isMutating } = useSWRMutation(
-    apiEndpoints.videos.unlike(videoId),
-    mutationFetchers.delete,
+    apiEndpoints.interactions.unlike,
+    async (url: string) => {
+      return mutationFetchers.post(url, { arg: { videoId } })
+    },
     {
       optimisticData: (currentData: any) => {
         // Instant UI update
@@ -335,8 +436,26 @@ export function useUnlikeVideo(videoId: string) {
   )
 
   return {
-    unlike: trigger,
+    unlike: () => trigger(),
     isLoading: isMutating,
+  }
+}
+
+export function useLikeStatus(videoId: string) {
+  const { data, error, isLoading, mutate } = useSWR(
+    videoId ? apiEndpoints.interactions.likeStatus(videoId) : null,
+    fetcher,
+    {
+      ...swrConfig,
+      dedupingInterval: 10000,
+    }
+  )
+
+  return {
+    isLiked: (data as any)?.data?.hasLiked || false,
+    isLoading,
+    error,
+    mutate,
   }
 }
 
@@ -380,9 +499,9 @@ export function useDeleteVideo(videoId: string) {
 }
 
 // Comment hooks - Optimized
-export function useVideoComments(videoId: string) {
+export function useVideoComments(videoId: string, page = 1, limit = 20) {
   const { data, error, isLoading, mutate } = useSWR(
-    videoId ? apiEndpoints.comments.list(videoId) : null,
+    videoId ? `${apiEndpoints.comments.list(videoId)}?page=${page}&limit=${limit}` : null,
     fetcher,
     {
       ...swrConfig,
@@ -392,7 +511,9 @@ export function useVideoComments(videoId: string) {
   )
 
   return {
-    comments: (data as any)?.data as Comment[] | undefined,
+    comments: ((data as any)?.comments || (data as any)?.data?.comments || []) as Comment[],
+    total: (data as any)?.total || (data as any)?.data?.total || 0,
+    hasMore: (data as any)?.hasMore || (data as any)?.data?.hasMore || false,
     isLoading,
     error,
     mutate,
@@ -401,26 +522,16 @@ export function useVideoComments(videoId: string) {
 
 export function useCreateComment(videoId: string) {
   const { trigger, isMutating, error } = useSWRMutation(
-    apiEndpoints.comments.create(videoId),
-    mutationFetchers.post
+    apiEndpoints.interactions.comment,
+    async (url: string, { arg }: { arg: { content: string } }) => {
+      return apiClient.post(url, { videoId, content: arg.content })
+    }
   )
 
   return {
     createComment: trigger,
     isLoading: isMutating,
     error,
-  }
-}
-
-export function useLikeComment(commentId: string) {
-  const { trigger, isMutating } = useSWRMutation(
-    apiEndpoints.comments.like(commentId),
-    mutationFetchers.post
-  )
-
-  return {
-    like: trigger,
-    isLoading: isMutating,
   }
 }
 
@@ -506,15 +617,4 @@ export function useRealTimeVideos() {
     error,
     mutate,
   }
-}
-
-// Generic SWR configuration
-export const swrConfig = {
-  refreshInterval: 0,
-  revalidateOnFocus: false,
-  revalidateOnReconnect: true,
-  shouldRetryOnError: false,
-  dedupingInterval: 2000,
-  errorRetryCount: 3,
-  errorRetryInterval: 5000,
 }

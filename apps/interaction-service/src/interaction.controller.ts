@@ -1,13 +1,13 @@
+import {
+  AddCommentDto,
+  GetCommentsDto,
+  LikeVideoDto,
+  RecordViewDto,
+  UnlikeVideoDto,
+} from '@app/common/dto/interaction.dto';
 import { Controller } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
 import { InteractionService } from './interaction.service';
-import {
-  LikeVideoDto,
-  UnlikeVideoDto,
-  AddCommentDto,
-  GetCommentsDto,
-  RecordViewDto,
-} from '@app/common/dto/interaction.dto';
 
 @Controller()
 export class InteractionController {
@@ -46,5 +46,30 @@ export class InteractionController {
   @GrpcMethod('InteractionService', 'GetLikeStatus')
   async getLikeStatus(data: { userId: string; videoId: string }) {
     return this.interactionService.getLikeStatus(data.userId, data.videoId);
+  }
+
+  @GrpcMethod('InteractionService', 'FollowUser')
+  async followUser(data: { followerId: string; followingId: string }) {
+    return this.interactionService.followUser(data.followerId, data.followingId);
+  }
+
+  @GrpcMethod('InteractionService', 'UnfollowUser')
+  async unfollowUser(data: { followerId: string; followingId: string }) {
+    return this.interactionService.unfollowUser(data.followerId, data.followingId);
+  }
+
+  @GrpcMethod('InteractionService', 'GetFollowStatus')
+  async getFollowStatus(data: { followerId: string; followingId: string }) {
+    return this.interactionService.getFollowStatus(data.followerId, data.followingId);
+  }
+
+  @GrpcMethod('InteractionService', 'GetFollowers')
+  async getFollowers(data: { userId: string; page: number; limit: number }) {
+    return this.interactionService.getFollowers(data.userId, data.page, data.limit);
+  }
+
+  @GrpcMethod('InteractionService', 'GetFollowing')
+  async getFollowing(data: { userId: string; page: number; limit: number }) {
+    return this.interactionService.getFollowing(data.userId, data.page, data.limit);
   }
 }
