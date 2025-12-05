@@ -38,12 +38,12 @@ export default function SingleComment({ comment, params }: SingleCommentCompType
       <div id="SingleComment" className="mt-4 flex items-center justify-between px-8">
         <div className="relative flex w-full items-center">
           <Link href={`/profile/${comment.user_id}`}>
-            {comment.profile.image ? (
+            {comment.user.avatar ? (
               <Image
                 alt="Profile Image"
                 className="absolute top-0 mx-auto rounded-full lg:mx-0"
                 width="40"
-                src={createBucketUrl(comment.profile.image)!}
+                src={createBucketUrl(comment.user.avatar)!}
               />
             ) : (
               <div className="absolute top-0 h-[40px] w-[40px] rounded-full bg-gray-200" />
@@ -52,7 +52,7 @@ export default function SingleComment({ comment, params }: SingleCommentCompType
           <div className="ml-14 w-full pt-0.5">
             <div className="flex items-center justify-between text-[18px] font-semibold">
               <span className="flex items-center">
-                {comment?.profile?.name} -
+                {comment?.user?.fullName} -
                 <span className="ml-1 text-[12px] font-light text-gray-600">
                   {dayjs(comment?.created_at).calendar()}
                 </span>

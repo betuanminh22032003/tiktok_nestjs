@@ -237,7 +237,7 @@ export class InteractionService implements OnModuleInit {
               id: userId,
               username: 'User',
               fullName: 'User',
-              avatar: 'User',
+              avatar: null,
             };
             return acc;
           },
@@ -254,11 +254,13 @@ export class InteractionService implements OnModuleInit {
         createdAt: comment.createdAt.toISOString(),
         likesCount: comment.likesCount || 0,
         repliesCount: comment.repliesCount || 0,
+        commentsCount: total, // align with proto CommentResponse
         user: usersData[comment.userId] || {
           id: comment.userId,
           username: 'User',
           fullName: 'User',
           avatar: null,
+          email: undefined,
         },
       }));
 

@@ -98,10 +98,12 @@ export interface CommentWithProfile {
   post_id: string
   text: string
   created_at: string
-  profile: {
-    user_id: string
-    name: string
-    image: string
+  user: {
+    id: string
+    username: string
+    fullName: string
+    email?: string
+    avatar?: string
   }
 }
 
