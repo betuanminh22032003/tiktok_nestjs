@@ -1,6 +1,6 @@
-import { IsString, IsNotEmpty, IsOptional, IsNumber, Min, Max } from 'class-validator';
-import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import { IsNotEmpty, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
 
 export class CreateCommentDto {
   @ApiProperty({ example: 'Great video!' })
@@ -15,27 +15,27 @@ export class CreateCommentDto {
 }
 
 export class LikeVideoDto {
-  @ApiProperty({ example: 'user-uuid' })
-  @IsString()
-  @IsNotEmpty()
-  userId: string;
-
   @ApiProperty({ example: 'video-uuid' })
   @IsString()
   @IsNotEmpty()
   videoId: string;
+
+  @ApiProperty({ example: 'user-uuid', required: false })
+  @IsString()
+  @IsOptional()
+  userId?: string;
 }
 
 export class UnlikeVideoDto {
-  @ApiProperty({ example: 'user-uuid' })
-  @IsString()
-  @IsNotEmpty()
-  userId: string;
-
   @ApiProperty({ example: 'video-uuid' })
   @IsString()
   @IsNotEmpty()
   videoId: string;
+
+  @ApiProperty({ example: 'user-uuid', required: false })
+  @IsString()
+  @IsOptional()
+  userId?: string;
 }
 
 export class AddCommentDto {
