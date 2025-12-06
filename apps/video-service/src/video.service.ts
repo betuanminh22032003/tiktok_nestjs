@@ -74,9 +74,9 @@ export class VideoService implements OnModuleInit {
               videoIds: [videoId],
             }),
           );
-          if (likeStatus?.likeInfos?.[0]) {
-            isLiked = likeStatus.likeInfos[0].hasLiked;
-            likesCount = likeStatus.likeInfos[0].likesCount;
+          if ((likeStatus as any)?.likeInfos?.[0]) {
+            isLiked = (likeStatus as any).likeInfos[0].hasLiked;
+            likesCount = (likeStatus as any).likeInfos[0].likesCount;
           }
         } catch (error) {
           // If interaction service fails, use database likes count
@@ -141,7 +141,7 @@ export class VideoService implements OnModuleInit {
       });
 
       // Get like status for all videos if userId provided
-      let likeMap: Map<string, { hasLiked: boolean; likesCount: number }> = new Map();
+      const likeMap: Map<string, { hasLiked: boolean; likesCount: number }> = new Map();
       if (userId && videos.length > 0) {
         try {
           const videoIds = videos.map((v) => v.id);
