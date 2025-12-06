@@ -42,7 +42,7 @@ export default function PostMainLikes({ post }: PostMainLikesCompTypes) {
     if (!post?.id) return
     try {
       const result = await apiClient.getCommentsByPostId(post.id)
-      setComments((result as Comment[]) || [])
+      setComments(((result as any).data?.comments as Comment[]) || [])
     } catch (error) {
       console.error('Failed to fetch comments:', error)
       setComments([])
