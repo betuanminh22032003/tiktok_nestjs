@@ -42,7 +42,8 @@ export default function SingleComment({ comment, params }: SingleCommentCompType
               <Image
                 alt="Profile Image"
                 className="absolute top-0 mx-auto rounded-full lg:mx-0"
-                width="40"
+                width={40}
+                height={40}
                 src={createBucketUrl(comment.user.avatar)!}
               />
             ) : (

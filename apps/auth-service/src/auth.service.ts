@@ -201,6 +201,7 @@ export class AuthService {
     const { password, ...result } = user;
     return {
       ...result,
+      avatar: user.avatar || null, // Ensure avatar is always present
       createdAt: user.createdAt.toISOString(),
     };
   }

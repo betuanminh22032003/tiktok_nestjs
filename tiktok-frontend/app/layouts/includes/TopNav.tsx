@@ -138,7 +138,10 @@ const TopNav = memo(function TopNav() {
                         height={35}
                         alt="Profile Image"
                         className="h-[35px] w-[35px] rounded-full"
-                        src={createBucketUrl(userContext.user.image)!}
+                        src={'/images/default-avatar.png'}
+                        onError={(e: any) => {
+                          e.target.style.display = 'none'
+                        }}
                       />
                     ) : (
                       <div className="h-[35px] w-[35px] rounded-full bg-gray-200" />

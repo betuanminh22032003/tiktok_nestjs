@@ -16,23 +16,40 @@ import Image from 'next/image'
 import React, { useEffect } from 'react'
 
 export default function Profile({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = React.use(params)
+  const [id, setId] = React.useState<string | null>(null)
+  const [isReady, setIsReady] = React.useState(false)
   const contextUser = useUser()
   const { postsByUser, setPostsByUser } = usePostStore()
   const { setCurrentProfile, currentProfile } = useProfileStore()
   let { isEditProfileOpen, setIsEditProfileOpen } = useGeneralStore()
 
-  // Fetch user data with SWR
-  const { user: profileUser } = useSWRUser(id)
-  const { followers, total: followersCount } = useFollowers(id, 1, 1)
-  const { following, total: followingCount } = useFollowing(id, 1, 1)
+  // Parse params safely
+  React.useEffect(() => {
+    let isMounted = true
+    params.then(({ id: paramId }) => {
+      if (isMounted && paramId && paramId !== 'undefined') {
+        setId(paramId)
+        setIsReady(true)
+      } else {
+        setIsReady(true)
+      }
+    })
+    return () => {
+      isMounted = false
+    }
+  }, [params])
+
+  // Fetch user data with SWR (only if id is ready)
+  const { user: profileUser } = useSWRUser(isReady && id ? id : null)
+  const { followers, total: followersCount } = useFollowers(isReady && id ? id : null, 1, 1)
+  const { following, total: followingCount } = useFollowing(isReady && id ? id : null, 1, 1)
 
   useEffect(() => {
-    if (id) {
+    if (isReady && id) {
       setCurrentProfile(id)
       setPostsByUser(id)
     }
-  }, [id, setCurrentProfile, setPostsByUser])
+  }, [id, isReady, setCurrentProfile, setPostsByUser])
 
   return (
     <>

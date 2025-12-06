@@ -11,10 +11,14 @@ const useGetAllPosts = async (): Promise<PostWithProfile[]> => {
     if (videos && Array.isArray(videos)) {
       // Map API response to PostWithProfile type
       const mapped = videos.map((video: any) => {
-        const userId = video.user?.id || video.userId || 'unknown'
+        // Try to get userId from video.user, fallback to video.userId, never use 'unknown'
+        const userId = video.user?.id || video.userId
+        if (!userId) {
+          console.warn('Warning: No userId found for video:', video.id)
+        }
         return {
           id: video.id,
-          user_id: userId,
+          user_id: userId || '',
           video_url: video.videoUrl || video.video_url || '',
           text: video.description || video.text || '',
           created_at: video.createdAt || video.created_at || '',
@@ -27,7 +31,7 @@ const useGetAllPosts = async (): Promise<PostWithProfile[]> => {
           createdAt: video.createdAt,
           // Always provide profile with fallback values
           profile: {
-            user_id: userId,
+            user_id: userId || '',
             name: video.user?.fullName || video.user?.username || 'Unknown User',
             image: video.user?.avatar || '',
           },

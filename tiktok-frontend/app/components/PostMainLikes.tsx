@@ -105,13 +105,15 @@ export default function PostMainLikes({ post }: PostMainLikesCompTypes) {
           </div>
 
           <button
-            onClick={() => router.push(`/post/${post?.id}/${post?.profile?.user_id}`)}
+            onClick={() =>
+              router.push(`/post/${post?.id}/${post?.user_id || post?.profile?.user_id}`)
+            }
             className="pb-4 text-center"
           >
             <div className="cursor-pointer rounded-full bg-gray-200 p-2">
               <FaCommentDots size="25" />
             </div>
-            <span className="text-xs font-semibold text-gray-800">{comments?.length}</span>
+            <span className="text-xs font-semibold text-gray-800">{comments?.length || 0}</span>
           </button>
 
           <button className="text-center">
