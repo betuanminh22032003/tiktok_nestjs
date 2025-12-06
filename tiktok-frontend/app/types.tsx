@@ -64,7 +64,6 @@ export interface Post {
 
 export interface PostWithProfile {
   id: string
-  user_id?: string
   title?: string
   description?: string
   videoUrl?: string
@@ -75,10 +74,10 @@ export interface PostWithProfile {
   text?: string
   created_at?: string
   createdAt?: string
-  profile: {
-    user_id: string
-    name: string
-    image: string
+  user: {
+    id: string
+    username: string
+    fullName: string
   }
 }
 

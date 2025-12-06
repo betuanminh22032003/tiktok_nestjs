@@ -15,7 +15,6 @@ import { use, useEffect } from 'react'
 
 export default function Post({ params }: PostPageTypes) {
   const { postId, userId } = use(params)
-
   const { postById, postsByUser, setPostById, setPostsByUser } = usePostStore()
   const { setCommentsByPost } = useCommentStore()
 
