@@ -1,7 +1,5 @@
 global:
   resolve_timeout: 5m
-  slack_api_url: '${SLACK_WEBHOOK_URL}'
-  pagerduty_url: 'https://events.pagerduty.com/v2/enqueue'
 
 route:
   receiver: 'default-receiver'
@@ -21,28 +19,8 @@ route:
 
 receivers:
   - name: 'default-receiver'
-    slack_configs:
-      - channel: '#alerts'
-        title: '{{ .GroupLabels.alertname }}'
-        text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
-        send_resolved: true
-
   - name: 'critical-receiver'
-    slack_configs:
-      - channel: '#critical-alerts'
-        title: '🚨 CRITICAL: {{ .GroupLabels.alertname }}'
-        text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
-        send_resolved: true
-    pagerduty_configs:
-      - service_key: '${PAGERDUTY_SERVICE_KEY}'
-        description: '{{ .GroupLabels.alertname }}'
-
   - name: 'warning-receiver'
-    slack_configs:
-      - channel: '#warnings'
-        title: '⚠️ WARNING: {{ .GroupLabels.alertname }}'
-        text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
-        send_resolved: true
 
 inhibit_rules:
   - source_match:
