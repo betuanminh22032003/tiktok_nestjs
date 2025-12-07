@@ -1,9 +1,12 @@
+import { LoggerModule, LoggingInterceptor } from '@app/common/logging';
 import { RedisModule } from '@app/redis';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { join } from 'path';
 import { HealthController } from './health.controller';
+import { MetricsController } from './metrics.controller';
 import { AuthModule } from './modules/auth/auth.module';
 import { InteractionModule } from './modules/interaction/interaction.module';
 import { UploadModule } from './modules/upload/upload.module';
@@ -17,6 +20,7 @@ import { WebsocketModule } from './modules/websocket/websocket.module';
       isGlobal: true,
       envFilePath: '.env',
     }),
+    LoggerModule,
     RedisModule,
 
     // gRPC Clients
@@ -57,13 +61,12 @@ import { WebsocketModule } from './modules/websocket/websocket.module';
     UserModule,
     UploadModule,
   ],
-  controllers: [HealthController],
+  controllers: [HealthController, MetricsController],
   providers: [
-    // Disabled HTTP cache interceptor to ensure fresh data
-    // {
-    //   provide: APP_INTERCEPTOR,
-    //   useClass: HttpCacheInterceptor,
-    // },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: LoggingInterceptor,
+    },
   ],
 })
 export class ApiGatewayModule {}

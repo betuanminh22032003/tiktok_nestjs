@@ -59,6 +59,7 @@
     "migration:all:run": "npm run migration:auth:run && npm run migration:video:run && npm run migration:interaction:run && npm run migration:notification:run"
   },
   "dependencies": {
+    "@elastic/elasticsearch": "^8.12.0",
     "@grpc/grpc-js": "^1.9.14",
     "@grpc/proto-loader": "^0.7.10",
     "@nestjs/common": "^10.3.0",
@@ -72,7 +73,9 @@
     "@nestjs/swagger": "^7.1.17",
     "@nestjs/typeorm": "^10.0.1",
     "@nestjs/websockets": "^10.3.0",
+    "@sentry/integrations": "^7.99.0",
     "@sentry/node": "^7.99.0",
+    "axios": "^1.6.5",
     "bcrypt": "^5.1.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
@@ -87,6 +90,8 @@
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
     "pg": "^8.11.3",
+    "pino": "^8.18.0",
+    "pino-http": "^8.6.1",
     "prom-client": "^15.1.0",
     "redis": "^4.6.12",
     "reflect-metadata": "^0.1.13",
@@ -95,7 +100,8 @@
     "typeorm": "^0.3.17",
     "uuid": "^9.0.1",
     "winston": "^3.11.0",
-    "winston-daily-rotate-file": "^4.7.1"
+    "winston-daily-rotate-file": "^4.7.1",
+    "winston-elasticsearch": "^0.17.4"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.2.1",
