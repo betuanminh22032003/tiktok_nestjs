@@ -5,6 +5,9 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { join } from 'path';
+
+import { LoggerModule } from '@app/common/logging';
+import { MetricsController } from '@app/common/logging/metrics.controller';
 import { HealthController } from './health.controller';
 import { VideoController } from './video.controller';
 import { VideoService } from './video.service';
@@ -29,8 +32,9 @@ import { VideoService } from './video.service';
         },
       },
     ]),
+    LoggerModule,
   ],
-  controllers: [VideoController, HealthController],
+  controllers: [VideoController, HealthController, MetricsController],
   providers: [VideoService],
 })
 export class VideoModule {}

@@ -5,6 +5,9 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
+
+import { LoggerModule } from '@app/common/logging';
+import { MetricsController } from '@app/common/logging/metrics.controller';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { HealthController } from './health.controller';
@@ -31,8 +34,9 @@ import { LocalStrategy } from './strategies/local.strategy';
       }),
       inject: [ConfigService],
     }),
+    LoggerModule,
   ],
-  controllers: [AuthController, HealthController],
+  controllers: [AuthController, HealthController, MetricsController],
   providers: [AuthService, JwtStrategy, LocalStrategy],
 })
 export class AuthModule {}
