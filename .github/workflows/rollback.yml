@@ -1,0 +1,327 @@
+# =============================================================================
+# TIKTOK CLONE - ROLLBACK WORKFLOW
+# =============================================================================
+# Workflow này cho phép rollback nhanh về version trước trong trường hợp khẩn cấp
+#
+# USE CASES:
+# 1. Production có bug nghiêm trọng cần rollback ngay
+# 2. Deployment mới gây ra issues
+# 3. Cần quay về version cụ thể
+# =============================================================================
+
+name: Emergency Rollback
+
+on:
+  # Chỉ cho phép trigger thủ công
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Môi trường cần rollback'
+        required: true
+        type: choice
+        options:
+          - production
+          - staging
+          - dev
+      rollback_type:
+        description: 'Loại rollback'
+        required: true
+        type: choice
+        options:
+          - previous # Rollback về version trước đó
+          - specific # Rollback về version cụ thể
+      target_version:
+        description: 'Version cần rollback tới (nếu chọn "specific")'
+        required: false
+        type: string
+      reason:
+        description: 'Lý do rollback'
+        required: true
+        type: string
+
+jobs:
+  # ===========================================================================
+  # JOB 1: VALIDATE & PREPARE ROLLBACK
+  # ===========================================================================
+  prepare:
+    name: 🔍 Prepare Rollback
+    runs-on: ubuntu-latest
+
+    outputs:
+      target_revision: ${{ steps.find-revision.outputs.revision }}
+      current_revision: ${{ steps.current.outputs.revision }}
+      app_name: ${{ steps.app.outputs.name }}
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Xác định ArgoCD application name
+      - name: 🎯 Determine ArgoCD app name
+        id: app
+        run: |
+          ENV="${{ inputs.environment }}"
+
+          case $ENV in
+            production)
+              APP_NAME="tiktok-clone-prod"
+              ;;
+            staging)
+              APP_NAME="tiktok-clone-staging"
+              ;;
+            dev)
+              APP_NAME="tiktok-clone-dev"
+              ;;
+          esac
+
+          echo "name=$APP_NAME" >> $GITHUB_OUTPUT
+          echo "🎯 ArgoCD App: $APP_NAME"
+
+      # Lấy current revision
+      - name: 📌 Get current revision
+        id: current
+        run: |
+          echo "📌 Getting current revision..."
+
+          # Nếu có ArgoCD access
+          if [ -n "${{ secrets.ARGOCD_SERVER }}" ]; then
+            curl -sSL -o argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+            chmod +x argocd
+
+            ./argocd login ${{ secrets.ARGOCD_SERVER }} \
+              --username ${{ secrets.ARGOCD_USERNAME }} \
+              --password ${{ secrets.ARGOCD_PASSWORD }} \
+              --insecure
+
+            CURRENT=$(./argocd app get ${{ steps.app.outputs.name }} -o json | jq -r '.status.sync.revision')
+            echo "revision=$CURRENT" >> $GITHUB_OUTPUT
+            echo "📌 Current revision: $CURRENT"
+          else
+            echo "revision=unknown" >> $GITHUB_OUTPUT
+            echo "⚠️ ArgoCD not configured, using git history"
+          fi
+
+      # Tìm revision cần rollback tới
+      - name: 🔍 Find target revision
+        id: find-revision
+        run: |
+          ROLLBACK_TYPE="${{ inputs.rollback_type }}"
+
+          if [ "$ROLLBACK_TYPE" == "specific" ]; then
+            # Sử dụng version được chỉ định
+            TARGET_VERSION="${{ inputs.target_version }}"
+
+            if [ -z "$TARGET_VERSION" ]; then
+              echo "❌ Target version is required for specific rollback"
+              exit 1
+            fi
+
+            # Tìm commit/tag tương ứng
+            if git rev-parse "v$TARGET_VERSION" >/dev/null 2>&1; then
+              REVISION=$(git rev-parse "v$TARGET_VERSION")
+            elif git rev-parse "$TARGET_VERSION" >/dev/null 2>&1; then
+              REVISION="$TARGET_VERSION"
+            else
+              echo "❌ Version $TARGET_VERSION not found"
+              exit 1
+            fi
+          else
+            # Rollback về version trước đó
+            # Lấy revision từ ArgoCD history hoặc git
+            if [ -n "${{ secrets.ARGOCD_SERVER }}" ]; then
+              REVISION=$(./argocd app history ${{ steps.app.outputs.name }} -o json | jq -r '.[1].revision // .[0].revision')
+            else
+              # Fallback: lấy commit trước đó
+              REVISION=$(git rev-parse HEAD~1)
+            fi
+          fi
+
+          echo "revision=$REVISION" >> $GITHUB_OUTPUT
+          echo "🎯 Target revision: $REVISION"
+
+  # ===========================================================================
+  # JOB 2: APPROVAL (cho Production)
+  # ===========================================================================
+  approval:
+    name: ⚠️ Rollback Approval
+    runs-on: ubuntu-latest
+    needs: prepare
+    if: inputs.environment == 'production'
+
+    # Yêu cầu manual approval
+    environment:
+      name: production-rollback
+
+    steps:
+      - name: ⚠️ Rollback Approved
+        run: |
+          echo "⚠️ PRODUCTION ROLLBACK APPROVED"
+          echo "Reason: ${{ inputs.reason }}"
+          echo "Target: ${{ needs.prepare.outputs.target_revision }}"
+          echo "Approved by: ${{ github.actor }}"
+
+  # ===========================================================================
+  # JOB 3: EXECUTE ROLLBACK
+  # ===========================================================================
+  rollback:
+    name: ⏪ Execute Rollback
+    runs-on: ubuntu-latest
+    needs: [prepare, approval]
+    # Chạy nếu approval passed hoặc không phải production
+    if: |
+      always() &&
+      (needs.approval.result == 'success' || inputs.environment != 'production') &&
+      needs.prepare.result == 'success'
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      # Thực hiện rollback qua ArgoCD
+      - name: ⏪ Execute ArgoCD Rollback
+        run: |
+          echo "⏪ Executing rollback..."
+          echo "Environment: ${{ inputs.environment }}"
+          echo "Target revision: ${{ needs.prepare.outputs.target_revision }}"
+          echo "Reason: ${{ inputs.reason }}"
+
+          if [ -n "${{ secrets.ARGOCD_SERVER }}" ]; then
+            curl -sSL -o argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+            chmod +x argocd
+
+            ./argocd login ${{ secrets.ARGOCD_SERVER }} \
+              --username ${{ secrets.ARGOCD_USERNAME }} \
+              --password ${{ secrets.ARGOCD_PASSWORD }} \
+              --insecure
+
+            # Thực hiện rollback
+            ./argocd app rollback ${{ needs.prepare.outputs.app_name }} \
+              ${{ needs.prepare.outputs.target_revision }}
+
+            # Đợi rollback hoàn thành
+            ./argocd app wait ${{ needs.prepare.outputs.app_name }} \
+              --timeout 600 \
+              --health
+
+            echo "✅ Rollback completed successfully"
+          else
+            echo "⚠️ ArgoCD not configured"
+            echo "Manual rollback required using kubectl or Helm"
+
+            # Alternative: rollback using kubectl
+            # kubectl rollout undo deployment/<deployment-name> -n <namespace>
+          fi
+
+      # Health check sau rollback
+      - name: 🏥 Post-rollback health check
+        run: |
+          echo "🏥 Running health checks..."
+
+          # Đợi pods stabilize
+          sleep 30
+
+          # Health check (adjust URL based on environment)
+          ENV="${{ inputs.environment }}"
+          case $ENV in
+            production)
+              URL="https://api.tiktok-clone.local/health"
+              ;;
+            staging)
+              URL="https://staging-api.tiktok-clone.local/health"
+              ;;
+            dev)
+              URL="https://dev-api.tiktok-clone.local/health"
+              ;;
+          esac
+
+          if curl -sf "$URL" --max-time 10; then
+            echo "✅ Health check passed"
+          else
+            echo "⚠️ Health check failed or not accessible"
+          fi
+        continue-on-error: true
+
+  # ===========================================================================
+  # JOB 4: NOTIFY & DOCUMENT
+  # ===========================================================================
+  notify:
+    name: 📢 Notify & Document
+    runs-on: ubuntu-latest
+    needs: [prepare, rollback]
+    if: always()
+
+    steps:
+      # Tạo GitHub Issue để document rollback
+      - name: 📋 Create rollback issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issueTitle = `🔄 Rollback: ${{ inputs.environment }} - ${new Date().toISOString().split('T')[0]}`;
+            const issueBody = `
+            ## Rollback Summary
+
+            | Field | Value |
+            |-------|-------|
+            | **Environment** | ${{ inputs.environment }} |
+            | **Type** | ${{ inputs.rollback_type }} |
+            | **From Revision** | ${{ needs.prepare.outputs.current_revision }} |
+            | **To Revision** | ${{ needs.prepare.outputs.target_revision }} |
+            | **Triggered by** | @${{ github.actor }} |
+            | **Status** | ${{ needs.rollback.result }} |
+
+            ## Reason
+            ${{ inputs.reason }}
+
+            ## Next Steps
+            - [ ] Investigate root cause
+            - [ ] Create fix PR
+            - [ ] Update documentation
+            - [ ] Post-mortem meeting scheduled
+
+            ---
+            *This issue was created automatically by the Rollback workflow*
+            `;
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: issueTitle,
+              body: issueBody,
+              labels: ['rollback', 'incident', '${{ inputs.environment }}']
+            });
+
+      # Slack notification (nếu có setup)
+      - name: 📢 Send Slack notification
+        if: vars.SLACK_WEBHOOK_URL != ''
+        run: |
+          curl -X POST ${{ vars.SLACK_WEBHOOK_URL }} \
+            -H 'Content-type: application/json' \
+            -d '{
+              "text": "🔄 *Rollback Executed*",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Environment:* ${{ inputs.environment }}\n*Status:* ${{ needs.rollback.result }}\n*Reason:* ${{ inputs.reason }}\n*By:* ${{ github.actor }}"
+                  }
+                }
+              ]
+            }'
+        continue-on-error: true
+
+      # Summary
+      - name: 📊 Generate summary
+        run: |
+          echo "# ⏪ Rollback Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Environment** | ${{ inputs.environment }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Status** | ${{ needs.rollback.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **From** | ${{ needs.prepare.outputs.current_revision }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **To** | ${{ needs.prepare.outputs.target_revision }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Reason** | ${{ inputs.reason }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Executed by** | ${{ github.actor }} |" >> $GITHUB_STEP_SUMMARY
