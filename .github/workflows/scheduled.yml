@@ -12,13 +12,13 @@
 name: Scheduled Maintenance
 
 on:
-  # Chạy theo schedule
-  schedule:
-    # Daily security scan lúc 2:00 AM UTC (9:00 AM Vietnam)
-    - cron: '0 2 * * *'
-
-    # Weekly dependency audit vào Chủ Nhật lúc 3:00 AM UTC
-    - cron: '0 3 * * 0'
+  # Chạy theo schedule - COMMENTED OUT để tiết kiệm runner resources
+  # Uncomment nếu cần auto-run
+  # schedule:
+  #   # Daily security scan lúc 2:00 AM UTC (9:00 AM Vietnam)
+  #   - cron: '0 2 * * *'
+  #   # Weekly dependency audit vào Chủ Nhật lúc 3:00 AM UTC
+  #   - cron: '0 3 * * 0'
 
   # Cho phép trigger thủ công
   workflow_dispatch:

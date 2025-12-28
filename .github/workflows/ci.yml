@@ -18,25 +18,38 @@ name: CI - Continuous Integration
 # Khi nào pipeline sẽ chạy?
 # =============================================================================
 on:
-  # Chạy khi có Pull Request vào các nhánh chính
-  pull_request:
-    branches:
-      - main
-      - develop
-      - 'release/*' # Các nhánh release như release/1.0.0
-    # Chỉ chạy khi có thay đổi các file liên quan đến code
-    paths:
-      - 'apps/**'
-      - 'libs/**'
-      - 'package*.json'
-      - 'tsconfig*.json'
-      - '.github/workflows/ci.yml'
+  # Manual trigger - Chạy khi cần thiết để tiết kiệm runner resources
+  workflow_dispatch:
+    inputs:
+      run_tests:
+        description: 'Run unit tests'
+        required: false
+        type: boolean
+        default: true
+      run_security_scan:
+        description: 'Run security scan'
+        required: false
+        type: boolean
+        default: true
 
-  # Chạy khi push code (không qua PR)
-  push:
-    branches:
-      - main
-      - develop
+  # Uncomment dòng dưới nếu muốn auto-run trên Pull Request
+  # pull_request:
+  #   branches:
+  #     - main
+  #     - develop
+  #     - 'release/*'
+  #   paths:
+  #     - 'apps/**'
+  #     - 'libs/**'
+  #     - 'package*.json'
+  #     - 'tsconfig*.json'
+  #     - '.github/workflows/ci.yml'
+
+  # Uncomment dòng dưới nếu muốn auto-run trên Push
+  # push:
+  #   branches:
+  #     - main
+  #     - develop
 
   # Cho phép chạy thủ công từ GitHub UI
   workflow_dispatch:
