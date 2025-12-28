@@ -1,0 +1,614 @@
+# =============================================================================
+# TIKTOK CLONE - CD PIPELINE (CONTINUOUS DEPLOYMENT)
+# =============================================================================
+# Pipeline này build Docker images và deploy lên Kubernetes thông qua ArgoCD
+#
+# FLOW:
+# 1. Build & Push Docker images lên Container Registry
+# 2. Update Helm values với image tags mới
+# 3. ArgoCD tự động detect changes và sync lên Kubernetes
+#
+# ENVIRONMENTS:
+# - develop branch → DEV environment
+# - release/* branches → STAGING environment
+# - main branch → PRODUCTION environment (cần approval)
+# =============================================================================
+
+name: CD - Build & Deploy
+
+# =============================================================================
+# TRIGGER CONDITIONS
+# =============================================================================
+on:
+  # Chỉ chạy khi CI pipeline hoàn thành thành công
+  workflow_run:
+    workflows: ['CI - Continuous Integration']
+    types:
+      - completed
+    branches:
+      - main
+      - develop
+      - 'release/*'
+
+  # Cho phép trigger thủ công với input
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Môi trường deploy'
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+          - production
+      services:
+        description: 'Services cần deploy (comma separated, hoặc "all")'
+        required: false
+        default: 'all'
+        type: string
+      skip_tests:
+        description: 'Bỏ qua tests (chỉ dùng khi khẩn cấp)'
+        required: false
+        default: false
+        type: boolean
+
+# =============================================================================
+# ENVIRONMENT VARIABLES
+# =============================================================================
+env:
+  # Container Registry - sử dụng GitHub Container Registry
+  REGISTRY: ghcr.io
+  # Image name prefix
+  IMAGE_PREFIX: ${{ github.repository }}
+  # Node version
+  NODE_VERSION: '20.x'
+  # Helm version
+  HELM_VERSION: '3.14.0'
+
+# =============================================================================
+# CONCURRENCY
+# Đảm bảo chỉ có 1 deployment chạy tại một thời điểm cho mỗi environment
+# =============================================================================
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false # KHÔNG hủy deployment đang chạy
+
+# =============================================================================
+# JOBS
+# =============================================================================
+jobs:
+  # ===========================================================================
+  # JOB 1: PREPARE
+  # Chuẩn bị thông tin cho deployment
+  # ===========================================================================
+  prepare:
+    name: 📋 Prepare Deployment
+    runs-on: ubuntu-latest
+    # Chỉ chạy nếu CI success hoặc trigger thủ công
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+
+    outputs:
+      # Output để các jobs sau sử dụng
+      environment: ${{ steps.set-env.outputs.environment }}
+      version: ${{ steps.set-version.outputs.version }}
+      services: ${{ steps.set-services.outputs.services }}
+      should_deploy: ${{ steps.check-changes.outputs.should_deploy }}
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Cần full history để tính version
+
+      # Xác định environment dựa trên branch
+      - name: 🎯 Determine environment
+        id: set-env
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            # Nếu trigger thủ công, dùng input
+            ENV="${{ inputs.environment }}"
+          else
+            # Tự động xác định từ branch
+            BRANCH="${{ github.ref_name }}"
+            if [ "$BRANCH" == "main" ]; then
+              ENV="production"
+            elif [ "$BRANCH" == "develop" ]; then
+              ENV="dev"
+            elif [[ "$BRANCH" == release/* ]]; then
+              ENV="staging"
+            else
+              ENV="dev"
+            fi
+          fi
+
+          echo "environment=$ENV" >> $GITHUB_OUTPUT
+          echo "📍 Environment: $ENV"
+
+      # Tạo version tag từ git
+      - name: 🏷️ Generate version tag
+        id: set-version
+        run: |
+          # Format: v{semver}-{short-sha}-{timestamp}
+          # Ví dụ: v1.2.3-abc1234-20241228
+
+          # Lấy latest tag hoặc mặc định v0.0.0
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+
+          # Short SHA của commit
+          SHORT_SHA=$(git rev-parse --short HEAD)
+
+          # Timestamp
+          TIMESTAMP=$(date +%Y%m%d%H%M)
+
+          # Tạo version string
+          VERSION="${LATEST_TAG}-${SHORT_SHA}-${TIMESTAMP}"
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "🏷️ Version: $VERSION"
+
+      # Xác định services cần build/deploy
+      - name: 📦 Determine services to deploy
+        id: set-services
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ "${{ inputs.services }}" != "all" ]; then
+            # Dùng input nếu được specify
+            SERVICES="${{ inputs.services }}"
+          else
+            # Build tất cả services
+            SERVICES="api-gateway,auth-service,video-service,interaction-service,notification-service"
+          fi
+
+          echo "services=$SERVICES" >> $GITHUB_OUTPUT
+          echo "📦 Services: $SERVICES"
+
+      # Kiểm tra có file thay đổi liên quan không
+      - name: 🔍 Check for relevant changes
+        id: check-changes
+        run: |
+          # Nếu trigger thủ công, luôn deploy
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "should_deploy=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Kiểm tra files changed
+          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD || echo "")
+
+          # Kiểm tra có thay đổi code không
+          if echo "$CHANGED_FILES" | grep -qE "^(apps/|libs/|package)"; then
+            echo "should_deploy=true" >> $GITHUB_OUTPUT
+            echo "✅ Code changes detected, will deploy"
+          else
+            echo "should_deploy=false" >> $GITHUB_OUTPUT
+            echo "⏭️ No code changes, skipping deployment"
+          fi
+
+  # ===========================================================================
+  # JOB 2: BUILD DOCKER IMAGES
+  # Build và push Docker images lên registry
+  # ===========================================================================
+  build:
+    name: 🐳 Build ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    needs: prepare
+    if: needs.prepare.outputs.should_deploy == 'true'
+
+    # Build matrix - build nhiều services song song
+    strategy:
+      fail-fast: false # Tiếp tục build các service khác nếu 1 cái fail
+      matrix:
+        service:
+          - api-gateway
+          - auth-service
+          - video-service
+          - interaction-service
+          - notification-service
+
+    # Permissions cần thiết để push images
+    permissions:
+      contents: read
+      packages: write
+
+    outputs:
+      # Output image tags cho từng service
+      image_tag: ${{ steps.meta.outputs.tags }}
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      # Setup Docker Buildx cho multi-platform builds và caching
+      - name: 🔧 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Login vào Container Registry
+      - name: 🔐 Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Generate metadata và tags cho image
+      - name: 🏷️ Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.service }}
+          tags: |
+            # Tag với version từ prepare job
+            type=raw,value=${{ needs.prepare.outputs.version }}
+            # Tag latest cho environment tương ứng
+            type=raw,value=${{ needs.prepare.outputs.environment }}-latest
+            # Tag với SHA cho traceability
+            type=sha,prefix=${{ needs.prepare.outputs.environment }}-
+          labels: |
+            org.opencontainers.image.title=${{ matrix.service }}
+            org.opencontainers.image.description=TikTok Clone - ${{ matrix.service }}
+            org.opencontainers.image.vendor=TikTok Clone Team
+
+      # Build và push Docker image
+      - name: 🐳 Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./apps/${{ matrix.service }}/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # Cache layers để tăng tốc builds sau
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          # Build arguments
+          build-args: |
+            NODE_ENV=production
+            BUILD_VERSION=${{ needs.prepare.outputs.version }}
+          # Platforms - có thể thêm arm64 nếu cần
+          platforms: linux/amd64
+
+      # Scan image for vulnerabilities
+      - name: 🔍 Scan image for vulnerabilities
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:${{ needs.prepare.outputs.version }}
+          format: 'sarif'
+          output: 'trivy-${{ matrix.service }}.sarif'
+          severity: 'HIGH,CRITICAL'
+        continue-on-error: true
+
+      - name: 📤 Upload scan results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-${{ matrix.service }}.sarif'
+        if: always()
+        continue-on-error: true
+
+  # ===========================================================================
+  # JOB 3: UPDATE HELM VALUES
+  # Cập nhật Helm values với image tags mới để ArgoCD detect và sync
+  # ===========================================================================
+  update-manifests:
+    name: 📝 Update Helm Values
+    runs-on: ubuntu-latest
+    needs: [prepare, build]
+    if: needs.prepare.outputs.should_deploy == 'true'
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          # Token với quyền push để update files
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ github.ref }}
+
+      # Cập nhật image tags trong Helm values file
+      - name: 📝 Update Helm values
+        run: |
+          ENV="${{ needs.prepare.outputs.environment }}"
+          VERSION="${{ needs.prepare.outputs.version }}"
+          REGISTRY="${{ env.REGISTRY }}"
+          IMAGE_PREFIX="${{ env.IMAGE_PREFIX }}"
+
+          # Xác định file values cần update
+          if [ "$ENV" == "production" ]; then
+            VALUES_FILE="helm/tiktok-clone/values-prod.yaml"
+          elif [ "$ENV" == "staging" ]; then
+            VALUES_FILE="helm/tiktok-clone/values-staging.yaml"
+          else
+            VALUES_FILE="helm/tiktok-clone/values-dev.yaml"
+          fi
+
+          echo "📝 Updating $VALUES_FILE with version $VERSION"
+
+          # Update image tags cho từng service
+          # Sử dụng yq để parse và update YAML
+          for service in api-gateway auth-service video-service interaction-service notification-service; do
+            SERVICE_KEY=$(echo $service | sed 's/-/_/g')  # api-gateway -> api_gateway
+            IMAGE="${REGISTRY}/${IMAGE_PREFIX}/${service}"
+
+            # Update repository và tag
+            yq -i ".services.${SERVICE_KEY}.image.repository = \"${IMAGE}\"" "$VALUES_FILE" || true
+            yq -i ".services.${SERVICE_KEY}.image.tag = \"${VERSION}\"" "$VALUES_FILE" || true
+          done
+
+          echo "✅ Updated $VALUES_FILE"
+          cat "$VALUES_FILE"
+
+      # Commit và push changes
+      - name: 📤 Commit and push changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+
+          git add helm/
+
+          # Chỉ commit nếu có thay đổi
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore(deploy): update image tags to ${{ needs.prepare.outputs.version }}
+
+            Environment: ${{ needs.prepare.outputs.environment }}
+            Triggered by: ${{ github.actor }}
+            Commit: ${{ github.sha }}"
+
+            git push
+            echo "✅ Changes pushed successfully"
+          fi
+
+  # ===========================================================================
+  # JOB 4: DEPLOY TO DEV
+  # Deploy tự động lên môi trường Development
+  # ===========================================================================
+  deploy-dev:
+    name: 🚀 Deploy to DEV
+    runs-on: ubuntu-latest
+    needs: [prepare, build, update-manifests]
+    if: |
+      needs.prepare.outputs.should_deploy == 'true' &&
+      needs.prepare.outputs.environment == 'dev'
+
+    environment:
+      name: development
+      url: https://dev.tiktok-clone.local
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      # Trigger ArgoCD sync
+      - name: 🔄 Trigger ArgoCD Sync
+        run: |
+          echo "🔄 Triggering ArgoCD sync for DEV environment..."
+
+          # ArgoCD sẽ tự động detect changes từ git và sync
+          # Nếu muốn trigger manually, có thể dùng ArgoCD CLI
+
+          # Install ArgoCD CLI
+          curl -sSL -o argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+          chmod +x argocd
+
+          # Login to ArgoCD (cần setup secrets)
+          if [ -n "${{ secrets.ARGOCD_SERVER }}" ]; then
+            ./argocd login ${{ secrets.ARGOCD_SERVER }} \
+              --username ${{ secrets.ARGOCD_USERNAME }} \
+              --password ${{ secrets.ARGOCD_PASSWORD }} \
+              --insecure
+
+            # Trigger sync
+            ./argocd app sync tiktok-clone-dev --prune
+
+            # Wait for sync to complete
+            ./argocd app wait tiktok-clone-dev --timeout 300
+
+            echo "✅ ArgoCD sync completed for DEV"
+          else
+            echo "⚠️ ArgoCD credentials not configured, relying on auto-sync"
+          fi
+
+      # Smoke test sau deploy
+      - name: 🧪 Run smoke tests
+        run: |
+          echo "Running smoke tests on DEV..."
+
+          # Đợi services ready
+          sleep 30
+
+          # Health check API Gateway
+          if curl -sf https://dev-api.tiktok-clone.local/health; then
+            echo "✅ API Gateway is healthy"
+          else
+            echo "⚠️ API Gateway health check failed (might be expected if no cluster access)"
+          fi
+        continue-on-error: true
+
+  # ===========================================================================
+  # JOB 5: DEPLOY TO STAGING
+  # Deploy lên môi trường Staging với approval
+  # ===========================================================================
+  deploy-staging:
+    name: 🚀 Deploy to STAGING
+    runs-on: ubuntu-latest
+    needs: [prepare, build, update-manifests]
+    if: |
+      needs.prepare.outputs.should_deploy == 'true' &&
+      needs.prepare.outputs.environment == 'staging'
+
+    environment:
+      name: staging
+      url: https://staging.tiktok-clone.local
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔄 Trigger ArgoCD Sync for Staging
+        run: |
+          echo "🔄 Triggering ArgoCD sync for STAGING environment..."
+
+          curl -sSL -o argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+          chmod +x argocd
+
+          if [ -n "${{ secrets.ARGOCD_SERVER }}" ]; then
+            ./argocd login ${{ secrets.ARGOCD_SERVER }} \
+              --username ${{ secrets.ARGOCD_USERNAME }} \
+              --password ${{ secrets.ARGOCD_PASSWORD }} \
+              --insecure
+
+            ./argocd app sync tiktok-clone-staging --prune
+            ./argocd app wait tiktok-clone-staging --timeout 300
+
+            echo "✅ ArgoCD sync completed for STAGING"
+          fi
+
+      # Run integration tests
+      - name: 🧪 Run integration tests
+        run: |
+          echo "Running integration tests on STAGING..."
+          # Add integration test commands here
+        continue-on-error: true
+
+  # ===========================================================================
+  # JOB 6: DEPLOY TO PRODUCTION
+  # Deploy lên Production với manual approval và rollback strategy
+  # ===========================================================================
+  deploy-production:
+    name: 🚀 Deploy to PRODUCTION
+    runs-on: ubuntu-latest
+    needs: [prepare, build, update-manifests]
+    if: |
+      needs.prepare.outputs.should_deploy == 'true' &&
+      needs.prepare.outputs.environment == 'production'
+
+    # Yêu cầu manual approval trước khi deploy
+    environment:
+      name: production
+      url: https://tiktok-clone.local
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      # Backup current version trước khi deploy
+      - name: 💾 Backup current version
+        run: |
+          echo "💾 Recording current version for potential rollback..."
+
+          if [ -n "${{ secrets.ARGOCD_SERVER }}" ]; then
+            curl -sSL -o argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+            chmod +x argocd
+
+            ./argocd login ${{ secrets.ARGOCD_SERVER }} \
+              --username ${{ secrets.ARGOCD_USERNAME }} \
+              --password ${{ secrets.ARGOCD_PASSWORD }} \
+              --insecure
+
+            # Lưu revision hiện tại
+            CURRENT_REVISION=$(./argocd app get tiktok-clone-prod -o json | jq -r '.status.sync.revision')
+            echo "Current revision: $CURRENT_REVISION"
+            echo "ROLLBACK_REVISION=$CURRENT_REVISION" >> $GITHUB_ENV
+          fi
+
+      # Deploy với Canary strategy
+      - name: 🚀 Deploy to Production (Canary)
+        run: |
+          echo "🚀 Starting canary deployment to PRODUCTION..."
+
+          if [ -n "${{ secrets.ARGOCD_SERVER }}" ]; then
+            # Sync with canary strategy
+            ./argocd app sync tiktok-clone-prod \
+              --strategy hook \
+              --prune
+
+            # Wait for initial sync
+            ./argocd app wait tiktok-clone-prod --timeout 600
+
+            echo "✅ Canary deployment initiated"
+          fi
+
+      # Health checks sau deploy
+      - name: 🏥 Production health checks
+        id: health-check
+        run: |
+          echo "🏥 Running production health checks..."
+
+          # Wait for pods to be ready
+          sleep 60
+
+          # Health check endpoints
+          HEALTH_OK=true
+
+          for endpoint in "health" "api/v1/health"; do
+            if ! curl -sf "https://api.tiktok-clone.local/$endpoint" --max-time 10; then
+              echo "❌ Health check failed for /$endpoint"
+              HEALTH_OK=false
+            else
+              echo "✅ Health check passed for /$endpoint"
+            fi
+          done
+
+          if [ "$HEALTH_OK" = false ]; then
+            echo "health_status=failed" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+          echo "health_status=success" >> $GITHUB_OUTPUT
+        continue-on-error: true
+
+      # Rollback nếu health check fail
+      - name: ⏪ Rollback on failure
+        if: steps.health-check.outputs.health_status == 'failed'
+        run: |
+          echo "⏪ Health checks failed! Initiating rollback..."
+
+          if [ -n "${{ secrets.ARGOCD_SERVER }}" ] && [ -n "${{ env.ROLLBACK_REVISION }}" ]; then
+            ./argocd app rollback tiktok-clone-prod ${{ env.ROLLBACK_REVISION }}
+            ./argocd app wait tiktok-clone-prod --timeout 300
+
+            echo "✅ Rollback completed to revision ${{ env.ROLLBACK_REVISION }}"
+          fi
+
+          # Fail the job để notify
+          exit 1
+
+      # Notify success
+      - name: 📢 Notify deployment success
+        if: success()
+        run: |
+          echo "✅ Production deployment successful!"
+          echo "Version: ${{ needs.prepare.outputs.version }}"
+          # Có thể thêm Slack/Teams notification ở đây
+
+  # ===========================================================================
+  # JOB 7: DEPLOYMENT SUMMARY
+  # Tổng hợp kết quả deployment
+  # ===========================================================================
+  summary:
+    name: 📊 Deployment Summary
+    runs-on: ubuntu-latest
+    needs: [prepare, build, deploy-dev, deploy-staging, deploy-production]
+    if: always()
+
+    steps:
+      - name: 📊 Generate deployment summary
+        run: |
+          echo "# 📊 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Item | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Environment** | ${{ needs.prepare.outputs.environment }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Version** | ${{ needs.prepare.outputs.version }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Triggered by** | ${{ github.actor }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Commit** | ${{ github.sha }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "## Job Results" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Prepare | ${{ needs.prepare.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build | ${{ needs.build.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Deploy DEV | ${{ needs.deploy-dev.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Deploy STAGING | ${{ needs.deploy-staging.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Deploy PRODUCTION | ${{ needs.deploy-production.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY

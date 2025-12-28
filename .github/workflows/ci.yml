@@ -1,0 +1,398 @@
+# =============================================================================
+# TIKTOK CLONE - CI PIPELINE (CONTINUOUS INTEGRATION)
+# =============================================================================
+# Pipeline này chạy mỗi khi có code mới được push hoặc tạo Pull Request
+# Mục đích: Kiểm tra chất lượng code trước khi merge vào nhánh chính
+#
+# CÁC STAGES:
+# 1. Lint & Format Check - Kiểm tra code style
+# 2. Unit Tests - Chạy unit tests với coverage
+# 3. Security Scan - Quét lỗ hổng bảo mật
+# 4. Build Validation - Kiểm tra code có thể build được không
+# =============================================================================
+
+name: CI - Continuous Integration
+
+# =============================================================================
+# TRIGGER CONDITIONS
+# Khi nào pipeline sẽ chạy?
+# =============================================================================
+on:
+  # Chạy khi có Pull Request vào các nhánh chính
+  pull_request:
+    branches:
+      - main
+      - develop
+      - 'release/*' # Các nhánh release như release/1.0.0
+    # Chỉ chạy khi có thay đổi các file liên quan đến code
+    paths:
+      - 'apps/**'
+      - 'libs/**'
+      - 'package*.json'
+      - 'tsconfig*.json'
+      - '.github/workflows/ci.yml'
+
+  # Chạy khi push code (không qua PR)
+  push:
+    branches:
+      - main
+      - develop
+
+  # Cho phép chạy thủ công từ GitHub UI
+  workflow_dispatch:
+
+# =============================================================================
+# ENVIRONMENT VARIABLES
+# Các biến môi trường dùng chung cho toàn bộ pipeline
+# =============================================================================
+env:
+  # Phiên bản Node.js sử dụng
+  NODE_VERSION: '20.x'
+
+  # Timezone cho CI (đảm bảo logs có thời gian đúng)
+  TZ: 'Asia/Ho_Chi_Minh'
+
+  # Cache key prefix - dùng để invalidate cache khi cần
+  CACHE_VERSION: v1
+
+# =============================================================================
+# CONCURRENCY
+# Hủy các pipeline cũ nếu có pipeline mới trên cùng branch/PR
+# Giúp tiết kiệm tài nguyên và thời gian chờ
+# =============================================================================
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# =============================================================================
+# JOBS DEFINITION
+# =============================================================================
+jobs:
+  # ===========================================================================
+  # JOB 1: LINT & FORMAT CHECK
+  # Kiểm tra code style theo chuẩn ESLint và Prettier
+  # ===========================================================================
+  lint:
+    name: 🔍 Lint & Format Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10 # Timeout sau 10 phút nếu job chạy quá lâu
+
+    steps:
+      # Bước 1: Checkout code từ repository
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          # Fetch đầy đủ history để có thể so sánh changes
+          fetch-depth: 0
+
+      # Bước 2: Setup Node.js với caching
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          # Sử dụng npm cache để tăng tốc install dependencies
+          cache: 'npm'
+
+      # Bước 3: Install dependencies
+      # --prefer-offline: Ưu tiên dùng cache
+      # --no-audit: Bỏ qua audit để tăng tốc (đã có job riêng cho security)
+      - name: 📚 Install dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      # Bước 4: Chạy ESLint kiểm tra code quality
+      - name: 🔍 Run ESLint
+        run: npm run lint
+        # Tiếp tục chạy các step khác nếu lint fail
+        # để xem được tất cả lỗi
+        continue-on-error: false
+
+      # Bước 5: Kiểm tra format code với Prettier
+      - name: ✨ Check code formatting
+        run: npx prettier --check "apps/**/*.ts" "libs/**/*.ts"
+
+      # Bước 6: Kiểm tra TypeScript types
+      - name: 📝 TypeScript type check
+        run: npx tsc --noEmit
+
+  # ===========================================================================
+  # JOB 2: UNIT TESTS
+  # Chạy unit tests và tạo báo cáo coverage
+  # ===========================================================================
+  test:
+    name: 🧪 Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Đợi lint job hoàn thành trước
+    needs: lint
+
+    # ---------------------------------------------------------------------------
+    # SERVICES
+    # Các container services cần thiết cho tests
+    # ---------------------------------------------------------------------------
+    services:
+      # PostgreSQL database cho integration tests
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: tiktok_clone_test
+        # Health check để đảm bảo DB sẵn sàng trước khi chạy tests
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      # Redis cache
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📚 Install dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      # Chạy unit tests với coverage report
+      - name: 🧪 Run unit tests
+        run: npm run test:cov
+        env:
+          # Environment variables cho tests
+          NODE_ENV: test
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USERNAME: postgres
+          DB_PASSWORD: postgres
+          DB_NAME: tiktok_clone_test
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+          JWT_SECRET: test-secret-key
+          JWT_EXPIRES_IN: 1h
+
+      # Upload coverage report lên Codecov để tracking
+      - name: 📊 Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage/lcov.info
+          flags: unittests
+          name: tiktok-clone-coverage
+          # Token từ Codecov (cần setup trong repository secrets)
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false # Không fail CI nếu upload thất bại
+
+      # Lưu coverage report như artifact để review sau
+      - name: 📁 Upload coverage artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 7 # Giữ artifact trong 7 ngày
+
+  # ===========================================================================
+  # JOB 3: SECURITY SCAN
+  # Quét lỗ hổng bảo mật trong dependencies và source code
+  # ===========================================================================
+  security:
+    name: 🔒 Security Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Chạy song song với lint để tiết kiệm thời gian
+
+    # Permissions cần thiết để upload security results
+    permissions:
+      contents: read
+      security-events: write # Để upload SARIF results
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      # Quét với Trivy - công cụ security scan phổ biến
+      - name: 🔍 Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs' # Scan filesystem
+          scan-ref: '.' # Scan thư mục hiện tại
+          format: 'sarif' # Output format cho GitHub Security
+          output: 'trivy-results.sarif'
+          # Chỉ báo cáo lỗi HIGH và CRITICAL
+          severity: 'HIGH,CRITICAL'
+          # Bỏ qua các vulnerability chưa có fix
+          ignore-unfixed: true
+
+      # Upload kết quả lên GitHub Security tab
+      - name: 📤 Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+        # Tiếp tục nếu upload thất bại (có thể do permissions)
+        if: always()
+
+      # Chạy npm audit để kiểm tra dependencies
+      - name: 🔐 Run npm audit
+        run: npm audit --audit-level=high
+        continue-on-error: true # Không fail CI, chỉ cảnh báo
+
+      # Kiểm tra secrets có bị commit vào repo không
+      - name: 🔑 Check for secrets in code
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          extra_args: --only-verified
+        continue-on-error: true
+
+  # ===========================================================================
+  # JOB 4: BUILD VALIDATION
+  # Kiểm tra tất cả services có thể build thành công không
+  # ===========================================================================
+  build-check:
+    name: 🏗️ Build Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: lint
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📚 Install dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      # Build tất cả services
+      - name: 🏗️ Build all services
+        run: npm run build
+
+      # Kiểm tra output build có đầy đủ không
+      - name: ✅ Verify build output
+        run: |
+          echo "Checking build outputs..."
+          # Kiểm tra các thư mục dist được tạo ra
+          ls -la dist/apps/ || echo "Warning: dist/apps not found"
+
+          # Kiểm tra từng service
+          for service in api-gateway auth-service video-service interaction-service notification-service; do
+            if [ -d "dist/apps/$service" ]; then
+              echo "✅ $service build successful"
+            else
+              echo "❌ $service build missing"
+              exit 1
+            fi
+          done
+
+  # ===========================================================================
+  # JOB 5: E2E TESTS (Optional - chạy trên nhánh main)
+  # End-to-end tests kiểm tra toàn bộ flow
+  # ===========================================================================
+  e2e-test:
+    name: 🎯 E2E Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [test, build-check]
+    # Chỉ chạy E2E tests trên nhánh main để tiết kiệm thời gian
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: tiktok_clone_e2e
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📚 Install dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      - name: 🎯 Run E2E tests
+        run: npm run test:e2e
+        env:
+          NODE_ENV: test
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USERNAME: postgres
+          DB_PASSWORD: postgres
+          DB_NAME: tiktok_clone_e2e
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+          JWT_SECRET: e2e-test-secret
+
+  # ===========================================================================
+  # JOB 6: CI STATUS CHECK
+  # Job tổng hợp kết quả để GitHub có thể check trước khi merge
+  # ===========================================================================
+  ci-status:
+    name: ✅ CI Status Check
+    runs-on: ubuntu-latest
+    needs: [lint, test, security, build-check]
+    # Luôn chạy job này để báo cáo status
+    if: always()
+
+    steps:
+      - name: 📋 Check all jobs status
+        run: |
+          echo "=== CI Pipeline Results ==="
+          echo "Lint: ${{ needs.lint.result }}"
+          echo "Test: ${{ needs.test.result }}"
+          echo "Security: ${{ needs.security.result }}"
+          echo "Build: ${{ needs.build-check.result }}"
+          echo "=========================="
+
+          # Fail nếu bất kỳ job required nào fail
+          if [ "${{ needs.lint.result }}" != "success" ] || \
+             [ "${{ needs.test.result }}" != "success" ] || \
+             [ "${{ needs.build-check.result }}" != "success" ]; then
+            echo "❌ CI Pipeline failed!"
+            exit 1
+          fi
+
+          echo "✅ CI Pipeline passed!"
