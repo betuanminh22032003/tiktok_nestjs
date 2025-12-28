@@ -76,13 +76,13 @@ ARGOCD_PASSWORD=your-argocd-password
 
 # -----------------------------------------------------------------------------
 
-AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
+AWS_ACCESS_KEY_ID=<your-aws-access-key-id>
 
-# ^ AWS Access Key ID
+# ^ AWS Access Key ID (format: AKIA...)
 
-AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+AWS_SECRET_ACCESS_KEY=<your-aws-secret-access-key>
 
-# ^ AWS Secret Access Key
+# ^ AWS Secret Access Key (40 characters)
 
 AWS_REGION=ap-southeast-1
 
