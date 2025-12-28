@@ -11,7 +11,12 @@
   ],
   "scripts": {
     "prebuild": "rimraf dist",
-    "build": "nest build",
+    "build": "nest build api-gateway && nest build auth-service && nest build video-service && nest build interaction-service && nest build notification-service",
+    "build:gateway": "nest build api-gateway",
+    "build:auth": "nest build auth-service",
+    "build:video": "nest build video-service",
+    "build:interaction": "nest build interaction-service",
+    "build:notification": "nest build notification-service",
     "format": "prettier --write \"apps/**/*.ts\" \"libs/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
