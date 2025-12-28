@@ -11,26 +11,7 @@
 name: Infrastructure Management
 
 on:
-  push:
-    branches:
-      - main
-      - develop
-    paths:
-      - 'helm/**'
-      - 'k8s/**'
-      - 'argocd/**'
-      - 'terraform/**'
-      - 'monitoring/**'
-
-  pull_request:
-    branches:
-      - main
-    paths:
-      - 'helm/**'
-      - 'k8s/**'
-      - 'argocd/**'
-      - 'terraform/**'
-
+  # Manual trigger - Tiết kiệm runner resources
   workflow_dispatch:
     inputs:
       action:
