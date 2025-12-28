@@ -26,7 +26,7 @@ metadata:
   name: api-gateway-config
   namespace: {{ .Values.namespace }}
 data:
-  CORS_ORIGIN: "http://localhost:3000,http://{{ .Values.services.frontend.name }}.{{ .Values.namespace }}.svc.cluster.local:3000"
+  CORS_ORIGIN: 'http://localhost:3000,http://{{- $frontend := .Values.services.frontend -}}{{- if $frontend -}}{{ $frontend.name | default "frontend" }}{{- else -}}frontend{{- end }}.{{ .Values.namespace }}.svc.cluster.local:3000'
 
 ---
 apiVersion: v1
