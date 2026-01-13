@@ -200,11 +200,43 @@ monitoring:
     enabled: true
     image: prom/prometheus:latest
     port: 9090
+    resources:
+      requests:
+        memory: '512Mi'
+        cpu: '250m'
+      limits:
+        memory: '1Gi'
+        cpu: '500m'
   grafana:
     enabled: true
     image: grafana/grafana:latest
     port: 3000
+    resources:
+      requests:
+        memory: '256Mi'
+        cpu: '200m'
+      limits:
+        memory: '512Mi'
+        cpu: '500m'
   elasticsearch:
     enabled: true
     image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
     port: 9200
+    resources:
+      requests:
+        memory: '1Gi'
+        cpu: '500m'
+      limits:
+        memory: '2Gi'
+        cpu: '1000m'
+  alertmanager:
+    enabled: true
+    image: prom/alertmanager:latest
+    port: 9093
+  loki:
+    enabled: true
+    image: grafana/loki:latest
+    port: 3100
+  promtail:
+    enabled: true
+    image: grafana/promtail:latest

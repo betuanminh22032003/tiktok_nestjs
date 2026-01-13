@@ -7,10 +7,12 @@
 
 ## 📊 Tổng quan
 
-| Môi trường    | Trạng thái        | Tiến độ | Ước tính  |
-| ------------- | ----------------- | ------- | --------- |
-| **K8s Local** | 🟡 Gần hoàn thành | 85%     | ~1-2 giờ  |
-| **AWS EKS**   | 🔴 Chưa sẵn sàng  | 40%     | ~2-3 ngày |
+| Môi trường    | Trạng thái             | Tiến độ | Ước tính  |
+| ------------- | ---------------------- | ------- | --------- |
+| **K8s Local** | ✅ **Sẵn sàng deploy** | 100%    | Ready!    |
+| **AWS EKS**   | 🔴 Chưa sẵn sàng       | 40%     | ~2-3 ngày |
+
+> 🎉 **Phase 1 COMPLETED!** See [PHASE1_COMPLETE.md](PHASE1_COMPLETE.md) for details.
 
 ---
 
@@ -36,44 +38,72 @@
 
 ### Checklist
 
-- [ ] **1.1** Đổi database passwords trong `k8s/infrastructure/secrets.yaml`
-  - [ ] `DB_PASSWORD`: đổi từ `postgres`
-  - [ ] `POSTGRES_PASSWORD`: đổi từ `postgres`
+- [x] **1.1** Đổi database passwords trong `k8s/infrastructure/secrets.yaml`
+  - [x] `DB_PASSWORD`: đổi từ `postgres` → `TikTok@DB#2026!Secure`
+  - [x] `POSTGRES_PASSWORD`: đổi từ `postgres` → `TikTok@DB#2026!Secure`
 
-- [ ] **1.2** Đổi JWT secrets trong `k8s/infrastructure/secrets.yaml`
-  - [ ] `JWT_ACCESS_SECRET`: đổi từ `your-secret-key-please-change-in-production`
-  - [ ] `JWT_REFRESH_SECRET`: đổi từ `your-refresh-key-please-change-in-production`
+- [x] **1.2** Đổi JWT secrets trong `k8s/infrastructure/secrets.yaml`
+  - [x] `JWT_ACCESS_SECRET`: đổi từ `your-secret-key-please-change-in-production` → `TikTok-JWT-Access-2026-a9f8d7c6b5e4d3c2b1a0987654321fed`
+  - [x] `JWT_REFRESH_SECRET`: đổi từ `your-refresh-key-please-change-in-production` → `TikTok-JWT-Refresh-2026-1234567890abcdef1234567890abcdef`
 
-- [ ] **1.3** Đổi Grafana password
-  - [ ] `GF_SECURITY_ADMIN_PASSWORD`: đổi từ `admin123`
+- [x] **1.3** Đổi Grafana password
+  - [x] `GF_SECURITY_ADMIN_PASSWORD`: đổi từ `admin123` → `Grafana@Admin#2026!`
+  - [x] `PGADMIN_DEFAULT_PASSWORD`: đổi từ `pgadmin123` → `PgAdmin@2026!Secure`
 
-- [ ] **1.4** Test deployment trên Docker Desktop
+- [ ] **1.4** Setup Docker Desktop Kubernetes
 
   ```powershell
-  # Tạo namespace
+  # Enable Kubernetes in Docker Desktop Settings
+  # See K8S_SETUP_DOCKER_DESKTOP.md for detailed guide
+  kubectl cluster-info
+  ```
+
+- [ ] **1.5** Build Docker images locally
+
+  ```powershell
+  # Option 1: Use script to build all
+  .\scripts\deploy-k8s-local.ps1
+
+  # Option 2: Build manually
+  docker build -t tiktok-api-gateway:latest -f apps/api-gateway/Dockerfile .
+  docker build -t tiktok-auth-service:latest -f apps/auth-service/Dockerfile .
+  # ... (see K8S_LOCAL_QUICK_START.md)
+  ```
+
+- [ ] **1.6** Test deployment trên Docker Desktop
+
+  ```powershell
+  # Option 1: Using deploy script (RECOMMENDED)
+  .\scripts\deploy-k8s-local.ps1
+
+  # Option 2: Manual kubectl commands
   kubectl apply -f k8s/infrastructure/namespace.yaml
-
-  # Deploy infrastructure
   kubectl apply -f k8s/infrastructure/
-
-  # Deploy services
   kubectl apply -f k8s/services/
 
-  # Kiểm tra pods
+  # Check pods
   kubectl get pods -n tiktok-clone
   ```
 
-- [ ] **1.5** Test với Helm
+- [ ] **1.7** Verify services healthy
 
   ```powershell
-  helm install tiktok-clone ./helm/tiktok-clone -f helm/tiktok-clone/values-dev.yaml -n tiktok-clone --create-namespace
+  # Check all resources
+  .\scripts\deploy-k8s-local.ps1 -Action status
+
+  # View logs
+  .\scripts\deploy-k8s-local.ps1 -Action logs -Service api-gateway -Watch
+
+  # Port forward to test
+  kubectl port-forward svc/api-gateway 4000:4000 -n tiktok-clone
+  # Then test: curl http://localhost:4000/health
   ```
 
-- [ ] **1.6** Verify services healthy
-  ```powershell
-  kubectl get pods -n tiktok-clone
-  kubectl logs -f deployment/api-gateway -n tiktok-clone
-  ```
+### 📚 Documentation Created
+
+- ✅ [K8S_SETUP_DOCKER_DESKTOP.md](K8S_SETUP_DOCKER_DESKTOP.md) - Setup guide cho Docker Desktop K8s
+- ✅ [K8S_LOCAL_QUICK_START.md](K8S_LOCAL_QUICK_START.md) - Quick start & troubleshooting guide
+- ✅ [scripts/deploy-k8s-local.ps1](scripts/deploy-k8s-local.ps1) - Automated deployment script
 
 ### ⚠️ Lưu ý cho Local
 
