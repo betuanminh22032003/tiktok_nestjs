@@ -240,3 +240,43 @@ monitoring:
   promtail:
     enabled: true
     image: grafana/promtail:latest
+# =============================================================================
+# Database Migration Configuration
+# =============================================================================
+migration:
+  # Enable/disable automatic migration on deploy
+  enabled: true
+
+  # Migration Docker image (uses same image as services with migration script)
+  image:
+    repository: tiktok-migration
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  # Target service(s) to migrate: auth|video|interaction|notification|all
+  targetService: all
+
+  # Force schema sync even if version matches (use with caution!)
+  forceSync: false
+
+  # Time to keep completed job (10 minutes)
+  ttlSecondsAfterFinished: 600
+
+  # Number of retries before marking migration as failed
+  backoffLimit: 3
+
+  # Database names for each service
+  databases:
+    auth: tiktok_auth
+    video: tiktok_video
+    interaction: tiktok_interaction
+    notification: tiktok_notification
+
+  # Resources for migration job
+  resources:
+    requests:
+      memory: '256Mi'
+      cpu: '200m'
+    limits:
+      memory: '512Mi'
+      cpu: '500m'
