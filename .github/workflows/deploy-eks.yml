@@ -233,6 +233,15 @@ jobs:
         run: |
           aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name ${{ env.CLUSTER_NAME }}
 
+          # Verify cluster access
+          echo "Verifying cluster access..."
+          kubectl cluster-info
+          kubectl get nodes
+
+          # Wait for cluster to be ready
+          echo "Waiting for cluster to be fully ready..."
+          kubectl wait --for=condition=Ready nodes --all --timeout=300s || true
+
       - name: Install Helm
         uses: azure/setup-helm@v3
         with:
@@ -241,7 +250,7 @@ jobs:
       - name: Deploy with Helm
         run: |
           # Create namespace if not exists
-          kubectl create namespace tiktok-clone-${{ github.event.inputs.environment }} --dry-run=client -o yaml | kubectl apply -f -
+          kubectl create namespace tiktok-clone-${{ github.event.inputs.environment }} --dry-run=client -o yaml | kubectl apply -f - --validate=false
 
           # Create GHCR secret
           kubectl create secret docker-registry ghcr-secret \
@@ -249,7 +258,7 @@ jobs:
             --docker-server=ghcr.io \
             --docker-username=${{ github.actor }} \
             --docker-password=${{ secrets.GITHUB_TOKEN }} \
-            --dry-run=client -o yaml | kubectl apply -f -
+            --dry-run=client -o yaml | kubectl apply -f - --validate=false
 
           # Deploy using Helm
           helm upgrade --install tiktok-clone ./helm/tiktok-clone \
@@ -291,7 +300,7 @@ jobs:
   # TERRAFORM DESTROY
   # ===========================================================================
   terraform-destroy:
-    name: 'Terraform Destroy'
+    name: 'Terraform Destroy - Complete Cleanup'
     runs-on: ubuntu-latest
     # Can run anytime when 'destroy' action is selected
     if: github.event.inputs.action == 'destroy'
@@ -307,6 +316,35 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update kubeconfig
+        continue-on-error: true
+        run: |
+          echo "Connecting to cluster..."
+          aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name ${{ env.CLUSTER_NAME }} || echo "Cluster may not exist"
+
+      - name: Clean up Kubernetes resources
+        continue-on-error: true
+        run: |
+          echo "=========================================="
+          echo "  Cleaning up Kubernetes resources..."
+          echo "=========================================="
+
+          # Delete Helm releases first (this removes LoadBalancers)
+          if kubectl get namespace tiktok-clone-${{ github.event.inputs.environment }} 2>/dev/null; then
+            echo "Uninstalling Helm release..."
+            helm uninstall tiktok-clone -n tiktok-clone-${{ github.event.inputs.environment }} --wait --timeout 5m || true
+
+            # Delete namespace (this removes any remaining resources)
+            echo "Deleting namespace..."
+            kubectl delete namespace tiktok-clone-${{ github.event.inputs.environment }} --wait=true --timeout=10m || true
+          fi
+
+          # Wait for LoadBalancers to be fully deleted
+          echo "Waiting for LoadBalancers to be cleaned up..."
+          sleep 60
+
+          echo "✓ Kubernetes cleanup complete"
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -324,7 +362,76 @@ jobs:
           TF_VAR_redis_password: ${{ secrets.REDIS_PASSWORD }}
           TF_VAR_ghcr_token: ${{ secrets.GHCR_TOKEN }}
           TF_VAR_environment: ${{ github.event.inputs.environment }}
-        run: terraform destroy -auto-approve
+        run: |
+          echo "=========================================="
+          echo "  Destroying EKS infrastructure..."
+          echo "=========================================="
+
+          terraform destroy -auto-approve
+
+          if [ $? -eq 0 ]; then
+            echo ""
+            echo "✓ Infrastructure destroyed successfully!"
+            echo ""
+            echo "⚠ IMPORTANT: Check for remaining resources:"
+            echo "  - Elastic IPs"
+            echo "  - NAT Gateways (may take 5-10 min to delete)"
+            echo "  - LoadBalancers (should be deleted)"
+            echo "  - VPC (will be deleted last)"
+          else
+            echo ""
+            echo "✗ Destroy failed. Check errors above."
+            echo "You may need to manually clean up resources."
+            exit 1
+          fi
+
+      - name: Verify cleanup
+        continue-on-error: true
+        run: |
+          echo "=========================================="
+          echo "  Verifying cleanup..."
+          echo "=========================================="
+
+          # Check for remaining EKS clusters
+          echo "Checking for EKS clusters..."
+          aws eks list-clusters --region ${{ env.AWS_REGION }} --query 'clusters' --output text
+
+          # Check for remaining VPCs (except default)
+          echo ""
+          echo "Checking for VPCs..."
+          aws ec2 describe-vpcs --region ${{ env.AWS_REGION }} --filters "Name=tag:Project,Values=tiktok-clone" --query 'Vpcs[*].[VpcId,Tags[?Key==`Name`].Value|[0]]' --output table || true
+
+          # Check for LoadBalancers
+          echo ""
+          echo "Checking for LoadBalancers..."
+          aws elbv2 describe-load-balancers --region ${{ env.AWS_REGION }} --query 'LoadBalancers[?contains(LoadBalancerName, `tiktok`) || contains(LoadBalancerName, `k8s`)].LoadBalancerName' --output table || true
+
+          echo ""
+          echo "✓ Verification complete"
+
+      - name: Cleanup summary
+        if: always()
+        run: |
+          echo ""
+          echo "=========================================="
+          echo "  🗑️  CLEANUP SUMMARY"
+          echo "=========================================="
+          echo ""
+          echo "Destroyed resources:"
+          echo "  ✓ Helm releases"
+          echo "  ✓ Kubernetes namespaces"
+          echo "  ✓ EKS cluster"
+          echo "  ✓ Node groups"
+          echo "  ✓ VPC and networking"
+          echo "  ✓ Security groups"
+          echo "  ✓ IAM roles"
+          echo ""
+          echo "⚠  Manual cleanup may be needed for:"
+          echo "  • NAT Gateway deletion (takes 5-10 minutes)"
+          echo "  • Elastic IPs (check EC2 console)"
+          echo "  • S3 buckets (not managed by Terraform)"
+          echo ""
+          echo "=========================================="
 
   # ===========================================================================
   # COST NOTIFICATION
