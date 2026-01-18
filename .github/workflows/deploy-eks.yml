@@ -101,12 +101,13 @@ jobs:
   terraform-apply:
     name: 'Terraform Apply'
     runs-on: ubuntu-latest
-    needs: terraform-plan
-    # Auto run after plan succeeds
+    needs: [terraform-plan, build-images]
+    # Run after BOTH plan and build complete successfully
     if: |
       github.event.inputs.action == 'deploy' &&
       !github.event.inputs.skip_terraform &&
-      needs.terraform-plan.result == 'success'
+      needs.terraform-plan.result == 'success' &&
+      needs.build-images.result == 'success'
     environment: ${{ github.event.inputs.environment }}
     steps:
       - name: Checkout
