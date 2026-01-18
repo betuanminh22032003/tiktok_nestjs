@@ -138,9 +138,6 @@ module "eks" {
   #   }
   # }
 
-  # Access entries for admin
-  enable_cluster_creator_admin_permissions = true
-
   tags = {
     Environment = var.environment
     Project     = var.project_name
