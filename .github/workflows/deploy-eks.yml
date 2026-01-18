@@ -104,6 +104,7 @@ jobs:
     needs: [terraform-plan, build-images]
     # Run after BOTH plan and build complete successfully
     if: |
+      always() &&
       github.event.inputs.action == 'deploy' &&
       !github.event.inputs.skip_terraform &&
       needs.terraform-plan.result == 'success' &&
