@@ -60,7 +60,7 @@ module "eks" {
   # EKS Managed Node Groups
   eks_managed_node_groups = {
     for name, config in var.node_groups : name => {
-      name = "${var.project_name}-${name}"
+      name = "tt-${name}"  # Shortened to avoid 38 char limit
 
       instance_types = config.instance_types
       capacity_type  = config.capacity_type
@@ -75,7 +75,7 @@ module "eks" {
 
       # Use spot instance interruption handler
       create_launch_template = true
-      launch_template_name   = "${var.project_name}-${name}-lt"
+      launch_template_name   = "tt-${name}-lt"  # Shortened
 
       # Enable node termination handler for spot
       enable_bootstrap_user_data = true
