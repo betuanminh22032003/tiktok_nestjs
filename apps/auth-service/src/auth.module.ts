@@ -1,5 +1,4 @@
 import { AuthDbModule } from '@app/auth-db';
-import { SentryModule } from '@app/common/sentry';
 import { KafkaModule } from '@app/kafka';
 import { RedisModule } from '@app/redis';
 import { Module } from '@nestjs/common';
@@ -20,7 +19,6 @@ import { LocalStrategy } from './strategies/local.strategy';
       isGlobal: true,
       envFilePath: '.env',
     }),
-    SentryModule,
     AuthDbModule,
     RedisModule,
     KafkaModule.register({ name: 'auth-service' }),

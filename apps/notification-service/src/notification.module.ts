@@ -1,5 +1,4 @@
 import { LoggerModule } from '@app/common/logging';
-import { SentryModule } from '@app/common/sentry';
 import { KafkaModule, KafkaService } from '@app/kafka';
 import { NotificationDbModule } from '@app/notification-db';
 import { Module, OnModuleInit } from '@nestjs/common';
@@ -14,7 +13,6 @@ import { NotificationService } from './notification.service';
       isGlobal: true,
       envFilePath: '.env',
     }),
-    SentryModule,
     NotificationDbModule,
     KafkaModule.register({ name: 'notification-service' }),
     LoggerModule,

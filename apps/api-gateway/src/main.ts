@@ -1,6 +1,5 @@
 import { AllExceptionsFilter } from '@app/common/filters';
 import { LoggingInterceptor, TransformInterceptor } from '@app/common/interceptors';
-import { SentryExceptionFilter, SentryInterceptor, SentryService } from '@app/common/sentry';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
@@ -16,10 +15,6 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(ApiGatewayModule);
 
   const configService = app.get(ConfigService);
-
-  // Initialize Sentry
-  const sentryService = app.get(SentryService);
-  await sentryService.initialize('api-gateway');
 
   // Serve static files (uploaded videos, images)
   app.use(helmet());
@@ -50,12 +45,8 @@ async function bootstrap() {
   );
 
   // Global Filters and Interceptors
-  app.useGlobalFilters(new SentryExceptionFilter(sentryService), new AllExceptionsFilter());
-  app.useGlobalInterceptors(
-    new SentryInterceptor(sentryService),
-    new LoggingInterceptor(),
-    new TransformInterceptor(),
-  );
+  app.useGlobalFilters(new AllExceptionsFilter());
+  app.useGlobalInterceptors(new LoggingInterceptor(), new TransformInterceptor());
 
   // Swagger API Documentation
   const config = new DocumentBuilder()
@@ -74,18 +65,15 @@ async function bootstrap() {
 
   logger.log(`🚀 API Gateway is running on http://localhost:${port}`);
   logger.log(`📚 Swagger docs available at http://localhost:${port}/api/docs`);
-  logger.log(`🐛 Sentry error tracking: ${sentryService.isInitialized() ? 'enabled' : 'disabled'}`);
 
   // Graceful shutdown
   process.on('SIGTERM', async () => {
     logger.log('SIGTERM signal received: closing HTTP server');
-    await sentryService.flush();
     await app.close();
   });
 
   process.on('SIGINT', async () => {
     logger.log('SIGINT signal received: closing HTTP server');
-    await sentryService.flush();
     await app.close();
   });
 }

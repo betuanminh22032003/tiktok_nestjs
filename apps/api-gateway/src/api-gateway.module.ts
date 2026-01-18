@@ -1,5 +1,4 @@
 import { LoggerModule, LoggingInterceptor } from '@app/common/logging';
-import { SentryModule } from '@app/common/sentry';
 import { RedisModule } from '@app/redis';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
@@ -22,7 +21,6 @@ import { WebsocketModule } from './modules/websocket/websocket.module';
       envFilePath: '.env',
     }),
     LoggerModule,
-    SentryModule,
     RedisModule,
 
     // gRPC Clients

@@ -1,4 +1,3 @@
-import { SentryModule } from '@app/common/sentry';
 import { InteractionDbModule } from '@app/interaction-db';
 import { KafkaModule } from '@app/kafka';
 import { RedisModule } from '@app/redis';
@@ -18,7 +17,6 @@ import { InteractionService } from './interaction.service';
       isGlobal: true,
       envFilePath: '.env',
     }),
-    SentryModule,
     InteractionDbModule,
     RedisModule,
     KafkaModule.register({ name: 'interaction-service' }),

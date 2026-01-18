@@ -130,3 +130,13 @@ services:
 # Migration disabled - services use TypeORM synchronize in dev mode
 migration:
   enabled: false
+
+# Seeding enabled for fresh installs
+seeding:
+  enabled: true
+  image:
+    repository: tiktok-seeder
+    tag: v1
+  ttlSecondsAfterFinished: 300
+  backoffLimit: 2
+  activeDeadlineSeconds: 180

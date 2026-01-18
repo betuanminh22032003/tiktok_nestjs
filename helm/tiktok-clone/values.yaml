@@ -280,3 +280,15 @@ migration:
     limits:
       memory: '512Mi'
       cpu: '500m'
+# =============================================================================
+# Database Seeding Configuration
+# =============================================================================
+seeding:
+  # Disabled by default - enable in values-dev.yaml for fresh installs
+  enabled: false
+  # Time to keep completed job
+  ttlSecondsAfterFinished: 300
+  # Retry attempts
+  backoffLimit: 2
+  # Max execution time
+  activeDeadlineSeconds: 120

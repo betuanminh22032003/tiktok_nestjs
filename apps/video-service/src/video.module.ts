@@ -1,4 +1,3 @@
-import { SentryModule } from '@app/common/sentry';
 import { KafkaModule } from '@app/kafka';
 import { RedisModule } from '@app/redis';
 import { VideoDbModule } from '@app/video-db';
@@ -18,7 +17,6 @@ import { VideoService } from './video.service';
       isGlobal: true,
       envFilePath: '.env',
     }),
-    SentryModule,
     VideoDbModule,
     RedisModule,
     KafkaModule.register({ name: 'video-service' }),
