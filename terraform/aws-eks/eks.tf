@@ -19,6 +19,10 @@ module "eks" {
   # OIDC Provider for IAM Roles for Service Accounts (IRSA)
   enable_irsa = true
 
+  # Disable KMS encryption - sandbox user doesn't have kms:TagResource permission
+  create_kms_key            = false
+  cluster_encryption_config = {}
+
   # Cluster addons
   cluster_addons = {
     coredns = {
