@@ -1,8 +1,8 @@
 # AWS and Kubernetes Providers Configuration
 
 provider "aws" {
-  region  = var.aws_region
-  profile = var.aws_profile
+  region = var.aws_region
+  # profile = var.aws_profile # Commented out for CI/CD - uses env vars instead
 
   default_tags {
     tags = merge(
