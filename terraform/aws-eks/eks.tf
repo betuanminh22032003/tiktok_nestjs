@@ -27,6 +27,10 @@ module "eks" {
   create_cloudwatch_log_group = false
   cloudwatch_log_group_retention_in_days = 7
 
+  # Enable access entry for better RBAC (requires eks:CreateAccessEntry permission)
+  enable_cluster_creator_admin_permissions = true
+  authentication_mode = "API_AND_CONFIG_MAP"  # Support both new API and legacy ConfigMap
+
   # Cluster addons
   cluster_addons = {
     coredns = {
@@ -85,8 +89,8 @@ module "eks" {
       create_launch_template = true
       launch_template_name   = "tt-${name}-lt"  # Shortened
 
-      # Enable node termination handler for spot
-      enable_bootstrap_user_data = true
+      # Disable bootstrap user data to avoid MIME format error
+      enable_bootstrap_user_data = false
 
       tags = {
         "k8s.io/cluster-autoscaler/enabled"             = "true"

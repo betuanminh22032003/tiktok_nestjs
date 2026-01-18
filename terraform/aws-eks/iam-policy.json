@@ -28,7 +28,15 @@
         "eks:AssociateEncryptionConfig",
         "eks:DisassociateIdentityProviderConfig",
         "eks:DescribeIdentityProviderConfig",
-        "eks:ListIdentityProviderConfigs"
+        "eks:ListIdentityProviderConfigs",
+        "eks:CreateAccessEntry",
+        "eks:DeleteAccessEntry",
+        "eks:DescribeAccessEntry",
+        "eks:ListAccessEntries",
+        "eks:UpdateAccessEntry",
+        "eks:AssociateAccessPolicy",
+        "eks:DisassociateAccessPolicy",
+        "eks:ListAssociatedAccessPolicies"
       ],
       "Resource": "*"
     },
@@ -134,7 +142,6 @@
         "iam:DeleteRole",
         "iam:GetRole",
         "iam:ListRoles",
-        "iam:PassRole",
         "iam:UpdateRole",
         "iam:AttachRolePolicy",
         "iam:DetachRolePolicy",
@@ -158,10 +165,39 @@
         "iam:GetOpenIDConnectProvider",
         "iam:TagOpenIDConnectProvider",
         "iam:UntagOpenIDConnectProvider",
-        "iam:ListOpenIDConnectProviders",
-        "iam:CreateServiceLinkedRole"
+        "iam:ListOpenIDConnectProviders"
       ],
       "Resource": "*"
+    },
+    {
+      "Sid": "IAMPassRoleForEKS",
+      "Effect": "Allow",
+      "Action": "iam:PassRole",
+      "Resource": "arn:aws:iam::263851502019:role/*",
+      "Condition": {
+        "StringEquals": {
+          "iam:PassedToService": [
+            "eks.amazonaws.com",
+            "ec2.amazonaws.com",
+            "autoscaling.amazonaws.com"
+          ]
+        }
+      }
+    },
+    {
+      "Sid": "IAMCreateServiceLinkedRole",
+      "Effect": "Allow",
+      "Action": "iam:CreateServiceLinkedRole",
+      "Resource": "arn:aws:iam::263851502019:role/aws-service-role/eks*.amazonaws.com/*",
+      "Condition": {
+        "StringLike": {
+          "iam:AWSServiceName": [
+            "eks.amazonaws.com",
+            "eks-nodegroup.amazonaws.com",
+            "eks-fargate.amazonaws.com"
+          ]
+        }
+      }
     },
     {
       "Sid": "CloudWatchLogs",
@@ -208,11 +244,27 @@
       "Sid": "KMSManagement",
       "Effect": "Allow",
       "Action": [
-        "kms:CreateGrant",
-        "kms:Decrypt",
+        "kms:CreateKey",
+        "kms:CreateAlias",
+        "kms:DeleteAlias",
         "kms:DescribeKey",
+        "kms:GetKeyPolicy",
+        "kms:GetKeyRotationStatus",
+        "kms:ListAliases",
+        "kms:ListKeys",
+        "kms:ListResourceTags",
+        "kms:PutKeyPolicy",
+        "kms:ScheduleKeyDeletion",
+        "kms:TagResource",
+        "kms:UntagResource",
+        "kms:EnableKeyRotation",
+        "kms:DisableKeyRotation",
+        "kms:CreateGrant",
+        "kms:RevokeGrant",
+        "kms:Decrypt",
         "kms:Encrypt",
-        "kms:GenerateDataKey"
+        "kms:GenerateDataKey",
+        "kms:GenerateDataKeyWithoutPlaintext"
       ],
       "Resource": "*"
     },
