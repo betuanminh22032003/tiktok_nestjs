@@ -1,0 +1,32 @@
+# =============================================================================
+# Security scan chạy định kỳ - thuộc về App Repo (CI)
+# =============================================================================
+
+name: Scheduled Security Scan
+
+on:
+  schedule:
+    - cron: '0 6 * * 1' # Weekly Monday 6AM UTC
+  workflow_dispatch:
+
+jobs:
+  dependency-audit:
+    name: Dependency Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+      - run: npm ci --prefer-offline --no-audit
+      - name: npm audit
+        run: npm audit --production
+        continue-on-error: true
+      - name: Trivy filesystem scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'table'
+          severity: 'HIGH,CRITICAL'
