@@ -1,0 +1,124 @@
+# ==============================================================================
+# PROMTAIL CONFIGURATION
+# ==============================================================================
+# Promtail là agent thu thập logs và push tới Loki.
+# Nó giống Prometheus nhưng cho logs: "scrape" logs từ nhiều nguồn khác nhau.
+#
+# Nhiệm vụ chính:
+#   1. Đọc logs từ Docker containers (qua /var/lib/docker/containers)
+#   2. Đọc log files từ ứng dụng (qua /logs/*.log)
+#   3. Gắn labels (service name, log level, container name...)
+#   4. Push logs tới Loki
+#
+# Luồng: Docker containers / Log files → Promtail → Loki → Grafana
+# ==============================================================================
+
+# --- Server config (cho health check) ---
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+# --- Positions file ---
+# Promtail ghi nhớ vị trí đọc cuối cùng của mỗi file ở đây.
+# Khi restart, nó sẽ tiếp tục từ vị trí cũ, không đọc lại từ đầu.
+positions:
+  filename: /tmp/positions.yaml
+
+# --- Clients ---
+# Nơi Promtail gửi logs tới (Loki)
+clients:
+  - url: http://loki:3100/loki/api/v1/push # Endpoint push logs của Loki
+
+# ==============================================================================
+# SCRAPE CONFIGS — Định nghĩa nguồn logs
+# ==============================================================================
+
+scrape_configs:
+  # ==========================================================================
+  # JOB 1: Docker Container Logs
+  # ==========================================================================
+  # Đọc logs từ tất cả Docker containers.
+  # Docker lưu stdout/stderr của mỗi container vào file JSON tại:
+  #   /var/lib/docker/containers/<container-id>/<container-id>-json.log
+  #
+  # Promtail tự động phát hiện containers qua Docker socket,
+  # và gắn labels từ Docker metadata (container name, image, compose service...)
+  # ==========================================================================
+  - job_name: docker
+    docker_sd_configs:
+      # Kết nối tới Docker daemon để discover containers
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s # Kiểm tra containers mới mỗi 5s
+
+    relabel_configs:
+      # --- Lấy tên container làm label ---
+      # __meta_docker_container_name = "/tiktok_api_gateway"
+      # Bỏ dấu "/" ở đầu → "tiktok_api_gateway"
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/(.*)'
+        target_label: 'container'
+
+      # --- Lấy tên compose service làm label ---
+      # Ví dụ: api-gateway, auth-service, video-service...
+      - source_labels: ['__meta_docker_compose_service']
+        target_label: 'service'
+
+    pipeline_stages:
+      # --- Parse JSON logs ---
+      # NestJS app ghi log dạng JSON (qua Winston):
+      #   {"level":"info","message":"HTTP Request","timestamp":"2024-01-01 12:00:00",...}
+      # Stage này parse JSON và extract các field
+      - json:
+          expressions:
+            level: level # Extract field "level" từ JSON log
+            msg: message # Extract field "message"
+            timestamp: timestamp # Extract field "timestamp"
+
+      # --- Gắn label "level" từ log content ---
+      # Sau khi parse JSON, gắn giá trị level (info/error/warn/debug)
+      # làm label trong Loki. Giúp filter logs theo level trong Grafana:
+      #   {service="api-gateway", level="error"}
+      - labels:
+          level:
+
+      # --- Set timestamp từ log ---
+      # Dùng timestamp trong log thay vì thời điểm Promtail đọc log
+      - timestamp:
+          source: timestamp
+          format: '2006-01-02 15:04:05' # Go time format
+
+  # ==========================================================================
+  # JOB 2: Application Log Files
+  # ==========================================================================
+  # Đọc log files mà NestJS ghi ra qua Winston (DailyRotateFile transport).
+  # Các file nằm trong thư mục /logs/ (được mount từ host ./logs)
+  #
+  # Dạng file: /logs/application-2024-01-15.log, /logs/error-2024-01-15.log
+  # ==========================================================================
+  - job_name: app-logs
+    static_configs:
+      - targets:
+          - localhost # Đọc file local, không cần network target
+        labels:
+          job: 'nestjs-logs' # Label để phân biệt nguồn log
+          __path__: /logs/*.log # Đường dẫn file logs (glob pattern)
+
+    pipeline_stages:
+      # --- Parse JSON log file ---
+      # Winston DailyRotateFile ghi JSON:
+      #   {"level":"info","message":"...","timestamp":"2024-01-01 12:00:00","context":"AuthService"}
+      - json:
+          expressions:
+            level: level
+            msg: message
+            service: context # Lấy context làm tên service
+
+      # --- Gắn labels ---
+      - labels:
+          level:
+          service:
+
+      # --- Set timestamp ---
+      - timestamp:
+          source: timestamp
+          format: '2006-01-02 15:04:05'

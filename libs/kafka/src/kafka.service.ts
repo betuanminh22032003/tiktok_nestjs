@@ -148,10 +148,18 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
       // Subscribe to the topic
       await this.consumer.subscribe({ topic, fromBeginning: false });
 
-      // Start consuming (consumer will handle multiple subscriptions)
-      // Only start if not already running
-      if (!this.consumerRunning) {
-        await this.startConsumer();
+      // Defer startConsumer để cho phép nhiều subscribe() gọi liên tiếp
+      // trong cùng 1 event loop tick (ví dụ: onModuleInit gọi 3 lần).
+      // Nếu start ngay, lần subscribe thứ 2 sẽ lỗi "Cannot subscribe while running".
+      if (!this.consumerRunning && !this.consumerStartScheduled) {
+        this.consumerStartScheduled = true;
+        queueMicrotask(() => {
+          this.startConsumer().catch((err) => {
+            this.consumerRunning = false;
+            this.consumerStartScheduled = false;
+            this.logger.error('Failed to start consumer', err);
+          });
+        });
       }
 
       this.logger.log(`Subscribed to topic ${topic}`);
@@ -165,6 +173,7 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
    * Start the Kafka consumer (idempotent)
    */
   private consumerRunning = false;
+  private consumerStartScheduled = false;
   private async startConsumer(): Promise<void> {
     if (this.consumerRunning) return;
 

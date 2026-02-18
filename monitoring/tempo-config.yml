@@ -1,0 +1,88 @@
+# ==============================================================================
+# TEMPO CONFIGURATION
+# ==============================================================================
+# Tempo là hệ thống lưu trữ traces (distributed tracing) của Grafana.
+#
+# TRACING LÀ GÌ?
+#   Khi 1 HTTP request đi qua nhiều services (Gateway → Auth → DB),
+#   tracing ghi lại TOÀN BỘ hành trình đó:
+#     - Service nào xử lý?
+#     - Mỗi service mất bao lâu?
+#     - Thứ tự gọi ra sao?
+#     - Có lỗi ở đâu không?
+#
+#   Mỗi request tạo 1 "Trace", gồm nhiều "Spans":
+#     Trace: [request-id-123]
+#       ├── Span: API Gateway (50ms)
+#       │     ├── Span: Auth middleware (5ms)
+#       │     └── Span: gRPC call to Auth Service (20ms)
+#       │           └── Span: DB query - SELECT user (8ms)
+#       └── Span: Response serialization (2ms)
+#
+# LUỒNG DỮ LIỆU:
+#   NestJS (OpenTelemetry SDK)
+#     → Tạo spans cho mỗi operation (HTTP, gRPC, DB query...)
+#     → Export spans qua OTLP HTTP protocol
+#     → Tempo nhận và lưu trữ
+#     → Grafana query từ Tempo để hiển thị trace timeline
+#
+# SO SÁNH 3 TRỤ CỘT OBSERVABILITY:
+#   Metrics (Prometheus): "Có bao nhiêu requests? Response time trung bình?"
+#   Logs (Loki):          "Request X ghi log gì? Có error message gì?"
+#   Traces (Tempo):       "Request X đi qua những services nào? Chỗ nào chậm?"
+# ==============================================================================
+
+# --- Server config ---
+server:
+  http_listen_port: 3200 # Port cho Tempo API (Grafana query từ đây)
+
+# --- Distributor ---
+# Nhận traces từ OpenTelemetry SDK (qua OTLP protocol)
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        http:
+          endpoint: '0.0.0.0:4318' # OTLP HTTP endpoint (NestJS gửi traces tới đây)
+
+# --- Ingester ---
+# Xử lý và buffer traces trước khi ghi vào storage
+ingester:
+  max_block_duration: 5m # Flush traces vào storage mỗi 5 phút
+
+# --- Compactor ---
+# Nén và tối ưu dữ liệu traces đã lưu
+compactor:
+  compaction:
+    block_retention: 168h # Giữ traces 7 ngày (168 giờ)
+
+# --- Metrics generator ---
+# Tự động tạo metrics từ traces (service graph, span metrics)
+# Giúp Grafana vẽ service dependency map
+metrics_generator:
+  registry:
+    external_labels:
+      source: tempo
+      cluster: docker-compose
+  storage:
+    path: /var/tempo/generator/wal
+    remote_write:
+      - url: http://prometheus:9090/api/v1/write
+        send_exemplars: true
+
+# --- Storage ---
+# Cấu hình nơi lưu trữ traces
+storage:
+  trace:
+    backend: local # Lưu trên local filesystem (production nên dùng S3/GCS)
+    wal:
+      path: /var/tempo/wal # Write-Ahead Log (buffer trước khi flush)
+    local:
+      path: /var/tempo/blocks # Nơi lưu trace blocks
+
+# --- Overrides ---
+# Cấu hình processors cho metrics_generator
+overrides:
+  defaults:
+    metrics_generator:
+      processors: [service-graphs, span-metrics]

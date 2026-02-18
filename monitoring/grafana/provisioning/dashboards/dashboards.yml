@@ -1,0 +1,21 @@
+# ==============================================================================
+# GRAFANA DASHBOARD PROVISIONING
+# ==============================================================================
+# File này nói cho Grafana biết: "Hãy load dashboard JSON files từ thư mục này".
+# Khi có dashboard JSON mới trong thư mục, Grafana tự động load mà không cần
+# import thủ công qua UI.
+# ==============================================================================
+
+apiVersion: 1
+
+providers:
+  - name: 'default'
+    orgId: 1
+    folder: '' # Để trống = dashboard ở thư mục gốc
+    type: file
+    disableDeletion: false # Cho phép xóa dashboard qua UI
+    editable: true # Cho phép edit dashboard qua UI
+    updateIntervalSeconds: 10 # Kiểm tra file mới mỗi 10 giây
+    options:
+      path: /var/lib/grafana/dashboards # Thư mục chứa dashboard JSON files
+      foldersFromFilesStructure: false

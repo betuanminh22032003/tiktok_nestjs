@@ -104,121 +104,69 @@ services:
       retries: 5
       start_period: 30s
 
-  # Elasticsearch
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
-    container_name: tiktok_elasticsearch
-    environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=false
-      - 'ES_JAVA_OPTS=-Xms512m -Xmx512m'
-    ports:
-      - '9200:9200'
-    volumes:
-      - elasticsearch_data:/usr/share/elasticsearch/data
-    networks:
-      - tiktok_network
-    healthcheck:
-      test: ['CMD-SHELL', 'curl -s http://localhost:9200 >/dev/null || exit 1']
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 40s
+  # ==========================================================================
+  # MONITORING STACK (Prometheus + Grafana + Loki + Promtail)
+  # ==========================================================================
+  # Luồng Metrics: NestJS → /metrics endpoint → Prometheus scrape → Grafana
+  # Luồng Logs:    NestJS → stdout/files → Promtail collect → Loki → Grafana
+  # ==========================================================================
 
-  # Kibana
-  kibana:
-    image: docker.elastic.co/kibana/kibana:8.11.0
-    container_name: tiktok_kibana
-    environment:
-      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
-    ports:
-      - '5601:5601'
-    depends_on:
-      elasticsearch:
-        condition: service_healthy
-    networks:
-      - tiktok_network
-    restart: unless-stopped
-
-  # Logstash
-  logstash:
-    image: docker.elastic.co/logstash/logstash:8.11.0
-    container_name: tiktok_logstash
-    volumes:
-      - ./monitoring/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
-    environment:
-      - 'LS_JAVA_OPTS=-Xmx256m -Xms256m'
-    ports:
-      - '5000:5000'
-      - '9600:9600'
-    depends_on:
-      elasticsearch:
-        condition: service_healthy
-    networks:
-      - tiktok_network
-    restart: unless-stopped
-
-  # Prometheus (Updated)
+  # --- Prometheus ---
+  # Thu thập metrics bằng cách gọi GET /metrics tới mỗi service mỗi 15s.
+  # Lưu dữ liệu vào time-series DB. Query bằng PromQL.
+  # UI: http://localhost:9090
   prometheus:
     image: prom/prometheus:latest
     container_name: tiktok_prometheus
     volumes:
+      # Mount file cấu hình (danh sách targets để scrape)
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
-      - ./monitoring/alert_rules.yml:/etc/prometheus/alert_rules.yml
+      # Volume lưu dữ liệu metrics
       - prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
-      - '--web.console.templates=/usr/share/prometheus/consoles'
-      - '--web.enable-lifecycle'
+      - '--storage.tsdb.retention.time=7d' # Giữ data 7 ngày
+      - '--web.enable-lifecycle' # Cho phép reload config qua API
     ports:
       - '9090:9090'
     networks:
       - tiktok_network
     restart: unless-stopped
 
-  # Alertmanager
-  alertmanager:
-    image: prom/alertmanager:latest
-    container_name: tiktok_alertmanager
-    volumes:
-      - ./monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml
-      - alertmanager_data:/alertmanager
-    command:
-      - '--config.file=/etc/alertmanager/alertmanager.yml'
-      - '--storage.path=/alertmanager'
-    ports:
-      - '19093:9093'
-    networks:
-      - tiktok_network
-    restart: unless-stopped
-
-  # Grafana (Updated)
+  # --- Grafana ---
+  # Dashboard UI để visualize metrics (từ Prometheus) và logs (từ Loki).
+  # UI: http://localhost:3005 (admin/admin123)
   grafana:
     image: grafana/grafana:latest
     container_name: tiktok_grafana
     environment:
       GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: admin123
-      GF_INSTALL_PLUGINS: 'grafana-piechart-panel'
     ports:
-      - '3005:3000'
+      - '3005:3000' # Map port 3000 (Grafana default) ra 3005
     volumes:
       - grafana_data:/var/lib/grafana
+      # Auto-provisioning: datasources + dashboards được load tự động
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
       - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
     depends_on:
       - prometheus
-      - elasticsearch
       - loki
+      - tempo
     networks:
       - tiktok_network
     restart: unless-stopped
 
-  # Loki
+  # --- Tempo ---
+  # (xem config ở trên)
+
+  # --- Loki ---
+  # Lưu trữ logs (giống Prometheus nhưng cho logs).
+  # Nhận logs từ Promtail, index theo labels, query bằng LogQL.
+  # Không có UI riêng - dùng qua Grafana.
   loki:
-    image: grafana/loki:latest
+    image: grafana/loki:3.4.2
     container_name: tiktok_loki
     ports:
       - '3100:3100'
@@ -230,45 +178,41 @@ services:
       - tiktok_network
     restart: unless-stopped
 
-  # Promtail
+  # --- Tempo ---
+  # Lưu trữ traces (distributed tracing).
+  # Nhận traces từ NestJS (OpenTelemetry SDK) qua OTLP HTTP protocol.
+  # Giúp theo dõi 1 request đi qua nhiều services: Gateway → Auth → DB.
+  # Không có UI riêng - dùng qua Grafana.
+  tempo:
+    image: grafana/tempo:2.7.2
+    container_name: tiktok_tempo
+    volumes:
+      - ./monitoring/tempo-config.yml:/etc/tempo/config.yaml
+      - tempo_data:/var/tempo
+    command: ['-config.file=/etc/tempo/config.yaml']
+    ports:
+      - '3200:3200' # Tempo API (Grafana query từ đây)
+      - '4318:4318' # OTLP HTTP receiver (NestJS gửi traces tới đây)
+    networks:
+      - tiktok_network
+    restart: unless-stopped
+
+  # --- Promtail ---
+  # Agent thu thập logs từ Docker containers và log files, push tới Loki.
+  # Đọc Docker container logs qua Docker socket.
+  # Đọc app log files từ ./logs directory.
   promtail:
-    image: grafana/promtail:latest
+    image: grafana/promtail:3.4.2
     container_name: tiktok_promtail
     volumes:
       - ./monitoring/promtail-config.yml:/etc/promtail/config.yml
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      # Mount Docker socket để discover containers và đọc logs
       - /var/run/docker.sock:/var/run/docker.sock
+      # Mount app log files
       - ./logs:/logs:ro
     command: -config.file=/etc/promtail/config.yml
     depends_on:
       - loki
-    networks:
-      - tiktok_network
-    restart: unless-stopped
-
-  # Postgres Exporter
-  postgres-exporter:
-    image: prometheuscommunity/postgres-exporter
-    container_name: tiktok_postgres_exporter
-    environment:
-      DATA_SOURCE_NAME: 'postgresql://postgres:postgres@postgres:5432/tiktok_clone?sslmode=disable'
-    ports:
-      - '9187:9187'
-    depends_on:
-      - postgres
-    networks:
-      - tiktok_network
-    restart: unless-stopped
-
-  # Redis Exporter
-  redis-exporter:
-    image: oliver006/redis_exporter
-    container_name: tiktok_redis_exporter
-    ports:
-      - '9121:9121'
-    command: -redis.addr=redis://redis:6379
-    depends_on:
-      - redis
     networks:
       - tiktok_network
     restart: unless-stopped
@@ -279,13 +223,12 @@ volumes:
   redisinsight_data:
   kafka_data:
   upload_data:
-  prometheus_data:
-  grafana_data:
   pgadmin_data:
-  elasticsearch_data:
-  kibana_data:
-  loki_data:
-  alertmanager_data:
+  # Monitoring volumes
+  prometheus_data: # Lưu metrics data của Prometheus
+  grafana_data: # Lưu dashboards, settings của Grafana
+  loki_data: # Lưu logs data của Loki
+  tempo_data: # Lưu traces data của Tempo
 
 networks:
   tiktok_network:

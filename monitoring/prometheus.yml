@@ -1,0 +1,83 @@
+# ==============================================================================
+# PROMETHEUS CONFIGURATION
+# ==============================================================================
+# Prometheus là hệ thống thu thập metrics (số liệu).
+# Nó hoạt động theo mô hình PULL: cứ mỗi X giây, Prometheus sẽ gọi HTTP GET
+# tới endpoint /metrics của mỗi service để lấy dữ liệu.
+#
+# Dữ liệu metrics có dạng text:
+#   http_requests_total{method="GET", route="/api/users", status_code="200"} 1523
+#   http_request_duration_seconds_bucket{le="0.1"} 980
+#
+# Prometheus lưu dữ liệu này vào time-series database (TSDB) và cho phép
+# query bằng ngôn ngữ PromQL.
+# ==============================================================================
+
+# --- Cấu hình global ---
+global:
+  # Prometheus gọi tới mỗi target mỗi 15 giây để lấy metrics
+  scrape_interval: 15s
+
+  # Đánh giá alerting rules mỗi 15 giây (chưa dùng alert ở bước này)
+  evaluation_interval: 15s
+
+# ==============================================================================
+# SCRAPE CONFIGS — Danh sách targets mà Prometheus sẽ pull metrics từ đó
+# ==============================================================================
+# Mỗi job_name là một nhóm targets.
+# Ví dụ: job "api-gateway" → Prometheus gọi http://api-gateway:4000/metrics
+# mỗi 15 giây và lưu tất cả metrics trả về.
+# ==============================================================================
+
+scrape_configs:
+  # --- Prometheus tự scrape chính nó (để monitor sức khỏe của Prometheus) ---
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # --- API Gateway (port 4000) ---
+  # Đây là service chính expose /metrics endpoint
+  # Metrics bao gồm: HTTP request count, duration, errors, Node.js metrics...
+  - job_name: 'api-gateway'
+    metrics_path: '/metrics' # Endpoint mà Prometheus gọi tới
+    scrape_interval: 10s # Scrape nhanh hơn default vì là gateway chính
+    static_configs:
+      - targets: ['api-gateway:4000']
+        labels:
+          service: 'api-gateway' # Label giúp filter metrics theo service trong Grafana
+
+  # --- Auth Service (port 4001) ---
+  - job_name: 'auth-service'
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['auth-service:4001']
+        labels:
+          service: 'auth-service'
+
+  # --- Video Service (port 4002) ---
+  - job_name: 'video-service'
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['video-service:4002']
+        labels:
+          service: 'video-service'
+
+  # --- Interaction Service (port 4003) ---
+  - job_name: 'interaction-service'
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['interaction-service:4003']
+        labels:
+          service: 'interaction-service'
+
+  # --- Notification Service (port 4004) ---
+  - job_name: 'notification-service'
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['notification-service:4004']
+        labels:
+          service: 'notification-service'

@@ -103,73 +103,21 @@ services:
       retries: 5
       start_period: 30s
 
-  # Elasticsearch
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
-    container_name: tiktok_elasticsearch
-    environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=false
-      - 'ES_JAVA_OPTS=-Xms512m -Xmx512m'
-    ports:
-      - '9200:9200'
-    volumes:
-      - elasticsearch_data:/usr/share/elasticsearch/data
-    networks:
-      - tiktok_network
-    healthcheck:
-      test: ['CMD-SHELL', 'curl -s http://localhost:9200 >/dev/null || exit 1']
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 40s
+  # ==========================================================================
+  # MONITORING STACK (Prometheus + Grafana + Loki + Promtail)
+  # ==========================================================================
 
-  # Kibana
-  kibana:
-    image: docker.elastic.co/kibana/kibana:8.11.0
-    container_name: tiktok_kibana
-    environment:
-      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
-    ports:
-      - '5601:5601'
-    depends_on:
-      elasticsearch:
-        condition: service_healthy
-    networks:
-      - tiktok_network
-    restart: unless-stopped
-
-  # Logstash
-  logstash:
-    image: docker.elastic.co/logstash/logstash:8.11.0
-    container_name: tiktok_logstash
-    volumes:
-      - ./monitoring/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
-    environment:
-      - 'LS_JAVA_OPTS=-Xmx256m -Xms256m'
-    ports:
-      - '5000:5000'
-      - '9600:9600'
-    depends_on:
-      elasticsearch:
-        condition: service_healthy
-    networks:
-      - tiktok_network
-    restart: unless-stopped
-
-  # Prometheus (Updated)
+  # --- Prometheus ---
   prometheus:
     image: prom/prometheus:latest
     container_name: tiktok_prometheus
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
-      - ./monitoring/alert_rules.yml:/etc/prometheus/alert_rules.yml
       - prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
-      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--storage.tsdb.retention.time=7d'
       - '--web.enable-lifecycle'
     ports:
       - '9090:9090'
@@ -177,30 +125,13 @@ services:
       - tiktok_network
     restart: unless-stopped
 
-  # Alertmanager
-  alertmanager:
-    image: prom/alertmanager:latest
-    container_name: tiktok_alertmanager
-    volumes:
-      - ./monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml
-      - alertmanager_data:/alertmanager
-    command:
-      - '--config.file=/etc/alertmanager/alertmanager.yml'
-      - '--storage.path=/alertmanager'
-    ports:
-      - '19093:9093'
-    networks:
-      - tiktok_network
-    restart: unless-stopped
-
-  # Grafana (Updated)
+  # --- Grafana ---
   grafana:
     image: grafana/grafana:latest
     container_name: tiktok_grafana
     environment:
       GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: admin123
-      GF_INSTALL_PLUGINS: 'grafana-piechart-panel'
     ports:
       - '3005:3000'
     volumes:
@@ -209,15 +140,15 @@ services:
       - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
     depends_on:
       - prometheus
-      - elasticsearch
       - loki
+      - tempo
     networks:
       - tiktok_network
     restart: unless-stopped
 
-  # Loki
+  # --- Loki ---
   loki:
-    image: grafana/loki:latest
+    image: grafana/loki:3.4.2
     container_name: tiktok_loki
     ports:
       - '3100:3100'
@@ -229,45 +160,32 @@ services:
       - tiktok_network
     restart: unless-stopped
 
-  # Promtail
+  # --- Tempo ---
+  tempo:
+    image: grafana/tempo:2.7.2
+    container_name: tiktok_tempo
+    volumes:
+      - ./monitoring/tempo-config.yml:/etc/tempo/config.yaml
+      - tempo_data:/var/tempo
+    command: ['-config.file=/etc/tempo/config.yaml']
+    ports:
+      - '3200:3200'
+      - '4318:4318'
+    networks:
+      - tiktok_network
+    restart: unless-stopped
+
+  # --- Promtail ---
   promtail:
-    image: grafana/promtail:latest
+    image: grafana/promtail:3.4.2
     container_name: tiktok_promtail
     volumes:
       - ./monitoring/promtail-config.yml:/etc/promtail/config.yml
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - /var/run/docker.sock:/var/run/docker.sock
       - ./logs:/logs:ro
     command: -config.file=/etc/promtail/config.yml
     depends_on:
       - loki
-    networks:
-      - tiktok_network
-    restart: unless-stopped
-
-  # Postgres Exporter
-  postgres-exporter:
-    image: prometheuscommunity/postgres-exporter
-    container_name: tiktok_postgres_exporter
-    environment:
-      DATA_SOURCE_NAME: 'postgresql://postgres:postgres@postgres:5432/tiktok_clone?sslmode=disable'
-    ports:
-      - '9187:9187'
-    depends_on:
-      - postgres
-    networks:
-      - tiktok_network
-    restart: unless-stopped
-
-  # Redis Exporter
-  redis-exporter:
-    image: oliver006/redis_exporter
-    container_name: tiktok_redis_exporter
-    ports:
-      - '9121:9121'
-    command: -redis.addr=redis://redis:6379
-    depends_on:
-      - redis
     networks:
       - tiktok_network
     restart: unless-stopped
@@ -298,6 +216,9 @@ services:
       GRPC_AUTH_URL: auth-service:50051
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-your-secret-key-please-change-in-production}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-your-refresh-key-please-change-in-production}
+      # OpenTelemetry → Tempo
+      OTEL_SERVICE_NAME: auth-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo:4318
     ports:
       - '4001:4001'
       - '50051:50051'
@@ -332,6 +253,9 @@ services:
       KAFKA_CLIENT_ID: video-service
       KAFKA_GROUP_ID: video-service-group
       GRPC_VIDEO_URL: video-service:50052
+      # OpenTelemetry → Tempo
+      OTEL_SERVICE_NAME: video-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo:4318
     ports:
       - '4002:4002'
       - '50052:50052'
@@ -368,6 +292,9 @@ services:
       KAFKA_CLIENT_ID: interaction-service
       KAFKA_GROUP_ID: interaction-service-group
       GRPC_INTERACTION_URL: interaction-service:50053
+      # OpenTelemetry → Tempo
+      OTEL_SERVICE_NAME: interaction-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo:4318
     ports:
       - '4003:4003'
       - '50053:50053'
@@ -401,6 +328,9 @@ services:
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-your-secret-key-please-change-in-production}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-your-refresh-key-please-change-in-production}
       CORS_ORIGIN: http://localhost:3006,http://localhost:4000
+      # OpenTelemetry → Tempo
+      OTEL_SERVICE_NAME: api-gateway
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo:4318
     ports:
       - '4000:4000'
     depends_on:
@@ -431,6 +361,9 @@ services:
       KAFKA_CLIENT_ID: notification-service
       KAFKA_GROUP_ID: notification-service-group
       GRPC_NOTIFICATION_URL: notification-service:50054
+      # OpenTelemetry → Tempo
+      OTEL_SERVICE_NAME: notification-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo:4318
     ports:
       - '4004:4004'
       - '50054:50054'
@@ -451,13 +384,11 @@ volumes:
   redisinsight_data:
   kafka_data:
   upload_data:
+  pgadmin_data:
   prometheus_data:
   grafana_data:
-  pgadmin_data:
-  elasticsearch_data:
-  kibana_data:
   loki_data:
-  alertmanager_data:
+  tempo_data:
 
 networks:
   tiktok_network:

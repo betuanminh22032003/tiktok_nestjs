@@ -1,3 +1,7 @@
+// ⚡ QUAN TRỌNG: Import tracing TRƯỚC TẤT CẢ các import khác
+// OpenTelemetry cần được khởi tạo đầu tiên để monkey-patch các thư viện (http, express, grpc...)
+import '@app/common/tracing';
+
 import { AllExceptionsFilter } from '@app/common/filters';
 import { LoggingInterceptor } from '@app/common/interceptors';
 import { logger } from '@app/common/utils';

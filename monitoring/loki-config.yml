@@ -1,0 +1,54 @@
+# ==============================================================================
+# LOKI CONFIGURATION
+# ==============================================================================
+# Loki là hệ thống lưu trữ logs, thiết kế giống Prometheus nhưng cho logs.
+#
+# Đặc điểm chính của Loki:
+#   - KHÔNG index nội dung log (khác Elasticsearch)
+#   - CHỈ index labels (ví dụ: service="api-gateway", level="error")
+#   - Tiết kiệm tài nguyên hơn Elasticsearch rất nhiều
+#   - Query bằng LogQL (giống PromQL)
+#
+# Luồng dữ liệu:
+#   Promtail → push logs → Loki (port 3100) → Grafana query
+# ==============================================================================
+
+# Tắt xác thực (phù hợp cho development)
+auth_enabled: false
+
+# --- Server config ---
+server:
+  http_listen_port: 3100 # Port mà Loki lắng nghe (Promtail push logs tới đây)
+
+# --- Cấu hình chung ---
+common:
+  path_prefix: /loki # Thư mục gốc lưu dữ liệu
+  storage:
+    filesystem:
+      chunks_directory: /loki/chunks # Nơi lưu nội dung log (compressed)
+      rules_directory: /loki/rules # Nơi lưu rules (alerting)
+  replication_factor: 1 # Chỉ 1 bản sao (single instance)
+  ring:
+    kvstore:
+      store: inmemory # Dùng memory cho service discovery (đủ cho single node)
+
+# --- Schema config ---
+# Định nghĩa cách Loki lưu trữ và index dữ liệu
+schema_config:
+  configs:
+    - from: 2024-01-01 # Áp dụng từ ngày này
+      store: tsdb # Dùng TSDB store (mới, hiệu quả hơn boltdb)
+      object_store: filesystem # Lưu trên filesystem (production nên dùng S3/GCS)
+      schema: v13 # Schema version 13 (mới nhất)
+      index:
+        prefix: index_ # Prefix cho index files
+        period: 24h # Tạo index mới mỗi 24 giờ
+
+# --- Giới hạn ---
+limits_config:
+  # Cho phép log cũ tối đa 168 giờ (7 ngày) - log cũ hơn sẽ bị reject
+  reject_old_samples: true
+  reject_old_samples_max_age: 168h
+
+  # Cho phép structured metadata (hữu ích cho JSON logs)
+  allow_structured_metadata: false

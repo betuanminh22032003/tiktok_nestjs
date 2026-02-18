@@ -1,0 +1,443 @@
+{
+  "__comment__": "Dashboard NestJS Overview - Hiển thị metrics từ Prometheus, logs từ Loki, và traces từ Tempo",
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "__comment__": "====== ROW 1: Tổng quan HTTP ======",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 100,
+      "title": "HTTP Overview",
+      "type": "row"
+    },
+    {
+      "__comment__": "Panel 1: Tổng số requests/giây (rate) trong 5 phút gần nhất. PromQL: rate() tính tốc độ thay đổi của counter theo thời gian. sum() gom tất cả labels lại. Kết quả: ví dụ 25.3 req/s",
+      "title": "Request Rate (req/s)",
+      "description": "Tổng số HTTP requests mỗi giây, tính trung bình trong 5 phút",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 1 },
+      "id": 1,
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 100 },
+              { "color": "red", "value": 500 }
+            ]
+          },
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background",
+        "graphMode": "area"
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_total[5m]))",
+          "legendFormat": "Total req/s"
+        }
+      ]
+    },
+    {
+      "__comment__": "Panel 2: Tỷ lệ lỗi (%). Đếm requests có status >= 400 chia cho tổng requests. Giúp phát hiện nhanh khi có nhiều lỗi xảy ra.",
+      "title": "Error Rate (%)",
+      "description": "Phần trăm requests trả về lỗi (status >= 400)",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 1 },
+      "id": 2,
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1 },
+              { "color": "red", "value": 5 }
+            ]
+          },
+          "unit": "percent",
+          "max": 100,
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background",
+        "graphMode": "area"
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(http_request_errors_total[5m])) / sum(rate(http_requests_total[5m])) * 100",
+          "legendFormat": "Error %"
+        }
+      ]
+    },
+    {
+      "__comment__": "Panel 3: Thời gian phản hồi P95 (95th percentile). Nghĩa là 95% requests hoàn thành trong thời gian này. histogram_quantile() tính percentile từ histogram buckets.",
+      "title": "P95 Response Time",
+      "description": "95% requests hoàn thành trong thời gian này (giây)",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 1 },
+      "id": 3,
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 0.5 },
+              { "color": "red", "value": 2 }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background",
+        "graphMode": "area"
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))",
+          "legendFormat": "P95"
+        }
+      ]
+    },
+    {
+      "__comment__": "Panel 4: Số services đang UP. up == 1 nghĩa là Prometheus scrape service đó thành công.",
+      "title": "Services UP",
+      "description": "Số lượng services mà Prometheus scrape thành công",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 1 },
+      "id": 4,
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 3 },
+              { "color": "green", "value": 5 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background",
+        "graphMode": "none"
+      },
+      "targets": [
+        {
+          "expr": "count(up{job!='prometheus'} == 1)",
+          "legendFormat": "Services UP"
+        }
+      ]
+    },
+    {
+      "__comment__": "====== ROW 2: Biểu đồ thời gian ======",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
+      "id": 101,
+      "title": "Request Metrics Over Time",
+      "type": "row"
+    },
+    {
+      "__comment__": "Panel 5: Biểu đồ request rate theo thời gian, phân chia theo service. Giúp thấy service nào nhận nhiều traffic nhất và traffic thay đổi thế nào.",
+      "title": "Request Rate by Service",
+      "description": "Số requests/giây theo thời gian, chia theo service",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+      "id": 5,
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "fillOpacity": 20,
+            "pointSize": 5,
+            "lineWidth": 2
+          },
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] },
+        "tooltip": { "mode": "multi" }
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_total[5m])) by (job)",
+          "legendFormat": "{{job}}"
+        }
+      ]
+    },
+    {
+      "__comment__": "Panel 6: Thời gian phản hồi P50, P95, P99 theo thời gian. P50 = median (50% requests nhanh hơn). P95 = 95th percentile. P99 = 99th percentile. Giúp phát hiện khi response time tăng đột biến.",
+      "title": "Response Time Percentiles",
+      "description": "P50 (median), P95, P99 response time theo thời gian",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+      "id": 6,
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "fillOpacity": 10,
+            "lineWidth": 2
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] },
+        "tooltip": { "mode": "multi" }
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))",
+          "legendFormat": "P50 (median)"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))",
+          "legendFormat": "P95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))",
+          "legendFormat": "P99"
+        }
+      ]
+    },
+    {
+      "__comment__": "====== ROW 3: Node.js Process Metrics ======",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 14 },
+      "id": 102,
+      "title": "Node.js Process Metrics",
+      "type": "row"
+    },
+    {
+      "__comment__": "Panel 7: Memory usage của Node.js process. process_resident_memory_bytes là default metric từ prom-client collectDefaultMetrics(). Giúp phát hiện memory leak.",
+      "title": "Memory Usage (RSS)",
+      "description": "Resident Set Size - bộ nhớ thực tế đang dùng bởi Node.js process",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 15 },
+      "id": 7,
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "fillOpacity": 20,
+            "lineWidth": 2
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] },
+        "tooltip": { "mode": "multi" }
+      },
+      "targets": [
+        {
+          "expr": "process_resident_memory_bytes",
+          "legendFormat": "{{job}}"
+        }
+      ]
+    },
+    {
+      "__comment__": "Panel 8: Event loop lag - đo độ trễ của Node.js event loop. Nếu event loop bị block (CPU-intensive task), lag sẽ tăng. Metric này chỉ có khi collectDefaultMetrics() được bật.",
+      "title": "Event Loop Lag",
+      "description": "Độ trễ event loop của Node.js (giây). Cao = event loop đang bị block",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 15 },
+      "id": 8,
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "fillOpacity": 20,
+            "lineWidth": 2
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] },
+        "tooltip": { "mode": "multi" }
+      },
+      "targets": [
+        {
+          "expr": "rate(nodejs_eventloop_lag_seconds[5m])",
+          "legendFormat": "{{job}}"
+        }
+      ]
+    },
+    {
+      "__comment__": "====== ROW 4: Logs ======",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 23 },
+      "id": 103,
+      "title": "Application Logs (from Loki)",
+      "type": "row"
+    },
+    {
+      "__comment__": "Panel 9: Logs từ Loki - hiển thị tất cả service logs. LogQL query: {job='docker'} lấy tất cả Docker container logs. Có thể filter thêm bằng: {service='api-gateway'} |= 'error'",
+      "title": "All Service Logs",
+      "description": "Logs từ tất cả services (từ Loki qua Promtail)",
+      "type": "logs",
+      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 24 },
+      "id": 9,
+      "options": {
+        "showTime": true,
+        "showLabels": true,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": true,
+        "enableLogDetails": true,
+        "sortOrder": "Descending",
+        "dedupStrategy": "none"
+      },
+      "targets": [
+        {
+          "expr": "{job=\"docker\"} |= ``",
+          "legendFormat": ""
+        }
+      ]
+    },
+    {
+      "__comment__": "====== ROW 5: Tracing — Tempo ======",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 34 },
+      "id": 500,
+      "title": "Distributed Tracing (Tempo)",
+      "type": "row"
+    },
+    {
+      "__comment__": "Panel: Trace duration (P95) theo service. PromQL dùng metrics do Tempo metrics_generator tạo ra. traces_spanmetrics_latency_bucket là histogram tổ hợp từ tất cả spans.",
+      "title": "Trace Duration P95 by Service",
+      "description": "P95 latency theo service, từ span metrics do Tempo sinh ra",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 35 },
+      "id": 10,
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "unit": "s",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "pointSize": 5,
+            "showPoints": "auto"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": { "mode": "multi" },
+        "legend": { "displayMode": "table", "placement": "bottom" }
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(traces_spanmetrics_latency_bucket[5m])) by (le, service))",
+          "legendFormat": "{{service}}"
+        }
+      ]
+    },
+    {
+      "__comment__": "Panel: Số spans/giây theo service. traces_spanmetrics_calls_total là counter do Tempo metrics_generator tạo ra, đếm tổng số spans nhận được.",
+      "title": "Span Rate by Service",
+      "description": "Số spans được tạo mỗi giây theo service",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 35 },
+      "id": 11,
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "unit": "ops",
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 1,
+            "fillOpacity": 50,
+            "stacking": { "mode": "normal" }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": { "mode": "multi" },
+        "legend": { "displayMode": "table", "placement": "bottom" }
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(traces_spanmetrics_calls_total[5m])) by (service)",
+          "legendFormat": "{{service}}"
+        }
+      ]
+    },
+    {
+      "__comment__": "Panel: Hướng dẫn xem traces chi tiết. Traces không hiển thị trực tiếp trên dashboard, cần dùng Explore → Tempo để xem waterfall timeline.",
+      "title": "💡 Xem Traces Chi Tiết",
+      "description": "Hướng dẫn xem distributed traces trong Grafana",
+      "type": "text",
+      "gridPos": { "h": 4, "w": 24, "x": 0, "y": 43 },
+      "id": 12,
+      "options": {
+        "mode": "markdown",
+        "content": "### Cách xem traces:\n1. **Grafana → Explore** (biểu tượng la bàn) → chọn datasource **Tempo**\n2. **Search tab** → chọn Service Name → Run query\n3. Click vào 1 trace để xem **waterfall timeline** (thời gian từng span)\n4. Từ trace, click **Logs for this span** để nhảy sang Loki xem log chi tiết\n\n> 💡 Tip: Mỗi request tạo 1 Trace ID duy nhất, theo dõi xuyên suốt: API Gateway → Auth/Video/Interaction Service → Database/Redis"
+      }
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["nestjs", "monitoring", "tracing"],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "NestJS Overview",
+  "uid": "nestjs-overview",
+  "version": 1
+}

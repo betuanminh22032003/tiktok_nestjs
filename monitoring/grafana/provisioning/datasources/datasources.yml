@@ -1,0 +1,48 @@
+# ==============================================================================
+# GRAFANA DATASOURCES — Auto-provisioning
+# ==============================================================================
+# File này được Grafana đọc khi khởi động để tự động cấu hình datasources.
+# Không cần vào Grafana UI để thêm datasource thủ công.
+#
+# Datasource = nguồn dữ liệu mà Grafana sẽ query để hiển thị trên dashboard.
+# ==============================================================================
+
+apiVersion: 1
+
+datasources:
+  # --- Datasource 1: Prometheus (cho Metrics) ---
+  # Grafana sẽ dùng PromQL để query metrics từ Prometheus.
+  # Ví dụ query: rate(http_requests_total[5m])
+  - name: Prometheus
+    type: prometheus
+    access: proxy # Grafana proxy request tới Prometheus (không expose ra ngoài)
+    url: http://prometheus:9090 # URL nội bộ trong Docker network
+    isDefault: true # Datasource mặc định khi tạo panel mới
+    editable: true # Cho phép edit trong UI
+
+  # --- Datasource 2: Loki (cho Logs) ---
+  # Grafana sẽ dùng LogQL để query logs từ Loki.
+  # Ví dụ query: {service="api-gateway"} |= "error"
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    editable: true
+
+  # --- Datasource 3: Tempo (cho Traces) ---
+  # Grafana sẽ query traces từ Tempo.
+  # Có thể search theo traceID, service name, hoặc duration.
+  # Kết hợp với Loki: click trace ID trong log → xem trace timeline.
+  - name: Tempo
+    type: tempo
+    access: proxy
+    url: http://tempo:3200
+    editable: true
+    jsonData:
+      # Liên kết Tempo với Loki: từ trace có thể nhảy sang xem logs
+      tracesToLogsV2:
+        datasourceUid: loki
+        filterByTraceID: true
+      # Liên kết Tempo với Prometheus: từ trace có thể nhảy sang xem metrics
+      tracesToMetrics:
+        datasourceUid: prometheus

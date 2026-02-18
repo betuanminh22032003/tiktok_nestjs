@@ -1,4 +1,15 @@
-import { LoggerModule, LoggingInterceptor } from '@app/common/logging';
+// ==============================================================================
+// API GATEWAY MODULE
+// ==============================================================================
+// Module chính của API Gateway. Import LoggerModule để:
+//   1. Expose GET /metrics → Prometheus scrape
+//   2. LoggingInterceptor tự động log + record metrics cho mọi request
+//
+// LoggerModule đã đăng ký MetricsController bên trong nên KHÔNG cần
+// import MetricsController riêng ở đây.
+// ==============================================================================
+
+import { LoggerModule, LoggingInterceptor as MetricsLoggingInterceptor } from '@app/common/logging';
 import { RedisModule } from '@app/redis';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
@@ -6,7 +17,6 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { join } from 'path';
 import { HealthController } from './health.controller';
-import { MetricsController } from './metrics.controller';
 import { AuthModule } from './modules/auth/auth.module';
 import { InteractionModule } from './modules/interaction/interaction.module';
 import { UploadModule } from './modules/upload/upload.module';
@@ -20,7 +30,14 @@ import { WebsocketModule } from './modules/websocket/websocket.module';
       isGlobal: true,
       envFilePath: '.env',
     }),
+
+    // LoggerModule cung cấp:
+    //   - MetricsController (GET /metrics cho Prometheus)
+    //   - MetricsService (record metrics)
+    //   - CustomLoggerService (Winston logger)
+    //   - LoggingInterceptor (auto log + metrics cho HTTP requests)
     LoggerModule,
+
     RedisModule,
 
     // gRPC Clients
@@ -61,11 +78,15 @@ import { WebsocketModule } from './modules/websocket/websocket.module';
     UserModule,
     UploadModule,
   ],
-  controllers: [HealthController, MetricsController],
+  controllers: [HealthController],
   providers: [
+    // Đăng ký LoggingInterceptor từ @app/common/logging qua DI.
+    // Interceptor này cần inject CustomLoggerService + MetricsService,
+    // nên PHẢI dùng APP_INTERCEPTOR (không thể dùng new LoggingInterceptor()).
+    // Mỗi HTTP request sẽ tự động được log + record metrics.
     {
       provide: APP_INTERCEPTOR,
-      useClass: LoggingInterceptor,
+      useClass: MetricsLoggingInterceptor,
     },
   ],
 })

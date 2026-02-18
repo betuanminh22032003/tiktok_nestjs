@@ -1,5 +1,9 @@
+// ⚡ QUAN TRỌNG: Import tracing TRƯỚC TẤT CẢ các import khác
+// OpenTelemetry cần được khởi tạo đầu tiên để monkey-patch các thư viện (http, express, grpc...)
+import '@app/common/tracing';
+
 import { AllExceptionsFilter } from '@app/common/filters';
-import { LoggingInterceptor, TransformInterceptor } from '@app/common/interceptors';
+import { TransformInterceptor } from '@app/common/interceptors';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
@@ -45,8 +49,10 @@ async function bootstrap() {
   );
 
   // Global Filters and Interceptors
+  // LoggingInterceptor được đăng ký qua APP_INTERCEPTOR trong module (cần DI)
+  // TransformInterceptor wrap response thành { success, data, timestamp }
   app.useGlobalFilters(new AllExceptionsFilter());
-  app.useGlobalInterceptors(new LoggingInterceptor(), new TransformInterceptor());
+  app.useGlobalInterceptors(new TransformInterceptor());
 
   // Swagger API Documentation
   const config = new DocumentBuilder()
