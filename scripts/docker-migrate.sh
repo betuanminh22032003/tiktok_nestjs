@@ -20,18 +20,18 @@ echo ""
 case "${MIGRATE_MODE}" in
   sync)
     echo "📦 Chạy sync schemas (tạo/update bảng)..."
-    node scripts/sync-schemas.js
+    npx ts-node -r tsconfig-paths/register scripts/seeders/sync-schemas.ts
     ;;
   seed)
     echo "🌱 Chạy seed data (thêm dữ liệu mẫu)..."
-    node scripts/seed-all.js
+    npx ts-node -r tsconfig-paths/register scripts/seeders/seed-all.ts
     ;;
   all)
     echo "📦 Bước 1/2: Sync schemas (tạo/update bảng)..."
-    node scripts/sync-schemas.js
+    npx ts-node -r tsconfig-paths/register scripts/seeders/sync-schemas.ts
     echo ""
     echo "🌱 Bước 2/2: Seed data (thêm dữ liệu mẫu)..."
-    node scripts/seed-all.js
+    npx ts-node -r tsconfig-paths/register scripts/seeders/seed-all.ts
     ;;
   *)
     echo "❌ MIGRATE_MODE không hợp lệ: ${MIGRATE_MODE}"
