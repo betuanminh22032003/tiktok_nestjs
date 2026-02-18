@@ -21,7 +21,7 @@ async function bootstrap() {
     options: {
       package: 'auth',
       protoPath: join(__dirname, '../../../proto/auth.proto'),
-      url: `localhost:${configService.get('AUTH_GRPC_PORT', 50051)}`,
+      url: `0.0.0.0:${configService.get('AUTH_GRPC_PORT', 50051)}`,
     },
   });
 

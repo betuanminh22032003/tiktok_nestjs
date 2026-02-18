@@ -26,11 +26,6 @@ export class RegisterDto {
     message: 'Password must contain uppercase, lowercase, number and special character',
   })
   password: string;
-
-  @ApiProperty({ example: 'John Doe', required: false })
-  @IsString()
-  @MaxLength(100)
-  fullName?: string;
 }
 
 export class LoginDto {

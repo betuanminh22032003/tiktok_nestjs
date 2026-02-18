@@ -1,0 +1,60 @@
+# =============================================================================
+# Database Migration & Seed Job
+# Build tất cả scripts (sync-schemas, seed-all) rồi chạy trong container
+# =============================================================================
+FROM node:20-bullseye-slim AS builder
+
+WORKDIR /app
+
+# Copy root workspace files
+COPY package*.json ./
+COPY tsconfig*.json ./
+COPY nest-cli.json ./
+
+# Install all dependencies (bao gồm dev dependencies để build)
+RUN npm ci && npm cache clean --force
+
+# Copy shared libs
+COPY libs ./libs
+
+# Copy scripts
+COPY scripts ./scripts
+
+# Build sync-schemas + seed-all bằng esbuild (bundle thành 1 file JS)
+RUN npx ts-node scripts/build-seeds.ts
+
+# Build thêm sync-schemas
+RUN npx esbuild scripts/seeders/sync-schemas.ts \
+  --bundle --platform=node --target=node20 \
+  --outfile=dist/scripts/seeders/sync-schemas.js \
+  --format=cjs \
+  --external:pg-native --external:mock-aws-s3 --external:nock --external:aws-sdk --external:@mapbox/node-pre-gyp \
+  --alias:@app/auth-db=./libs/auth-db/src \
+  --alias:@app/video-db=./libs/video-db/src \
+  --alias:@app/interaction-db=./libs/interaction-db/src \
+  --alias:@app/notification-db=./libs/notification-db/src \
+  --alias:@app/common=./libs/common/src \
+  --alias:@app/database=./libs/database/src \
+  --loader:.html=text
+
+# =============================================================================
+# Production stage - chỉ chạy scripts đã bundle
+# =============================================================================
+FROM node:20-bullseye-slim
+
+WORKDIR /app
+
+# Copy bundled scripts và node_modules (cần pg driver)
+COPY --from=builder /app/dist/scripts/seeders ./scripts
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package*.json ./
+
+# Script wrapper để chạy sync hoặc seed hoặc cả hai
+COPY scripts/docker-migrate.sh ./docker-migrate.sh
+RUN chmod +x ./docker-migrate.sh
+
+# Mặc định: chạy sync schemas (tạo bảng)
+# Có thể override bằng: MIGRATE_MODE=seed | MIGRATE_MODE=all
+ENV MIGRATE_MODE=sync
+
+CMD ["./docker-migrate.sh"]

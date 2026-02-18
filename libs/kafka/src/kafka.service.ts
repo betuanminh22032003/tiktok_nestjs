@@ -145,22 +145,10 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
       // Store the callback
       this.consumerCallbacks.set(topic, callback);
 
-      // Subscribe to the topic
+      // Subscribe to the topic (chỉ đăng ký topic, CHƯA start consumer)
+      // KafkaJS cho phép gọi consumer.subscribe() nhiều lần
+      // NHƯNG phải gọi TẤT CẢ trước khi gọi consumer.run()
       await this.consumer.subscribe({ topic, fromBeginning: false });
-
-      // Defer startConsumer để cho phép nhiều subscribe() gọi liên tiếp
-      // trong cùng 1 event loop tick (ví dụ: onModuleInit gọi 3 lần).
-      // Nếu start ngay, lần subscribe thứ 2 sẽ lỗi "Cannot subscribe while running".
-      if (!this.consumerRunning && !this.consumerStartScheduled) {
-        this.consumerStartScheduled = true;
-        queueMicrotask(() => {
-          this.startConsumer().catch((err) => {
-            this.consumerRunning = false;
-            this.consumerStartScheduled = false;
-            this.logger.error('Failed to start consumer', err);
-          });
-        });
-      }
 
       this.logger.log(`Subscribed to topic ${topic}`);
     } catch (error) {
@@ -170,10 +158,26 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
+   * Start consuming messages from all subscribed topics.
+   * Phải gọi SAU KHI đã subscribe() hết tất cả topics.
+   *
+   * Ví dụ:
+   *   await kafka.subscribe('topic1', handler1);
+   *   await kafka.subscribe('topic2', handler2);
+   *   await kafka.startConsuming(); // ← gọi 1 lần duy nhất
+   */
+  async startConsuming(): Promise<void> {
+    if (this.consumerRunning) {
+      this.logger.warn('Consumer is already running');
+      return;
+    }
+    await this.startConsumer();
+  }
+
+  /**
    * Start the Kafka consumer (idempotent)
    */
   private consumerRunning = false;
-  private consumerStartScheduled = false;
   private async startConsumer(): Promise<void> {
     if (this.consumerRunning) return;
 

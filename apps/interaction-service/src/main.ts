@@ -22,7 +22,7 @@ async function bootstrap() {
     options: {
       package: 'interaction',
       protoPath: join(__dirname, '../../../proto/interaction.proto'),
-      url: `localhost:${configService.get('INTERACTION_GRPC_PORT', 50053)}`,
+      url: `0.0.0.0:${configService.get('INTERACTION_GRPC_PORT', 50053)}`,
     },
   });
 

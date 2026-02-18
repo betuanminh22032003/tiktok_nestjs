@@ -27,7 +27,7 @@ export class NotificationModule implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    // Subscribe to Kafka topics
+    // Bước 1: Đăng ký tất cả topics + callbacks TRƯỚC
     await this.kafkaService.subscribe('video.liked', async (data) => {
       await this.notificationService.handleVideoLiked(data as any);
     });
@@ -39,5 +39,8 @@ export class NotificationModule implements OnModuleInit {
     await this.kafkaService.subscribe('video.created', async (data) => {
       await this.notificationService.handleVideoCreated(data as any);
     });
+
+    // Bước 2: Start consumer SAU KHI đã subscribe hết tất cả topics
+    await this.kafkaService.startConsuming();
   }
 }

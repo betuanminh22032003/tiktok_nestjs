@@ -217,6 +217,52 @@ services:
       - tiktok_network
     restart: unless-stopped
 
+  # ==========================================================================
+  # DATABASE MIGRATION JOB (chạy riêng với infra)
+  # ==========================================================================
+  # Khi dùng docker-compose.infra.yml, services chạy native (npm run start:xxx).
+  # Job này sync schema cho DB trước khi chạy native services.
+  #
+  # Cách dùng:
+  #   docker compose -f docker-compose.infra.yml run --rm db-migrate
+  #   docker compose -f docker-compose.infra.yml run --rm -e MIGRATE_MODE=all db-migrate
+  # ==========================================================================
+  db-migrate:
+    build:
+      context: .
+      dockerfile: scripts/Dockerfile.migrate
+    container_name: tiktok_db_migrate
+    profiles:
+      - migrate
+    environment:
+      MIGRATE_MODE: ${MIGRATE_MODE:-sync}
+      AUTH_DB_HOST: postgres
+      AUTH_DB_PORT: 5432
+      AUTH_DB_USERNAME: postgres
+      AUTH_DB_PASSWORD: postgres
+      AUTH_DB_NAME: tiktok_auth
+      VIDEO_DB_HOST: postgres
+      VIDEO_DB_PORT: 5432
+      VIDEO_DB_USERNAME: postgres
+      VIDEO_DB_PASSWORD: postgres
+      VIDEO_DB_NAME: tiktok_video
+      INTERACTION_DB_HOST: postgres
+      INTERACTION_DB_PORT: 5432
+      INTERACTION_DB_USERNAME: postgres
+      INTERACTION_DB_PASSWORD: postgres
+      INTERACTION_DB_NAME: tiktok_interaction
+      NOTIFICATION_DB_HOST: postgres
+      NOTIFICATION_DB_PORT: 5432
+      NOTIFICATION_DB_USERNAME: postgres
+      NOTIFICATION_DB_PASSWORD: postgres
+      NOTIFICATION_DB_NAME: tiktok_notification
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - tiktok_network
+    restart: 'no'
+
 volumes:
   postgres_data:
   redis_data:

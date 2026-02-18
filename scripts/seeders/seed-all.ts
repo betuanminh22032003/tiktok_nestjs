@@ -40,7 +40,7 @@ const AuthDataSource = new DataSource({
 const VideoDataSource = new DataSource({
   type: 'postgres',
   host: process.env.VIDEO_DB_HOST || 'localhost',
-  port: parseInt(process.env.VIDEO_DB_PORT) || 5433,
+  port: parseInt(process.env.VIDEO_DB_PORT) || 5432,
   username: process.env.VIDEO_DB_USERNAME || 'postgres',
   password: process.env.VIDEO_DB_PASSWORD || 'postgres',
   database: process.env.VIDEO_DB_NAME || 'tiktok_video',
@@ -52,7 +52,7 @@ const VideoDataSource = new DataSource({
 const InteractionDataSource = new DataSource({
   type: 'postgres',
   host: process.env.INTERACTION_DB_HOST || 'localhost',
-  port: parseInt(process.env.INTERACTION_DB_PORT) || 5434,
+  port: parseInt(process.env.INTERACTION_DB_PORT) || 5432,
   username: process.env.INTERACTION_DB_USERNAME || 'postgres',
   password: process.env.INTERACTION_DB_PASSWORD || 'postgres',
   database: process.env.INTERACTION_DB_NAME || 'tiktok_interaction',
@@ -68,10 +68,10 @@ async function seedAll() {
     `   Auth DB: ${process.env.AUTH_DB_HOST || 'localhost'}:${process.env.AUTH_DB_PORT || 5432}/${process.env.AUTH_DB_NAME || 'tiktok_auth'}`,
   );
   console.log(
-    `   Video DB: ${process.env.VIDEO_DB_HOST || 'localhost'}:${process.env.VIDEO_DB_PORT || 5433}/${process.env.VIDEO_DB_NAME || 'tiktok_video'}`,
+    `   Video DB: ${process.env.VIDEO_DB_HOST || 'localhost'}:${process.env.VIDEO_DB_PORT || 5432}/${process.env.VIDEO_DB_NAME || 'tiktok_video'}`,
   );
   console.log(
-    `   Interaction DB: ${process.env.INTERACTION_DB_HOST || 'localhost'}:${process.env.INTERACTION_DB_PORT || 5434}/${process.env.INTERACTION_DB_NAME || 'tiktok_interaction'}`,
+    `   Interaction DB: ${process.env.INTERACTION_DB_HOST || 'localhost'}:${process.env.INTERACTION_DB_PORT || 5432}/${process.env.INTERACTION_DB_NAME || 'tiktok_interaction'}`,
   );
   console.log('');
 

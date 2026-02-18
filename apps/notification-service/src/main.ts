@@ -22,7 +22,7 @@ async function bootstrap() {
     options: {
       package: 'notification',
       protoPath: join(__dirname, '../../../proto/notification.proto'),
-      url: `localhost:${configService.get('NOTIFICATION_GRPC_PORT', 50054)}`,
+      url: `0.0.0.0:${configService.get('NOTIFICATION_GRPC_PORT', 50054)}`,
     },
   });
 

@@ -11,6 +11,7 @@ services:
       - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init-databases.sh:/docker-entrypoint-initdb.d/init-databases.sh
     networks:
       - tiktok_network
     healthcheck:
@@ -206,7 +207,7 @@ services:
       AUTH_DB_PORT: 5432
       AUTH_DB_USERNAME: postgres
       AUTH_DB_PASSWORD: postgres
-      AUTH_DB_NAME: tiktok_clone
+      AUTH_DB_NAME: tiktok_auth
       REDIS_HOST: redis
       REDIS_PORT: 6379
       KAFKA_BROKERS: kafka:29092
@@ -223,8 +224,8 @@ services:
       - '4001:4001'
       - '50051:50051'
     depends_on:
-      postgres:
-        condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
       kafka:
@@ -246,7 +247,7 @@ services:
       VIDEO_DB_PORT: 5432
       VIDEO_DB_USERNAME: postgres
       VIDEO_DB_PASSWORD: postgres
-      VIDEO_DB_NAME: tiktok_clone
+      VIDEO_DB_NAME: tiktok_video
       REDIS_HOST: redis
       REDIS_PORT: 6379
       KAFKA_BROKERS: kafka:29092
@@ -262,8 +263,8 @@ services:
     volumes:
       - upload_data:/app/uploads
     depends_on:
-      postgres:
-        condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
       kafka:
@@ -285,7 +286,7 @@ services:
       INTERACTION_DB_PORT: 5432
       INTERACTION_DB_USERNAME: postgres
       INTERACTION_DB_PASSWORD: postgres
-      INTERACTION_DB_NAME: tiktok_clone
+      INTERACTION_DB_NAME: tiktok_interaction
       REDIS_HOST: redis
       REDIS_PORT: 6379
       KAFKA_BROKERS: kafka:29092
@@ -299,8 +300,8 @@ services:
       - '4003:4003'
       - '50053:50053'
     depends_on:
-      postgres:
-        condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
       kafka:
@@ -354,7 +355,7 @@ services:
       NOTIFICATION_DB_PORT: 5432
       NOTIFICATION_DB_USERNAME: postgres
       NOTIFICATION_DB_PASSWORD: postgres
-      NOTIFICATION_DB_NAME: tiktok_clone
+      NOTIFICATION_DB_NAME: tiktok_notification
       REDIS_HOST: redis
       REDIS_PORT: 6379
       KAFKA_BROKERS: kafka:29092
@@ -368,8 +369,8 @@ services:
       - '4004:4004'
       - '50054:50054'
     depends_on:
-      postgres:
-        condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
       kafka:
@@ -377,6 +378,51 @@ services:
     networks:
       - tiktok_network
     restart: unless-stopped
+
+  # ==========================================================================
+  # DATABASE MIGRATION JOB (tự động chạy mỗi lần docker compose up)
+  # ==========================================================================
+  # Sync schema cho tất cả databases trước khi services khởi động.
+  # Chạy 1 lần rồi thoát (exit 0). Các services depend vào job này.
+  #
+  # Muốn seed data thêm thì set env: MIGRATE_MODE=all
+  #   docker compose up -d                         → chỉ sync schema
+  #   MIGRATE_MODE=all docker compose up -d         → sync + seed
+  #   docker compose run --rm -e MIGRATE_MODE=seed db-migrate  → chỉ seed
+  # ==========================================================================
+  db-migrate:
+    build:
+      context: .
+      dockerfile: scripts/Dockerfile.migrate
+    container_name: tiktok_db_migrate
+    environment:
+      MIGRATE_MODE: ${MIGRATE_MODE:-sync}
+      AUTH_DB_HOST: postgres
+      AUTH_DB_PORT: 5432
+      AUTH_DB_USERNAME: postgres
+      AUTH_DB_PASSWORD: postgres
+      AUTH_DB_NAME: tiktok_auth
+      VIDEO_DB_HOST: postgres
+      VIDEO_DB_PORT: 5432
+      VIDEO_DB_USERNAME: postgres
+      VIDEO_DB_PASSWORD: postgres
+      VIDEO_DB_NAME: tiktok_video
+      INTERACTION_DB_HOST: postgres
+      INTERACTION_DB_PORT: 5432
+      INTERACTION_DB_USERNAME: postgres
+      INTERACTION_DB_PASSWORD: postgres
+      INTERACTION_DB_NAME: tiktok_interaction
+      NOTIFICATION_DB_HOST: postgres
+      NOTIFICATION_DB_PORT: 5432
+      NOTIFICATION_DB_USERNAME: postgres
+      NOTIFICATION_DB_PASSWORD: postgres
+      NOTIFICATION_DB_NAME: tiktok_notification
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - tiktok_network
+    restart: 'no'
 
 volumes:
   postgres_data:
