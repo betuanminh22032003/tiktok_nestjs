@@ -76,19 +76,9 @@
     "docker:up": "docker compose up -d",
     "docker:up:seed": "cross-env MIGRATE_MODE=all docker compose up -d",
     "docker:migrate": "docker compose run --rm db-migrate",
-    "docker:migrate:seed": "docker compose run --rm -e MIGRATE_MODE=all db-migrate",
-    "k8s:build": "powershell -ExecutionPolicy Bypass -File scripts/build-minikube.ps1",
-    "k8s:build:auth": "powershell -ExecutionPolicy Bypass -File scripts/build-minikube.ps1 -Service auth",
-    "k8s:build:video": "powershell -ExecutionPolicy Bypass -File scripts/build-minikube.ps1 -Service video",
-    "k8s:build:interaction": "powershell -ExecutionPolicy Bypass -File scripts/build-minikube.ps1 -Service interaction",
-    "k8s:build:notification": "powershell -ExecutionPolicy Bypass -File scripts/build-minikube.ps1 -Service notification",
-    "k8s:build:gateway": "powershell -ExecutionPolicy Bypass -File scripts/build-minikube.ps1 -Service gateway",
-    "k8s:dev": "powershell -ExecutionPolicy Bypass -File scripts/dev-workflow.ps1",
-    "k8s:dev:auth": "powershell -ExecutionPolicy Bypass -File scripts/dev-workflow.ps1 -Service auth",
-    "k8s:dev:video": "powershell -ExecutionPolicy Bypass -File scripts/dev-workflow.ps1 -Service video"
+    "docker:migrate:seed": "docker compose run --rm -e MIGRATE_MODE=all db-migrate"
   },
   "dependencies": {
-    "@elastic/elasticsearch": "^8.12.0",
     "@grpc/grpc-js": "^1.9.14",
     "@grpc/proto-loader": "^0.7.10",
     "@nestjs/common": "^10.3.0",
@@ -117,7 +107,6 @@
     "compression": "^1.7.4",
     "cookie-parser": "^1.4.6",
     "helmet": "^7.1.0",
-    "image-js": "^1.2.0",
     "ioredis": "^5.3.2",
     "kafkajs": "^2.2.4",
     "multer": "^1.4.5-lts.1",
@@ -128,15 +117,13 @@
     "pino": "^8.18.0",
     "pino-http": "^8.6.1",
     "prom-client": "^15.1.0",
-    "redis": "^4.6.12",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.1",
     "socket.io": "^4.6.1",
     "typeorm": "^0.3.17",
     "uuid": "^9.0.1",
     "winston": "^3.11.0",
-    "winston-daily-rotate-file": "^4.7.1",
-    "winston-elasticsearch": "^0.17.4"
+    "winston-daily-rotate-file": "^4.7.1"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.2.1",
@@ -153,6 +140,7 @@
     "@types/uuid": "^9.0.7",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "@typescript-eslint/parser": "^6.21.0",
+    "cross-env": "^7.0.3",
     "esbuild": "^0.27.2",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^9.1.0",

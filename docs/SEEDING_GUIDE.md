@@ -92,7 +92,7 @@ All users have password: `Password123!`
 
 ## Environment Variables
 
-Create a `.env` file (or copy from `.env.database-per-service`):
+Create a `.env` file (or copy from `.env.example`):
 
 ```env
 # All databases run on the same PostgreSQL instance

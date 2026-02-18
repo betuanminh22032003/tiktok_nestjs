@@ -7,18 +7,18 @@ Write-Host ""
 
 # Check if .env exists, if not copy from example
 if (-not (Test-Path ".env")) {
-    if (Test-Path ".env.database-per-service") {
-        Write-Host "📋 Creating .env from .env.database-per-service..." -ForegroundColor Yellow
-        Copy-Item ".env.database-per-service" ".env"
-    } elseif (Test-Path ".env.example") {
+    if (Test-Path ".env.example") {
         Write-Host "📋 Creating .env from .env.example..." -ForegroundColor Yellow
         Copy-Item ".env.example" ".env"
+    } else {
+        Write-Host "❌ No .env.example found. Please create .env file manually." -ForegroundColor Red
+        exit 1
     }
 }
 
 # Check if Docker is running
 Write-Host "🐳 Checking Docker..." -ForegroundColor Yellow
-$dockerRunning = docker info 2>&1
+docker info 2>&1 | Out-Null
 if ($LASTEXITCODE -ne 0) {
     Write-Host "❌ Docker is not running. Please start Docker first." -ForegroundColor Red
     exit 1
@@ -40,7 +40,7 @@ $maxAttempts = 30
 $attempt = 0
 do {
     $attempt++
-    $ready = docker exec tiktok_postgres pg_isready -U postgres 2>&1
+    docker exec tiktok_postgres pg_isready -U postgres 2>&1 | Out-Null
     if ($LASTEXITCODE -eq 0) {
         break
     }

@@ -230,34 +230,21 @@ Tài liệu này tổng hợp tất cả các thông tin đăng nhập và truy 
 - **Modification:** Copy to `.env` and update values
 - **Contains:** Database, Redis, Kafka, JWT secrets, Service URLs, gRPC endpoints
 
-### `.env.monitoring`
-
-- **Location:** Root directory
-- **Purpose:** Monitoring-specific environment variables
-- **Contains:** Elasticsearch, Sentry, Prometheus, Alert configuration
-
-### `.env.database-per-service`
-
-- **Location:** Root directory
-- **Purpose:** Alternative database configuration (one DB per service)
-- **Note:** Currently using shared PostgreSQL instance
-
 ---
 
 ## 🔗 IMPORTANT REFERENCES
 
 ### Configuration Files
 
-| File                             | Purpose                     | Location      |
-| -------------------------------- | --------------------------- | ------------- |
-| `docker-compose.yml`             | Service orchestration       | Root          |
-| `monitoring/prometheus.yml`      | Prometheus configuration    | `monitoring/` |
-| `monitoring/loki-config.yml`     | Loki configuration          | `monitoring/` |
-| `monitoring/promtail-config.yml` | Log collection              | `monitoring/` |
-| `monitoring/alertmanager.yml`    | Alert routing               | `monitoring/` |
-| `monitoring/logstash.conf`       | Log processing              | `monitoring/` |
-| `.env.example`                   | Service environment vars    | Root          |
-| `.env.monitoring`                | Monitoring environment vars | Root          |
+| File                             | Purpose                  | Location      |
+| -------------------------------- | ------------------------ | ------------- |
+| `docker-compose.yml`             | Service orchestration    | Root          |
+| `monitoring/prometheus.yml`      | Prometheus configuration | `monitoring/` |
+| `monitoring/loki-config.yml`     | Loki configuration       | `monitoring/` |
+| `monitoring/promtail-config.yml` | Log collection           | `monitoring/` |
+| `monitoring/alertmanager.yml`    | Alert routing            | `monitoring/` |
+| `monitoring/logstash.conf`       | Log processing           | `monitoring/` |
+| `.env.example`                   | Service environment vars | Root          |
 
 ### Volume Mappings
 
