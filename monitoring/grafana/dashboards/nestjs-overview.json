@@ -335,7 +335,8 @@
       },
       "targets": [
         {
-          "expr": "{job=\"docker\"} |= ``",
+          "refId": "A",
+          "expr": "{job=\"dockerlogs\"} |= ``",
           "legendFormat": ""
         }
       ]
